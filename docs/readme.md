@@ -4,7 +4,7 @@ This is the third, and hopefully last, major iteration of
 the teensyExpression/vGuitar rig design and implementation.
 
 Please see the
-[vGuitar System](https://github.com/phorton1/phorton1/blob/master/vGuitar.md)
+[vGuitar System](https://github.com/phorton1/phorton1/blob/master/vGuitar/vGuitar.md)
 for information regardind the system as a whole.
 
 This repository contains the source code for the portion
