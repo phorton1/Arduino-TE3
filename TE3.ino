@@ -39,7 +39,7 @@
 
 
 #if WITH_ROTARY_BOARD
-    #include "rotaryBoard.h"
+    #include "src/rotaryBoard.h"
     static uint8_t last_rot[NUM_ROTARIES];
     #define PIN_ROTARY_INTERRUPT   22
 #endif
