@@ -71,10 +71,16 @@ static void processCommandLine(const char *line);
 
 #if defined(ESP32) && WITH_TELNET
 
+    #define MAX_TELNET_STRINGS   1000
+
+    volatile int telnet_head = 0;
+    volatile int telnet_tail = 0;
+    String telnet_queue[MAX_TELNET_STRINGS];
     static bool telnet_started = false;
     static bool telnet_connected = false;
 
     ESPTelnetStream telnet;
+
 
     void onTelnetConnect(String ip)
     {
@@ -108,6 +114,58 @@ static void processCommandLine(const char *line);
     //     processCommandLine(command.c_str());
     // }
 
+    void enqueTelnet(const char *line)
+    {
+        // display(0,"enqueueTelenet(%d,%d)=%s",telnet_head,telnet_tail,line);
+
+        int new_head = telnet_head;
+        if (new_head + 1 >= MAX_TELNET_STRINGS)
+            new_head = 0;
+        else
+            new_head++;
+        if (new_head == telnet_tail)
+        {
+            my_error("telnet_out_buffer overflow",0);
+        }
+        else
+        {
+            telnet_queue[telnet_head] = line;
+            telnet_head = new_head;
+        }
+    }
+
+    void dequeueTelnet()
+    {
+        while (telnet_tail != telnet_head)
+        {
+            if (!telnet_started || !telnet_connected)
+            {
+                telnet_tail = telnet_head;
+                return;
+            }
+
+            // display(0,"dequeueTelenet(%d,%d)=%s",telnet_head,telnet_tail,telnet_queue[telnet_tail].c_str());
+
+            telnet.println(telnet_queue[telnet_tail].c_str());
+            telnet_tail++;
+            if (telnet_tail >= MAX_TELNET_STRINGS)
+                telnet_tail = 0;
+        }
+    }
+
+
+    void telnetTask(void *param)
+    {
+        delay(1000);
+        display(dbg_telnet,"starting telnetTask loop on core(%d)",xPortGetCoreID());
+        delay(1000);
+        while (1)
+        {
+            vTaskDelay(1);  // 1ms
+            dequeueTelnet();
+        }
+    }
+
 
     void init_telnet()
     {
@@ -116,6 +174,19 @@ static void processCommandLine(const char *line);
         telnet.onReconnect(onTelnetReconnect);
         telnet.onDisconnect(onTelnetDisconnect);
         // telnet.onInputReceived(onTelnetReceived);
+
+        // runs on ESP32_CORE_ARDUINO==1
+        // otherwise run on ESP32_CORE_OTHER==0
+        // see notes in bilgeAlarm.cpp lcdPrint()
+        display(dbg_telnet,"starting telnetTask pinned to core %d",1);
+        xTaskCreatePinnedToCore(
+            telnetTask,
+            "telnetTask",
+            8000,
+            NULL,
+            1,  	// priority
+            NULL,   // handle
+            1);     // ESP32_CORE_ARDUINO
     }
 
 
@@ -482,10 +553,16 @@ void testSerialImplementation()
     if (hub_line)
     {
         USB_SERIAL_PORT.println(hub_line);
+
+        // telnet serial output slows loop() down too much
+        // so there is a separate task to output a circular
+        // buffer of telnet lines.
+
         #if defined(ESP32) && WITH_TELNET
             if (telnet_started && telnet_connected)
             {
-                telnet.println(hub_line);
+                enqueTelnet(hub_line);
+                // telnet.println(hub_line);
             }
         #endif
     }
