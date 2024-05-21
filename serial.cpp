@@ -17,8 +17,9 @@
 
 #include "serial.h"
 #include <myDebug.h>
-#include <teSGTL5000.h>
 #include <teMIDI.h>
+#include <teCommon.h>
+#include <sgtl5000midi.h>
 
 
 #define dbg_cmd  0
@@ -413,32 +414,23 @@ static void handleCommand(const String &left, const String &right)
 {
     display(dbg_cmd,"handleCommand(%s)=%s",left.c_str(),right.c_str());
 
-    // MONADIC COMMANDS
+    // TE3 commands
 
     if (StringEqI(left,"REBOOT"))
     {
         reboot();
-        return;
     }
     else if (StringEqI(left,"RESET"))
     {
         reset();
-        return;
     }
-    else if (right == "")
-    {
-        my_error("expected rVal for command(%s)",left.c_str());
-        return;
-    }
-
     #ifdef ESP32
-        if (StringEqI(left,"STA_SSID"))
+        else if (StringEqI(left,"STA_SSID"))
         {
             preferences.putString("STA_SSID", right);
             String pass = preferences.getString("STA_PASS","");
             if (pass)
                 connectWifi(right,pass);
-            return;
         }
         else if (StringEqI(left,"STA_PASS"))
         {
@@ -446,45 +438,74 @@ static void handleCommand(const String &left, const String &right)
             String ssid = preferences.getString("STA_SSID","");
             if (ssid)
                 connectWifi(ssid,right);
-            return;
         }
     #endif
 
-    uint8_t found_cc = 0;
-    for (uint8_t cc=SGTL_CC_BASE; cc<=SGTL_CC_MAX; cc++)
+    // commands to TE3_hub or it's SGTL5000
+
+    else
     {
-        if (StringEqI(left,sgtl5000_getCCName(cc)))
+        uint8_t val = 0;
+        uint8_t found_cc = 0;
+        uint8_t cable = SGTL5000_CABLE;
+        uint8_t channel = SGTL5000_CHANNEL;
+        uint8_t max = 255;
+
+        for (uint8_t cc=SGTL_CC_BASE; cc<=SGTL_CC_MAX; cc++)
         {
-            found_cc = cc;
-            break;
+            if (StringEqI(left,sgtl5000_getCCName(cc)))
+            {
+                found_cc = cc;
+                max = sgtl5000_getCCMax(found_cc);
+                break;
+            }
         }
-    }
 
-    if (!found_cc)
-    {
-        my_error("Unknown command(%s)=%s",left.c_str(),right.c_str());
-        return;
-    }
+        if (!found_cc)
+        {
+            cable = TEHUB_CABLE;
+            channel = TEHUB_CHANNEL;
+            for (uint8_t cc=TEHUB_CC_BASE; cc<=TEHUB_CC_MAX; cc++)
+            {
+                if (StringEqI(left,tehub_getCCName(cc)))
+                {
+                    found_cc = cc;
+                    max = tehub_getCCMax(found_cc);
+                    break;
+                }
+            }
+        }
 
+        if (found_cc)
+        {
+            if (max != 255 && right == "")
+            {
+                my_error("expected rVal for command(%s)",left.c_str());
+            }
+            else if (max == 255 || validInt(&val,left,right,max))
+            {
+                // Send the Midi Message
 
-    uint8_t val=0;
-    uint8_t max = sgtl5000_getCCMax(found_cc);
-    if (!validInt(&val,left,right,max))
-        return;
+                msgUnion msg(
+                    cable,
+                    MIDI_TYPE_CC,
+                    channel,
+                    found_cc,
+                    val);
 
-    // Send the Midi Message
+                if (HUB_SERIAL_PORT.write(msg.b,4) != 4)
+                {
+                    my_error("Could not send Serial MIDI for command(%s)=%s",left.c_str(),right.c_str());
+                }
+            }
+        }
+        else    // !found_cc
+        {
+            my_error("Unknown command(%s)=%s",left.c_str(),right.c_str());
+        }
 
-    msgUnion msg(
-        SGTL5000_CABLE,
-        MIDI_TYPE_CC,
-        SGTL5000_CHANNEL,
-        found_cc,
-        val);
-
-    if (HUB_SERIAL_PORT.write(msg.b,4) != 4)
-        my_error("Could not send Serial MIDI for command(%s)=%s",left.c_str(),right.c_str());
-
-}
+    }   // commands to TE3_hub or it's SGTL5000
+}   // handleCommand()
 
 
 
