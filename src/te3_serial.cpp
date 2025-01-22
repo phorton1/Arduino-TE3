@@ -14,12 +14,12 @@
 // to connect to Wifi.  If it works, the values
 // are stored in EEPROM.
 
-
-#include "serial.h"
+#include "defines.h"
 #include <myDebug.h>
 #include <teMIDI.h>
 #include <teCommon.h>
 #include <sgtl5000midi.h>
+#include <nvs_flash.h>
 
 
 #define dbg_cmd  0
@@ -28,38 +28,6 @@
 
 #define MAX_STRING  255
 
-#define USB_SERIAL_PORT     Serial
-
-
-#ifdef ESP32
-
-    #define WITH_TELNET     1
-
-    #include <HardwareSerial.h>
-    #include <nvs_flash.h>
-    #include <Preferences.h>
-    #include "WiFi.h"
-    // #include <driver/uart.h>
-
-    #if WITH_TELNET
-        #include <ESPTelnetStream.h>
-    #endif
-
-    #define HUB_SERIAL_RX   27
-    #define HUB_SERIAL_TX   26
-
-    #define WIFI_CONNECT_TIMEOUT        10000
-    #define WIFI_DISCONNECT_TIMEOUT     10000
-
-    Preferences preferences;
-
-    HardwareSerial HUB_SERIAL_PORT(1);
-
-#else
-
-    #define HUB_SERIAL_PORT Serial1
-
-#endif
 
 
 static void processCommandLine(const char *line);
@@ -70,17 +38,17 @@ static void processCommandLine(const char *line);
 // telnet
 //-----------------------------------------
 
-#if defined(ESP32) && WITH_TELNET
+#if WITH_WIFI && WITH_TELNET
 
     #define MAX_TELNET_STRINGS   1000
 
-    volatile int telnet_head = 0;
-    volatile int telnet_tail = 0;
-    String telnet_queue[MAX_TELNET_STRINGS];
-    static bool telnet_started = false;
-    static bool telnet_connected = false;
-
     ESPTelnetStream telnet;
+    bool telnet_started = false;
+
+    static volatile int telnet_head = 0;
+    static volatile int telnet_tail = 0;
+    static String telnet_queue[MAX_TELNET_STRINGS];
+    static bool telnet_connected = false;
 
 
     void onTelnetConnect(String ip)
@@ -194,158 +162,6 @@ static void processCommandLine(const char *line);
 #endif  // ESP32 && WITH_TELNET
 
 
-//===================================
-// ESP32 WIFI
-//===================================
-
-#ifdef ESP32
-
-    static void connectWifi(const String &ssid, const String &pass)
-    {
-        display(0,"TE3 serial.cpp connectWiFi() started",0);
-        proc_entry();
-
-        wifi_mode_t mode = WiFi.getMode();
-        if (mode != WIFI_AP_STA)
-        {
-            WiFi.mode(WIFI_STA);
-            delay(400);
-        }
-
-        #if WITH_TELNET
-            if (telnet_started)
-            {
-                display(0,"telnet stopped",0);
-                telnet.stop();
-                telnet_started = false;
-            }
-        #endif
-        if (WiFi.status() == WL_CONNECTED)
-        {
-            WiFi.disconnect();
-            display(0,"disconnecting station ...",0);
-            uint32_t start = millis();
-            while (WiFi.status() == WL_CONNECTED)
-            {
-                if (millis() > start + WIFI_DISCONNECT_TIMEOUT)
-                {
-                    my_error("could not discconnect station!!",0);
-                    break;
-                }
-                delay(500);
-            }
-        }
-
-        if (ssid != "" && pass != "")
-        {
-            display(0,"Connecting to (%s:%s)",ssid.c_str(),pass.c_str());
-
-            bool timeout = false;
-            uint32_t start = millis();
-            WiFi.begin(ssid.c_str(),pass.c_str());
-
-            // delay(400);
-
-            while (WiFi.status() != WL_CONNECTED)
-            {
-                delay(500);
-                if (millis() > start + WIFI_CONNECT_TIMEOUT)
-                {
-                    timeout = true;
-                    break;
-                }
-            }
-
-            if (timeout)
-            {
-                my_error("Could not connect to %s",ssid.c_str());
-            }
-            else
-            {
-                String ip = WiFi.localIP().toString();
-                warning(0,"Connected to %s at IP=%s",ssid.c_str(),ip.c_str());
-
-                #if WITH_TELNET
-                    telnet.begin();
-                    telnet_started = true;
-                    display(0,"telnet started",0);
-                #endif
-            }
-        }
-
-        proc_leave();
-        display(0,"connect() finished",0);
-    }
-
-#endif
-
-
-
-
-//---------------------------------------------
-// initSerial
-//---------------------------------------------
-
-
-void init_serial()
-{
-    // delay(1000);
-    // setColorString(COLOR_CONST_DEFAULT, "\033[94m");  // example for bright blue
-        // TE3's normal (default) display color is green
-        // TE3_hubs normal display color is bright blue
-        // Looper's normal display color, is cyan, I think
-
-    #ifdef ESP32
-        // switching ESP32 to 921600 baud.
-        // 921600 is the fast ESP32 upload speed.
-        // If I use it, and Serial.begin(115200), I have to unplug
-        //      and replug the ESP32 in to get it to work.
-        // In fact the problem does not appear to be the ESP32,
-        //      but the attached cp210x chip and/or Win10 cp210x
-        //      driver.
-        // I *think* that what happens is that no matter what I do,
-        //      after a fast upload, the cp210x chip is left at 921600,
-        //      and there is no apparent way to get it reset to the
-        //      ESP32 uart0 baud rate.
-        // I made a test mod to the console.pm program and it can
-        //      detect when it opens a serial port at a given
-        //      baud rate but the actual baud rate is not what
-        //      is specified in the Win32::SerialPort setup.
-        // So the problem happens on both sides, and appears
-        //      to be the fault of this cp210x approach on
-        //      both sides.
-
-        Serial.begin(921600);
-
-    #else
-        Serial.begin(115200);
-    #endif
-
-    delay(200);
-    // dbgSerial = &Serial;
-    display(0,"TE3 init_serial()",0);
-
-    #ifdef ESP32
-
-        preferences.begin("TE3", false);
-    
-        HUB_SERIAL_PORT.begin(115200, SERIAL_8N1, HUB_SERIAL_RX, HUB_SERIAL_TX);
-
-        #if WITH_TELNET
-            init_telnet();
-        #endif
-
-        String ssid = preferences.getString("STA_SSID", "");
-        String pass = preferences.getString("STA_PASS", "");
-        if (ssid != "" && pass != "")
-            connectWifi(ssid,pass);
-
-    #else
-        HUB_SERIAL_PORT.begin(115200);
-    #endif
-
-    delay(200);
-}
 
 
 //---------------------------------------------
@@ -424,7 +240,7 @@ static void handleCommand(const String &left, const String &right)
     {
         reset();
     }
-    #ifdef ESP32
+    #if WITH_WIFI
         else if (StringEqI(left,"STA_SSID"))
         {
             preferences.putString("STA_SSID", right);
@@ -510,7 +326,7 @@ static void handleCommand(const String &left, const String &right)
 
 
 //---------------------------------------------
-// test Serial Implementation
+// handleSerial() Implementation
 //---------------------------------------------
 
 static char *bufferLine(Stream *stream, char *buf, int *len)
@@ -562,7 +378,7 @@ static void processCommandLine(const char *line)
 
 
 
-void testSerialImplementation()
+void handleSerial()
 {
     static int hub_serial_len = 0;
     static char hub_serial_buf[MAX_STRING+1];
@@ -579,7 +395,7 @@ void testSerialImplementation()
         // so there is a separate task to output a circular
         // buffer of telnet lines.
 
-        #if defined(ESP32) && WITH_TELNET
+        #if WITH_WIFI && WITH_TELNET
             if (telnet_started && telnet_connected)
             {
                 enqueTelnet(hub_line);
@@ -601,7 +417,7 @@ void testSerialImplementation()
         processCommandLine(usb_line);
     }
 
-    #if defined(ESP32) && WITH_TELNET
+    #if WITH_WIFI && WITH_TELNET
         if (telnet_started)
         {
             telnet.loop();
@@ -620,7 +436,3 @@ void testSerialImplementation()
 
 }
 
-
-
-
-// serial.cpp

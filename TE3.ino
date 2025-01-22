@@ -2,23 +2,73 @@
 // TE3.ino
 //-------------------------------------------
 
+#include "src/defines.h"
 #include <myDebug.h>
-#include "serial.h"
-
-#define FLASH_PIN  2
-
-#define WITH_ROTARY_BOARD  0
 
 
-#define SERIAL_ISOLATION_TEST	0   // 25
-	// A pin for testing the ESP32 serial opto-isolator.
-	// The program will generate a square wave signal on this pin.
-#define ISOLATION_FREQ          100000
-    // frequency for the square weave
-
-#if SERIAL_ISOLATION_TEST
-	#include <driver/ledc.h>
+#ifdef ESP32
+	Preferences preferences;
+	HardwareSerial HUB_SERIAL_PORT(1);
 #endif
+
+
+
+
+//---------------------------------------------
+// setup
+//---------------------------------------------
+
+void setup()
+{
+	#ifdef ESP32
+		preferences.begin("TE3", false);
+	#endif
+
+    // setColorString(COLOR_CONST_DEFAULT, "\033[94m");  // example for bright blue
+        // TE3's normal (default) display color is green
+        // TE3_hubs normal display color is bright blue
+        // Looper's normal display color, is cyan, I think
+
+	#ifdef ESP32
+	    USB_SERIAL_PORT.begin(921600);	// ESP32
+	#else
+		USB_SERIAL_PORT.begin(115200);	// Teensy4.1
+	#endif
+
+	delay(500);
+    display(0,"TE3.ino setup() started",0);
+
+	#ifdef ESP32
+		HUB_SERIAL_PORT.begin(115200, SERIAL_8N1, PIN_HUB_SERIAL_RX, PIN_HUB_SERIAL_TX);
+	#else
+		HUB_SERIAL_PORT.begin(115200);	// Teensy4.1
+	#endif
+
+    #if PIN_LED_ALIVE
+        pinMode(PIN_LED_ALIVE,OUTPUT);
+        digitalWrite(PIN_LED_ALIVE,0);
+    #endif
+
+    #if WITH_ROTARIES
+        rotaryBoard::begin(PIN_ROTARY_INTERRUPT);
+    #endif
+
+
+	#ifdef ESP32
+		#if WITH_WIFI
+			#if WITH_TELNET
+				init_telnet();
+			#endif
+
+			String ssid = preferences.getString("STA_SSID", "");
+			String pass = preferences.getString("STA_PASS", "");
+			if (ssid != "" && pass != "")
+				connectWifi(ssid,pass);
+		#endif
+	#endif
+	
+    display(0,"TE3.ino setup() finished",0);
+}
 
 
 
@@ -27,11 +77,10 @@
 // rotary board
 //--------------------------------------
 
-#if WITH_ROTARY_BOARD
+#if WITH_ROTARIES
 
     #include "src/rotaryBoard.h"
     static uint8_t last_rot[NUM_ROTARIES];
-    #define PIN_ROTARY_INTERRUPT   22
 
     void handleRotaries()
     {
@@ -61,65 +110,12 @@
 
 
 //---------------------------------------------
-// setup
-//---------------------------------------------
-
-void setup()
-{
-    init_serial();
-    display(0,"TE3.ino setup() started",0);
-
-    #if FLASH_PIN
-        pinMode(FLASH_PIN,OUTPUT);
-        digitalWrite(FLASH_PIN,0);
-    #endif
-
-    #if WITH_ROTARY_BOARD
-        rotaryBoard::begin(PIN_ROTARY_INTERRUPT);
-    #endif
-
-    #if SERIAL_ISOLATION_TEST
-    
-        ledc_timer_config_t ledc_timer;
-        ledc_channel_config_t ledc_channel;
-
-        ledc_timer.speed_mode = LEDC_HIGH_SPEED_MODE;
-        ledc_timer.bit_num    = LEDC_TIMER_2_BIT;
-        ledc_timer.timer_num  = LEDC_TIMER_1;
-        ledc_timer.freq_hz    = 2048000;
-
-        ledc_channel.gpio_num   = SERIAL_ISOLATION_TEST;    // GPIO_NUM_33,
-        ledc_channel.speed_mode = LEDC_HIGH_SPEED_MODE;
-        ledc_channel.channel    = LEDC_CHANNEL_0;
-        ledc_channel.timer_sel  = LEDC_TIMER_1;
-        ledc_channel.duty       = 2;
-
-        ledc_timer_config(&ledc_timer);
-        ledc_channel_config(&ledc_channel);
-
-        uint32_t before_freq = ledc_get_freq(LEDC_HIGH_SPEED_MODE, LEDC_TIMER_1);
-        int rslt = ledc_set_freq(LEDC_HIGH_SPEED_MODE, LEDC_TIMER_1, ISOLATION_FREQ);
-        delay(100);
-        uint32_t after_freq = ledc_get_freq(LEDC_HIGH_SPEED_MODE, LEDC_TIMER_1);
-        display(0,"SERIAL_ISOLATION_TEST(%d) before(%u) after(%u) rslt(%d)",
-            SERIAL_ISOLATION_TEST,
-            before_freq,
-            after_freq,
-            rslt);
-    #endif
-
-    display(0,"TE3.ino setup() finished",0);
-}
-
-
-
-//---------------------------------------------
 // loop()
 //---------------------------------------------
 
 void loop()
 {
-    #if FLASH_PIN
+    #if PIN_LED_ALIVE
         static bool flash_on = 0;
         static uint32_t flash_last = 0;
         uint32_t flash_now = millis();
@@ -127,15 +123,15 @@ void loop()
         {
             flash_last = flash_now;
             flash_on = !flash_on;
-            digitalWrite(FLASH_PIN,flash_on);
+            digitalWrite(PIN_LED_ALIVE,flash_on);
         }
     #endif
 
-    #if WITH_ROTARY_BOARD
+    #if WITH_ROTARIES
         handleRotaries();
     #endif
 
-    testSerialImplementation();
+    handleSerial();
 
     delay(1);
 }
