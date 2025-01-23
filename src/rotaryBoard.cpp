@@ -14,6 +14,7 @@
 //
 // push_button debouncing done in process()
 
+#include "defines.h"
 #include "rotaryBoard.h"
 #include <Wire.h>
 #include <myDebug.h>

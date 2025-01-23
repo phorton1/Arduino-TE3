@@ -17,6 +17,26 @@
 #include "src/defines.h"
 #include <myDebug.h>
 
+#define WITH_ROTARIES		1
+	// #define WITH_MIDI_HOST      1
+	// defined in midiHost.cpp
+
+#if WITH_ROTARIES
+    #include "src/rotaryBoard.h"
+#endif
+
+#if WITH_ROTARIES
+    #include "src/midiHost.h"
+#endif
+
+
+extern "C" {
+    extern void my_usb_init();          	// in usb.c
+    // extern void setFTPDescriptors();    	// _usbNames.c
+	extern const char *getUSBSerialNum();	// _usbNames.c
+}
+
+
 
 //---------------------------------------------
 // setup
@@ -29,6 +49,12 @@ void setup()
         // TE3_hubs normal display color is bright blue
         // Looper's normal display color, is cyan
 
+	//-------------------------------------------
+	// initialize usb and serial ports
+	//-------------------------------------------
+
+    delay(500);
+	my_usb_init();
 	USB_SERIAL_PORT.begin(115200);
 
 	delay(500);
@@ -39,6 +65,11 @@ void setup()
 		pinMode(PIN_LED_ALIVE,OUTPUT);
         digitalWrite(PIN_LED_ALIVE,0);
     #endif
+
+	pinMode(PIN_LED_RPI_RUN,OUTPUT);
+	pinMode(PIN_LED_RPI_READY,OUTPUT);
+	digitalWrite(PIN_LED_RPI_RUN,0);
+	digitalWrite(PIN_LED_RPI_READY,0);
 
     #if WITH_ROTARIES
         rotaryBoard::begin(PIN_ROTARY_INTERRUPT);

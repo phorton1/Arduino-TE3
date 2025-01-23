@@ -4,8 +4,7 @@
 // rotary board implementation using interrupt driven
 // i2C based mpc23017 3 wire communications
 
-
-#include "defines.h"
+#pragma once
 
 #define NUM_ROTARIES        4
 

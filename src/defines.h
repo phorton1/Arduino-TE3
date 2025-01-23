@@ -2,20 +2,13 @@
 // defines.h
 //-----------------------------------------------
 
-
 #pragma once
-
-#define WITH_WIFI			0
-#define WITH_TELNET     	0
-#define WITH_ROTARIES		0
-
 
 #include <Arduino.h>
 
 #define USB_SERIAL_PORT     Serial
 #define HUB_SERIAL_PORT     Serial7
 #define RPI_SERIAL_PORT     Serial8
-
 
 
 extern void handleSerial();
