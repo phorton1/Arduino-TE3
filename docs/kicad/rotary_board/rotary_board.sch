@@ -421,9 +421,9 @@ Text GLabel 4950 3100 3    50   Input ~ 0
 SCL
 Text GLabel 5050 3100 3    50   Input ~ 0
 SDA
-Text GLabel 2750 2000 2    50   Input ~ 0
-SCL
 Text GLabel 2750 1900 2    50   Input ~ 0
+SCL
+Text GLabel 2750 2000 2    50   Input ~ 0
 SDA
 Text GLabel 4650 2300 1    50   Input ~ 0
 ROT_INT
