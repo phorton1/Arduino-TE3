@@ -1,167 +1,21 @@
 //-------------------------------------------
-// serial.cpp
+// te3_serial.cpp
 //-------------------------------------------
-// initial implementation not at all like
-// the final one.  We merely display whatever
-// comes from the TE3_hub as debugging output,
-// and have a custom built test processor to
-// handle text Serial input to the TE3, parse
-// it on a line by line basis, and send Serial
-// MIDI Messages to the TE3_hub.
-//
-// For telnet, accepts STA_SSID= and STA_PASS=
-// commands over the USB Serial port, and attempts
-// to connect to Wifi.  If it works, the values
-// are stored in EEPROM.
+// Serial Port and Command Line handler
 
 #include "defines.h"
 #include <myDebug.h>
 #include <teMIDI.h>
 #include <teCommon.h>
 #include <sgtl5000midi.h>
-#include <nvs_flash.h>
-
 
 #define dbg_cmd  0
-#define dbg_telnet 0
-
 
 #define MAX_STRING  255
 
 
-
 static void processCommandLine(const char *line);
     // forward
-
-
-//-----------------------------------------
-// telnet
-//-----------------------------------------
-
-#if WITH_WIFI && WITH_TELNET
-
-    #define MAX_TELNET_STRINGS   1000
-
-    ESPTelnetStream telnet;
-    bool telnet_started = false;
-
-    static volatile int telnet_head = 0;
-    static volatile int telnet_tail = 0;
-    static String telnet_queue[MAX_TELNET_STRINGS];
-    static bool telnet_connected = false;
-
-
-    void onTelnetConnect(String ip)
-    {
-        telnet_connected = true;
-        extraSerial = &telnet; // in myDebug.h
-        display(dbg_telnet,"TE3 telnet connected from %s",ip.c_str());
-    }
-
-    void onTelnetDisconnect(String ip)
-    {
-        telnet_connected = false;
-        extraSerial = NULL; // in myDebug.h
-        display(dbg_telnet,"Telnet %s disconnected",ip.c_str());
-    }
-
-    void onTelnetReconnect(String ip)
-    {
-        telnet_connected = true;
-        extraSerial = &telnet; // in myDebug.h
-        display(dbg_telnet,"Telnet reconnected from %s",ip.c_str());
-    }
-
-    void onTelnetConnectionAttempt(String ip)
-    {
-        display(dbg_telnet,"Telnet %s tried to connect",ip.c_str());
-    }
-
-    // void onTelnetReceived(String command)
-    // {
-    //     display(dbg_telnet,"Telnet Received(%d): '%s'",command.length(),command.c_str());
-    //     processCommandLine(command.c_str());
-    // }
-
-    void enqueTelnet(const char *line)
-    {
-        // display(0,"enqueueTelenet(%d,%d)=%s",telnet_head,telnet_tail,line);
-
-        int new_head = telnet_head;
-        if (new_head + 1 >= MAX_TELNET_STRINGS)
-            new_head = 0;
-        else
-            new_head++;
-        if (new_head == telnet_tail)
-        {
-            my_error("telnet_out_buffer overflow",0);
-        }
-        else
-        {
-            telnet_queue[telnet_head] = line;
-            telnet_head = new_head;
-        }
-    }
-
-    void dequeueTelnet()
-    {
-        while (telnet_tail != telnet_head)
-        {
-            if (!telnet_started || !telnet_connected)
-            {
-                telnet_tail = telnet_head;
-                return;
-            }
-
-            // display(0,"dequeueTelenet(%d,%d)=%s",telnet_head,telnet_tail,telnet_queue[telnet_tail].c_str());
-
-            telnet.println(telnet_queue[telnet_tail].c_str());
-            telnet_tail++;
-            if (telnet_tail >= MAX_TELNET_STRINGS)
-                telnet_tail = 0;
-        }
-    }
-
-
-    void telnetTask(void *param)
-    {
-        delay(1000);
-        display(dbg_telnet,"starting telnetTask loop on core(%d)",xPortGetCoreID());
-        delay(1000);
-        while (1)
-        {
-            vTaskDelay(1);  // 1ms
-            dequeueTelnet();
-        }
-    }
-
-
-    void init_telnet()
-    {
-        telnet.onConnect(onTelnetConnect);
-        telnet.onConnectionAttempt(onTelnetConnectionAttempt);
-        telnet.onReconnect(onTelnetReconnect);
-        telnet.onDisconnect(onTelnetDisconnect);
-        // telnet.onInputReceived(onTelnetReceived);
-
-        // runs on ESP32_CORE_ARDUINO==1
-        // otherwise run on ESP32_CORE_OTHER==0
-        // see notes in bilgeAlarm.cpp lcdPrint()
-        display(dbg_telnet,"starting telnetTask pinned to core %d",1);
-        xTaskCreatePinnedToCore(
-            telnetTask,
-            "telnetTask",
-            8000,
-            NULL,
-            1,  	// priority
-            NULL,   // handle
-            1);     // ESP32_CORE_ARDUINO
-    }
-
-
-#endif  // ESP32 && WITH_TELNET
-
-
 
 
 //---------------------------------------------
@@ -172,19 +26,15 @@ static void reboot()
 {
     warning(0,"REBOOTING TE3!!",0);
     delay(300);
-    #ifdef ESP32
-        ESP.restart();
-    #endif
+    SCB_AIRCR = 0x05FA0004;
+        // reboot teensy processors
 }
 
 static void reset()
 {
     warning(0,"RESETTING TE3!!",0);
     delay(300);
-    #ifdef ESP32
-        nvs_flash_erase(); // erase the NVS partition and...
-        nvs_flash_init(); // initialize the NVS partition.
-    #endif
+    // unimplemented
     reboot();
 }
 
@@ -204,7 +54,7 @@ static bool StringEqI(const String &s1, const char *s2)
 static bool validInt(uint8_t *rslt, const String &left, const String right, uint8_t max)
 {
     int val = 0;
-    for (int i=0; i<right.length(); i++)
+    for (uint16_t i=0; i<right.length(); i++)
     {
         char c = right[i];
         if (c < '0' || c > '9')
@@ -240,22 +90,6 @@ static void handleCommand(const String &left, const String &right)
     {
         reset();
     }
-    #if WITH_WIFI
-        else if (StringEqI(left,"STA_SSID"))
-        {
-            preferences.putString("STA_SSID", right);
-            String pass = preferences.getString("STA_PASS","");
-            if (pass)
-                connectWifi(right,pass);
-        }
-        else if (StringEqI(left,"STA_PASS"))
-        {
-            preferences.putString("STA_PASS", right);
-            String ssid = preferences.getString("STA_SSID","");
-            if (ssid)
-                connectWifi(ssid,right);
-        }
-    #endif
 
     // commands to TE3_hub or it's SGTL5000
 
@@ -360,7 +194,6 @@ static char *bufferLine(Stream *stream, char *buf, int *len)
 static void processCommandLine(const char *line)
 {
     // copy and strip out blanks
-
     String command;
     while (*line)
     {
@@ -380,31 +213,20 @@ static void processCommandLine(const char *line)
 
 void handleSerial()
 {
+    // process HUB_SERIAL_PORT
+
     static int hub_serial_len = 0;
     static char hub_serial_buf[MAX_STRING+1];
     char *hub_line = bufferLine(
         &HUB_SERIAL_PORT,
         hub_serial_buf,
         &hub_serial_len);
-
     if (hub_line)
     {
         USB_SERIAL_PORT.println(hub_line);
-
-        // telnet serial output slows loop() down too much
-        // so there is a separate task to output a circular
-        // buffer of telnet lines.
-
-        #if WITH_WIFI && WITH_TELNET
-            if (telnet_started && telnet_connected)
-            {
-                enqueTelnet(hub_line);
-                // telnet.println(hub_line);
-            }
-        #endif
     }
 
-    // process serial input to USB_SERIAL_PORT
+    // process USB_SERIAL_PORT
 
     static int usb_serial_len = 0;
     static char usb_serial_buf[MAX_STRING+1];
@@ -416,23 +238,5 @@ void handleSerial()
     {
         processCommandLine(usb_line);
     }
-
-    #if WITH_WIFI && WITH_TELNET
-        if (telnet_started)
-        {
-            telnet.loop();
-            static int telnet_serial_len = 0;
-            static char telnet_serial_buf[MAX_STRING+1];
-            char *telnet_line = bufferLine(
-                &telnet,
-                telnet_serial_buf,
-                &telnet_serial_len);
-            if (telnet_line)
-            {
-                processCommandLine(telnet_line);
-            }
-        }
-    #endif
-
 }
 

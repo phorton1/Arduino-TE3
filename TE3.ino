@@ -1,17 +1,21 @@
 //-------------------------------------------
 // TE3.ino
 //-------------------------------------------
+// TE3 is the third version of the teensyExpression pedal.
+//
+// It integrates the Looper and TE into a single box, minimizing
+// external cables, connectors, and power supplies.
+//
+// This code runs on a teensy 4.1 and inherits the functionality
+// from the teensyPiLooper program to communicate with the
+// circle rPi Looper program, now running on an rPi 2W, via Serial,
+// as well as adding functionality to communicate with the new TE3_Hub
+// USB Audio Device running on a teensy 4.0 with a revD SGTL5000 sound
+// card, which replaces the iRigHD2 from the previous Looper2 box.
+
 
 #include "src/defines.h"
 #include <myDebug.h>
-
-
-#ifdef ESP32
-	Preferences preferences;
-	HardwareSerial HUB_SERIAL_PORT(1);
-#endif
-
-
 
 
 //---------------------------------------------
@@ -20,32 +24,19 @@
 
 void setup()
 {
-	#ifdef ESP32
-		preferences.begin("TE3", false);
-	#endif
-
     // setColorString(COLOR_CONST_DEFAULT, "\033[94m");  // example for bright blue
         // TE3's normal (default) display color is green
         // TE3_hubs normal display color is bright blue
-        // Looper's normal display color, is cyan, I think
+        // Looper's normal display color, is cyan
 
-	#ifdef ESP32
-	    USB_SERIAL_PORT.begin(921600);	// ESP32
-	#else
-		USB_SERIAL_PORT.begin(115200);	// Teensy4.1
-	#endif
+	USB_SERIAL_PORT.begin(115200);
 
 	delay(500);
     display(0,"TE3.ino setup() started",0);
-
-	#ifdef ESP32
-		HUB_SERIAL_PORT.begin(115200, SERIAL_8N1, PIN_HUB_SERIAL_RX, PIN_HUB_SERIAL_TX);
-	#else
-		HUB_SERIAL_PORT.begin(115200);	// Teensy4.1
-	#endif
+	HUB_SERIAL_PORT.begin(115200);
 
     #if PIN_LED_ALIVE
-        pinMode(PIN_LED_ALIVE,OUTPUT);
+		pinMode(PIN_LED_ALIVE,OUTPUT);
         digitalWrite(PIN_LED_ALIVE,0);
     #endif
 
@@ -53,20 +44,6 @@ void setup()
         rotaryBoard::begin(PIN_ROTARY_INTERRUPT);
     #endif
 
-
-	#ifdef ESP32
-		#if WITH_WIFI
-			#if WITH_TELNET
-				init_telnet();
-			#endif
-
-			String ssid = preferences.getString("STA_SSID", "");
-			String pass = preferences.getString("STA_PASS", "");
-			if (ssid != "" && pass != "")
-				connectWifi(ssid,pass);
-		#endif
-	#endif
-	
     display(0,"TE3.ino setup() finished",0);
 }
 
@@ -135,7 +112,6 @@ void loop()
 
     delay(1);
 }
-
 
 
 // end of TE3.ino
