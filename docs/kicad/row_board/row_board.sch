@@ -188,12 +188,12 @@ Wire Wire Line
 $Comp
 L power:+5V #PWR03
 U 1 1 660AD766
-P 6850 1350
-F 0 "#PWR03" H 6850 1200 50  0001 C CNN
-F 1 "+5V" V 6850 1550 50  0000 C CNN
-F 2 "" H 6850 1350 50  0001 C CNN
-F 3 "" H 6850 1350 50  0001 C CNN
-	1    6850 1350
+P 6850 1050
+F 0 "#PWR03" H 6850 900 50  0001 C CNN
+F 1 "+5V" V 6850 1250 50  0000 C CNN
+F 2 "" H 6850 1050 50  0001 C CNN
+F 3 "" H 6850 1050 50  0001 C CNN
+	1    6850 1050
 	1    0    0    -1  
 $EndComp
 Text GLabel 7050 1350 1    50   Input ~ 0
@@ -566,4 +566,44 @@ Text GLabel 1150 1000 3    50   Input ~ 0
 BTN_SENSE
 Text GLabel 1200 3400 1    50   Input ~ 0
 BTN_SENSE
+$Comp
+L Device:R R?
+U 1 1 67948ED1
+P 6850 1200
+F 0 "R?" H 6650 1250 50  0000 L CNN
+F 1 "100" V 6850 1200 50  0000 C CNN
+F 2 "" V 6780 1200 50  0001 C CNN
+F 3 "~" H 6850 1200 50  0001 C CNN
+	1    6850 1200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 6794FF15
+P 6550 1550
+F 0 "R?" H 6350 1600 50  0000 L CNN
+F 1 "220" V 6550 1550 50  0000 C CNN
+F 2 "" V 6480 1550 50  0001 C CNN
+F 3 "~" H 6550 1550 50  0001 C CNN
+	1    6550 1550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6850 1350 6550 1350
+Wire Wire Line
+	6550 1350 6550 1400
+Connection ~ 6850 1350
+$Comp
+L power:GND #PWR?
+U 1 1 67952185
+P 6550 1700
+F 0 "#PWR?" H 6550 1450 50  0001 C CNN
+F 1 "GND" V 6550 1500 50  0000 C CNN
+F 2 "" H 6550 1700 50  0001 C CNN
+F 3 "" H 6550 1700 50  0001 C CNN
+	1    6550 1700
+	1    0    0    -1  
+$EndComp
+Text Notes 8000 1350 0    50   ~ 0
+Note that supply voltage is \ndivided down to 3.3V for\ncompatibility with teensy4.1
 $EndSCHEMATC

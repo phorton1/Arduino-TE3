@@ -61,9 +61,9 @@ void setup()
     display(0,"TE3.ino setup() started",0);
 	HUB_SERIAL_PORT.begin(115200);
 
-    #if PIN_LED_ALIVE
-		pinMode(PIN_LED_ALIVE,OUTPUT);
-        digitalWrite(PIN_LED_ALIVE,0);
+    #if PIN_LED_T3_ALIVE
+		pinMode(PIN_LED_T3_ALIVE,OUTPUT);
+        digitalWrite(PIN_LED_T3_ALIVE,0);
     #endif
 
 	pinMode(PIN_LED_RPI_RUN,OUTPUT);
@@ -123,7 +123,7 @@ void setup()
 
 void loop()
 {
-    #if PIN_LED_ALIVE
+    #if PIN_LED_T3_ALIVE
         static bool flash_on = 0;
         static uint32_t flash_last = 0;
         uint32_t flash_now = millis();
@@ -131,7 +131,7 @@ void loop()
         {
             flash_last = flash_now;
             flash_on = !flash_on;
-            digitalWrite(PIN_LED_ALIVE,flash_on);
+            digitalWrite(PIN_LED_T3_ALIVE,flash_on);
         }
     #endif
 
