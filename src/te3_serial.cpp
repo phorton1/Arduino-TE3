@@ -91,7 +91,7 @@ static void handleCommand(const String &left, const String &right)
         reset();
     }
 
-    // commands to TE3_hub or it's SGTL5000
+    // commands to TE3_audio or it's SGTL5000
 
     else
     {
@@ -113,14 +113,14 @@ static void handleCommand(const String &left, const String &right)
 
         if (!found_cc)
         {
-            cable = TEHUB_CABLE;
-            channel = TEHUB_CHANNEL;
-            for (uint8_t cc=TEHUB_CC_BASE; cc<=TEHUB_CC_MAX; cc++)
+            cable = AUDIO_CABLE;
+            channel = AUDIO_CHANNEL;
+            for (uint8_t cc=AUDIO_CC_BASE; cc<=AUDIO_CC_MAX; cc++)
             {
-                if (StringEqI(left,tehub_getCCName(cc)))
+                if (StringEqI(left,audio_getCCName(cc)))
                 {
                     found_cc = cc;
-                    max = tehub_getCCMax(found_cc);
+                    max = audio_getCCMax(found_cc);
                     break;
                 }
             }
@@ -154,7 +154,7 @@ static void handleCommand(const String &left, const String &right)
             my_error("Unknown command(%s)=%s",left.c_str(),right.c_str());
         }
 
-    }   // commands to TE3_hub or it's SGTL5000
+    }   // commands to TE3_audio or it's SGTL5000
 }   // handleCommand()
 
 
