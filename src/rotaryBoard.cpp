@@ -143,7 +143,7 @@ void rotaryBoard::dumpMpcRegs(const char *what)
     uint16_t regs[NUM_DUMP_WORDS];
     memset(regs,0,2*NUM_DUMP_WORDS);
     mpcRead(IODIRA,(uint8_t *)regs, 2*NUM_DUMP_WORDS);
-    display(0,"dumpRegs(%)",what);
+    display(0,"dumpRegs(%s)",what);
     for (int i=0; i<NUM_DUMP_WORDS; i++)
     {
         display(0,"  %-8s = 0x%04x",reg_name[i],regs[i]);
@@ -175,7 +175,7 @@ void rotaryBoard::mpcWrite2(uint8_t reg, uint8_t data)
 
 
 void rotaryBoard::mpcRead(uint8_t reg, uint8_t *buf, int bytes)
-    // Read a byte from a single register
+   // Read bytes from sequential registers
 {
     Wire.setClock(s_freq);
     Wire.beginTransmission(MPC_ADDR);
@@ -260,19 +260,5 @@ void rotaryBoard::calcRotary(int i, uint16_t last_val)
     rot_value[i] = val;
 }
 
-
-void rotaryBoard::process()
-{
-    if (dbg_mpc < -1)
-    {
-        static int last_int_count = 0;
-        if (last_int_count != s_int_count)
-        {
-            last_int_count = s_int_count;
-            display(0,"INT[%d] GPIO_VAL(0x%04x) rot0=%0.3f=%d",s_int_count,s_gpio_val,rot_value[0],getValue(0));
-        }
-    }
-
-}
 
 

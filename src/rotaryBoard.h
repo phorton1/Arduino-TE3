@@ -27,7 +27,6 @@ public:
 	rotaryBoard() {}
 
 	static void begin(int int_pin, uint32_t freq=100000);
-	static void process();
 
 	static void setValue(uint8_t num, uint8_t val)
 		{ rot_value[num] = val; }

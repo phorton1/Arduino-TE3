@@ -38,12 +38,12 @@ $EndComp
 $Comp
 L Connector_Generic:Conn_01x08 J?
 U 1 1 679456F8
-P 6300 1250
-F 0 "J?" V 6400 850 50  0000 L CNN
-F 1 "TE_DISPLAY" V 6400 1200 50  0000 L CNN
-F 2 "" H 6300 1250 50  0001 C CNN
-F 3 "~" H 6300 1250 50  0001 C CNN
-	1    6300 1250
+P 6200 1250
+F 0 "J?" V 6300 850 50  0000 L CNN
+F 1 "TE_DISPLAY" V 6300 1200 50  0000 L CNN
+F 2 "" H 6200 1250 50  0001 C CNN
+F 3 "~" H 6200 1250 50  0001 C CNN
+	1    6200 1250
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -118,36 +118,36 @@ LED_DIN
 $Comp
 L power:+5V #PWR?
 U 1 1 6797CEDB
-P 6000 1450
-F 0 "#PWR?" H 6000 1300 50  0001 C CNN
-F 1 "+5V" V 6000 1550 50  0000 L CNN
-F 2 "" H 6000 1450 50  0001 C CNN
-F 3 "" H 6000 1450 50  0001 C CNN
-	1    6000 1450
+P 5900 1450
+F 0 "#PWR?" H 5900 1300 50  0001 C CNN
+F 1 "+5V" V 5900 1550 50  0000 L CNN
+F 2 "" H 5900 1450 50  0001 C CNN
+F 3 "" H 5900 1450 50  0001 C CNN
+	1    5900 1450
 	-1   0    0    1   
 $EndComp
 $Comp
 L power:GND #PWR?
 U 1 1 6797D5D1
-P 6700 1450
-F 0 "#PWR?" H 6700 1200 50  0001 C CNN
-F 1 "GND" V 6700 1150 50  0000 L CNN
-F 2 "" H 6700 1450 50  0001 C CNN
-F 3 "" H 6700 1450 50  0001 C CNN
-	1    6700 1450
+P 6600 1450
+F 0 "#PWR?" H 6600 1200 50  0001 C CNN
+F 1 "GND" V 6600 1150 50  0000 L CNN
+F 2 "" H 6600 1450 50  0001 C CNN
+F 3 "" H 6600 1450 50  0001 C CNN
+	1    6600 1450
 	1    0    0    -1  
 $EndComp
-Text GLabel 6100 1450 3    50   Input ~ 0
+Text GLabel 6000 1450 3    50   Input ~ 0
 T41_T_CS
-Text GLabel 6200 1450 3    50   Input ~ 0
+Text GLabel 6100 1450 3    50   Input ~ 0
 T41_SCLK
-Text GLabel 6300 1450 3    50   Input ~ 0
+Text GLabel 6200 1450 3    50   Input ~ 0
 T41_MISO
-Text GLabel 6400 1450 3    50   Input ~ 0
+Text GLabel 6300 1450 3    50   Input ~ 0
 T41_LCD_DC
-Text GLabel 6500 1450 3    50   Input ~ 0
+Text GLabel 6400 1450 3    50   Input ~ 0
 T41_LCD_CS
-Text GLabel 6600 1450 3    50   Input ~ 0
+Text GLabel 6500 1450 3    50   Input ~ 0
 T41_MOSI
 $Comp
 L Connector_Generic:Conn_01x08 J?
@@ -269,7 +269,7 @@ Text GLabel 10950 3250 1    50   Input ~ 0
 RPI_MISO
 Text GLabel 11050 3250 1    50   Input ~ 0
 RPI_MOSI
-Text Notes 6100 1100 0    50   ~ 0
+Text Notes 6000 1100 0    50   ~ 0
 ILI9488_T3
 Text GLabel 5150 5100 3    50   Input ~ 0
 T41_SCLK?
@@ -483,7 +483,7 @@ $Comp
 L Device:R R?
 U 1 1 64CCBE5B
 P 4500 6500
-F 0 "R?" H 4570 6546 50  0000 L CNN
+F 0 "R?" V 4600 6450 50  0000 L CNN
 F 1 "220" V 4500 6500 50  0000 C CNN
 F 2 "" V 4430 6500 50  0001 C CNN
 F 3 "~" H 4500 6500 50  0001 C CNN
@@ -516,7 +516,7 @@ F 3 "" H 4800 7100 50  0001 C CNN
 	1    4800 7100
 	1    0    0    -1  
 $EndComp
-Text GLabel 4500 6800 0    50   Input ~ 0
+Text GLabel 4200 6800 0    50   Input ~ 0
 PI_REBOOT
 Wire Wire Line
 	4650 6500 4800 6500
@@ -580,4 +580,61 @@ Text GLabel 5250 3050 1    50   Input ~ 0
 PI_REBOOT
 Text GLabel 5450 3050 1    50   Input ~ 0
 RPI_READY
+Text GLabel 6150 6700 1    50   Input ~ 0
+T41_SCL
+Text GLabel 6050 6700 1    50   Input ~ 0
+T41_SDA
+$Comp
+L Device:R R?
+U 1 1 67964E23
+P 6050 6850
+F 0 "R?" H 6100 6850 50  0000 L CNN
+F 1 "1K" V 6050 6850 50  0000 C CNN
+F 2 "" V 5980 6850 50  0001 C CNN
+F 3 "~" H 6050 6850 50  0001 C CNN
+	1    6050 6850
+	-1   0    0    1   
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 67965E12
+P 6150 6850
+F 0 "R?" H 6000 6850 50  0000 L CNN
+F 1 "1K" V 6150 6850 50  0000 C CNN
+F 2 "" V 6080 6850 50  0001 C CNN
+F 3 "~" H 6150 6850 50  0001 C CNN
+	1    6150 6850
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 67968FB3
+P 6100 7100
+F 0 "#PWR?" H 6100 6850 50  0001 C CNN
+F 1 "GND" H 6105 6927 50  0000 C CNN
+F 2 "" H 6100 7100 50  0001 C CNN
+F 3 "" H 6100 7100 50  0001 C CNN
+	1    6100 7100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6050 7000 6050 7100
+Wire Wire Line
+	6050 7100 6100 7100
+Wire Wire Line
+	6150 7000 6150 7100
+Wire Wire Line
+	6150 7100 6100 7100
+Connection ~ 6100 7100
+$Comp
+L Device:R R?
+U 1 1 6796F63B
+P 4350 6800
+F 0 "R?" V 4450 6750 50  0000 L CNN
+F 1 "1K" V 4350 6800 50  0000 C CNN
+F 2 "" V 4280 6800 50  0001 C CNN
+F 3 "~" H 4350 6800 50  0001 C CNN
+	1    4350 6800
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC

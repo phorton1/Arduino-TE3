@@ -238,34 +238,34 @@ $EndComp
 $Comp
 L Device:C C?
 U 1 1 6643CD42
-P 2800 3600
-F 0 "C?" H 2915 3646 50  0001 L CNN
-F 1 "100nf" H 2915 3600 50  0000 L CNN
-F 2 "" H 2838 3450 50  0001 C CNN
-F 3 "~" H 2800 3600 50  0001 C CNN
-	1    2800 3600
+P 2650 3600
+F 0 "C?" H 2765 3646 50  0001 L CNN
+F 1 "100nf" H 2765 3600 50  0000 L CNN
+F 2 "" H 2688 3450 50  0001 C CNN
+F 3 "~" H 2650 3600 50  0001 C CNN
+	1    2650 3600
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:+3.3V #PWR?
 U 1 1 66443A19
-P 2800 3450
-F 0 "#PWR?" H 2800 3300 50  0001 C CNN
-F 1 "+3.3V" V 2800 3700 50  0000 C CNN
-F 2 "" H 2800 3450 50  0001 C CNN
-F 3 "" H 2800 3450 50  0001 C CNN
-	1    2800 3450
+P 2650 3450
+F 0 "#PWR?" H 2650 3300 50  0001 C CNN
+F 1 "+3.3V" V 2650 3700 50  0000 C CNN
+F 2 "" H 2650 3450 50  0001 C CNN
+F 3 "" H 2650 3450 50  0001 C CNN
+	1    2650 3450
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR?
 U 1 1 66444811
-P 2800 3750
-F 0 "#PWR?" H 2800 3500 50  0001 C CNN
-F 1 "GND" V 2800 3550 50  0000 C CNN
-F 2 "" H 2800 3750 50  0001 C CNN
-F 3 "" H 2800 3750 50  0001 C CNN
-	1    2800 3750
+P 2650 3750
+F 0 "#PWR?" H 2650 3500 50  0001 C CNN
+F 1 "GND" V 2650 3550 50  0000 C CNN
+F 2 "" H 2650 3750 50  0001 C CNN
+F 3 "" H 2650 3750 50  0001 C CNN
+	1    2650 3750
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -307,50 +307,6 @@ Text GLabel 4050 3100 3    50   Input ~ 0
 SW3
 Text GLabel 4450 3100 3    50   Input ~ 0
 SW4
-$Comp
-L power:GND #PWR?
-U 1 1 66491CF1
-P 4600 3700
-F 0 "#PWR?" H 4600 3450 50  0001 C CNN
-F 1 "GND" V 4600 3500 50  0000 C CNN
-F 2 "" H 4600 3700 50  0001 C CNN
-F 3 "" H 4600 3700 50  0001 C CNN
-	1    4600 3700
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:GND #PWR?
-U 1 1 66491F00
-P 4700 3700
-F 0 "#PWR?" H 4700 3450 50  0001 C CNN
-F 1 "GND" V 4700 3500 50  0000 C CNN
-F 2 "" H 4700 3700 50  0001 C CNN
-F 3 "" H 4700 3700 50  0001 C CNN
-	1    4700 3700
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:GND #PWR?
-U 1 1 66495A69
-P 4450 1400
-F 0 "#PWR?" H 4450 1150 50  0001 C CNN
-F 1 "GND" V 4450 1200 50  0000 C CNN
-F 2 "" H 4450 1400 50  0001 C CNN
-F 3 "" H 4450 1400 50  0001 C CNN
-	1    4450 1400
-	-1   0    0    1   
-$EndComp
-$Comp
-L power:GND #PWR?
-U 1 1 66495DD6
-P 4550 1400
-F 0 "#PWR?" H 4550 1150 50  0001 C CNN
-F 1 "GND" V 4550 1200 50  0000 C CNN
-F 2 "" H 4550 1400 50  0001 C CNN
-F 3 "" H 4550 1400 50  0001 C CNN
-	1    4550 1400
-	-1   0    0    1   
-$EndComp
 $Comp
 L 0_my_symbols:mcp23017 U?
 U 1 1 663ECAFA
@@ -431,11 +387,55 @@ Text GLabel 2750 2100 2    50   Input ~ 0
 ROT_INT
 NoConn ~ 4750 2300
 Text Notes 1950 1300 0    50   ~ 0
-Note:  there are (1K) pullup resistors on\nSDA and SCL on the client board
+Note:  there are (1K) pullup resistors on\nSDA and SCL on the mother_board
 Text GLabel 4750 2300 1    50   Input ~ 0
 ROT_INT
 Text Notes 2000 2900 0    50   ~ 0
 Not resolved if there needs to be a\ndecoupling cap on the mpc23017
 Text Notes 5450 950  0    50   ~ 0
 may want 0.1uf ceramic caps tween pins and ground\nfor hardware debouncing
+$Comp
+L power:GND #PWR?
+U 1 1 66491F00
+P 4550 3100
+F 0 "#PWR?" H 4550 2850 50  0001 C CNN
+F 1 "GND" V 4550 2900 50  0000 C CNN
+F 2 "" H 4550 3100 50  0001 C CNN
+F 3 "" H 4550 3100 50  0001 C CNN
+	1    4550 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 66491CF1
+P 4150 3100
+F 0 "#PWR?" H 4150 2850 50  0001 C CNN
+F 1 "GND" V 4150 2900 50  0000 C CNN
+F 2 "" H 4150 3100 50  0001 C CNN
+F 3 "" H 4150 3100 50  0001 C CNN
+	1    4150 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 66495DD6
+P 4250 2300
+F 0 "#PWR?" H 4250 2050 50  0001 C CNN
+F 1 "GND" V 4250 2100 50  0000 C CNN
+F 2 "" H 4250 2300 50  0001 C CNN
+F 3 "" H 4250 2300 50  0001 C CNN
+	1    4250 2300
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 66495A69
+P 3850 2300
+F 0 "#PWR?" H 3850 2050 50  0001 C CNN
+F 1 "GND" V 3850 2100 50  0000 C CNN
+F 2 "" H 3850 2300 50  0001 C CNN
+F 3 "" H 3850 2300 50  0001 C CNN
+	1    3850 2300
+	-1   0    0    1   
+$EndComp
 $EndSCHEMATC

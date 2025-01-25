@@ -18,7 +18,7 @@
 #include <myDebug.h>
 
 #define WITH_ROTARIES		1
-	// #define WITH_MIDI_HOST      1
+// #define WITH_MIDI_HOST      1
 	// defined in midiHost.cpp
 
 #if WITH_ROTARIES
@@ -87,13 +87,10 @@ void setup()
 
 #if WITH_ROTARIES
 
-    #include "src/rotaryBoard.h"
     static uint8_t last_rot[NUM_ROTARIES];
 
     void handleRotaries()
     {
-        rotaryBoard::process();
-
         bool changed = false;
         for (int i=0; i<NUM_ROTARIES; i++)
         {
