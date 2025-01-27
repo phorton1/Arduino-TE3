@@ -16,8 +16,9 @@
 
 #include "src/defines.h"
 #include <myDebug.h>
+#include "src/te3_leds.h"
 
-#define WITH_ROTARIES		1
+#define WITH_ROTARIES		0
 // #define WITH_MIDI_HOST      1
 	// defined in midiHost.cpp
 
@@ -34,6 +35,16 @@ extern "C" {
     extern void my_usb_init();          	// in usb.c
     // extern void setFTPDescriptors();    	// _usbNames.c
 	extern const char *getUSBSerialNum();	// _usbNames.c
+}
+
+
+
+//---------------------------------------------
+// 595 test
+//---------------------------------------------
+
+void test595()
+{
 }
 
 
@@ -66,14 +77,36 @@ void setup()
         digitalWrite(PIN_LED_T3_ALIVE,0);
     #endif
 
+
 	pinMode(PIN_LED_RPI_RUN,OUTPUT);
 	pinMode(PIN_LED_RPI_READY,OUTPUT);
+	#if 1
+		for (int i=0; i<7; i++)
+		{
+			digitalWrite(PIN_LED_RPI_RUN,i&1);
+			digitalWrite(PIN_LED_RPI_READY,!(i&1));
+			delay(200);
+		}
+	#endif
 	digitalWrite(PIN_LED_RPI_RUN,0);
 	digitalWrite(PIN_LED_RPI_READY,0);
 
+
+    initLEDs();
+    LEDFancyStart();
+
+	
     #if WITH_ROTARIES
         rotaryBoard::begin(PIN_ROTARY_INTERRUPT);
     #endif
+
+	#if 0
+		pinMode(PIN_BTN_CLK,OUTPUT);
+		pinMode(PIN_BTN_DIN,OUTPUT);
+		digitalWrite(PIN_BTN_CLK,0);
+		digitalWrite(PIN_BTN_DIN,0);
+		pinMode(PIN_BTN_SENSE,INPUT);	// _PULLDOWN);
+	#endif
 
     display(0,"TE3.ino setup() finished",0);
 }

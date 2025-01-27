@@ -10,7 +10,7 @@
 	// PCB versus BREADBOARD
 
 #define USB_SERIAL_PORT     Serial
-#define DBG_SERIAL_PORT		Serial5
+#define DBG_SERIAL_PORT		Serial1
 #define HUB_SERIAL_PORT     Serial7
 #define RPI_SERIAL_PORT     Serial8
 
@@ -18,6 +18,9 @@
 extern void handleSerial();
 	// in serial.cpp
 
+
+#define NUM_BUTTON_ROWS		5
+#define NUM_BUTTON_COLS		5
 
 //-------------------------------------
 // PINS
@@ -46,7 +49,6 @@ extern void handleSerial();
 #define PIN_SENSE_RPI_READY     37		// sense rpi GPIO25, HIGH == my program has initialized
 #define PIN_RPI_BOOT       		39		// HIGH == REBOOT (to base of transistor)
 
-
 #if PRODUCTION
 	#define PIN_LED_T3_ALIVE 	4
 	#define PIN_LED_RPI_RUN		7		// GREEN LED (wimpy with 220 ohm resistor but scared about 4.1 4ma pin limit)
@@ -61,13 +63,20 @@ extern void handleSerial();
 	#define PIN_LED_RPI_RUN		36		// GREEN LED (wimpy with 220 ohm resistor but scared about 4.1 4ma pin limit)
 	#define PIN_LED_RPI_READY	38		// BLUE LED (bright with 220 ohm reisitor, prob about 7ma)
 #endif
-
 										
 #define PIN_LED_RPI_RUN			36		// GREEN LED (wimpy with 220 ohm resistor but scared about 4.1 4ma pin limit)
 #define PIN_LED_RPI_READY		38		// BLUE LED (bright with 220 ohm reisitor, prob about 7ma)
 
+
 #define PIN_ROTARY_INTERRUPT   	17
 	// arbitrary and untested
 
+// row boards
+
+#define PIN_LED_DIN				20
+#define PIN_BTN_DIN				14
+#define PIN_BTN_SENSE			15
+#define PIN_BTN_CLK				41
 
 
+// end of TE3 defines.h
