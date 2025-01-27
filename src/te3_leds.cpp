@@ -54,16 +54,16 @@
     //      Serial6 on Teensy 3.6 is not currently supported, due to different hardware
     //      registers.    
     
-#define NUM_LEDS         (NUM_BUTTON_ROWS * NUM_BUTTON_COLS)
+
 
 
 #if USE_ADAFRUIT
-    Adafruit_NeoPixel leds(NUM_LEDS,PIN_LED_DIN);
+    Adafruit_NeoPixel leds(NUM_BUTTONS,PIN_LED_DIN);
 #else
-    unsigned drawingMemory[NUM_LEDS];
-    byte renderingMemory[NUM_LEDS*3];         //  3 bytes per LED
-    DMAMEM byte displayMemory[NUM_LEDS*12]; // 12 bytes per LED
-    WS2812Serial leds(NUM_LEDS, displayMemory, renderingMemory, PIN_LED_DIN, WS2812_GRB);
+    unsigned drawingMemory[NUM_BUTTONS];
+    byte renderingMemory[NUM_BUTTONS*3];         //  3 bytes per LED
+    DMAMEM byte displayMemory[NUM_BUTTONS*12]; // 12 bytes per LED
+    WS2812Serial leds(NUM_BUTTONS, displayMemory, renderingMemory, PIN_LED_DIN, WS2812_GRB);
 #endif
 
 
@@ -142,7 +142,7 @@ void showLEDs(bool force)
     if (force || leds_changed)
     {
         #if !USE_ADAFRUIT
-            for (int i=0; i<NUM_LEDS; i++)
+            for (int i=0; i<NUM_BUTTONS; i++)
             {
                 unsigned c = drawingMemory[i];
                 unsigned r = (c >> 16) * brightness;
@@ -184,8 +184,8 @@ void LEDFancyStart()
         }
     }
     delay(1000);
-    leds.clear();
-    leds.show();
+    clearLEDs();
+    showLEDs();
 }
 
 

@@ -105,7 +105,7 @@ void setup()
 		pinMode(PIN_BTN_DIN,OUTPUT);
 		digitalWrite(PIN_BTN_CLK,0);
 		digitalWrite(PIN_BTN_DIN,0);
-		pinMode(PIN_BTN_SENSE,INPUT);	// _PULLDOWN);
+		pinMode(PIN_BTN_SENSE,INPUT_PULLDOWN);
 	#endif
 
     display(0,"TE3.ino setup() finished",0);
@@ -170,9 +170,137 @@ void loop()
     #endif
 
     handleSerial();
-
     delay(1);
-}
+
+
+
+	//----------------------------------
+	// 74hc595 button test
+	//----------------------------------
+	// I think maybe better would be to supply voltage to all the
+	// pins and multiplex the inputs, but I would need to order 495's
+	// and redesign the row_board.
+	//
+	// When I first implemented this as a loopt to read all buttons,
+	// there was an issue with timing, both with the latching
+	// out outputs, AND the reading of the input.  I presume
+	// it's because of the capacitance of the wires and traces,
+	// and would probably get worse when I add more buttons
+	// to each row_board and add more row_boards.
+	//
+	// This algorithm polls starts the 595 bit process on the 0th
+	// itereation, then reads subsequent buttons each ms thereafter.
+	// It only uses a few us per loop, and defers event handling to some
+	//
+	// Note that need to do a full 8 cycles per row board, and assumes we
+	// are using the 595 B-F outputs for the attached buttons.
+	// The test prototype board only has two buttons, with the left
+	// button is on the 595 'B' channel, and the right button is on the
+	// 'F' channel.  Therefor their "actual" button numbers are 0 and 5.
+
+
+	#define dbg_buttons 	0
+
+	#define PROTO_LEFT_BNUM		0		// 'B' on first row_board
+	#define PROTO_RIGHT_BNUM	4		// 'F' on first row_board
+
+	//-------------------------------------------
+	// RAW BUTTON IO
+	//-------------------------------------------
+
+	static int button_num = -1;
+	static bool cur_button_state[NUM_BUTTONS];		// contantly updated
+
+	#define LATCH_DELAY		2			// us
+	#define BTN_READ_TIME	0			// every ms
+
+	static uint32_t btn_read_time = 0;
+	uint32_t now = millis();
+	if (now - btn_read_time > BTN_READ_TIME)
+	{
+		btn_read_time = now;
+
+		// the clock is always left LOW be
+		if (button_num == -1)	// starting new cycle
+		{
+			digitalWrite(PIN_BTN_DIN,1);
+			digitalWrite(PIN_BTN_CLK,1);		// 1 goes into the shift register
+			delayMicroseconds(LATCH_DELAY);
+			digitalWrite(PIN_BTN_CLK,0);
+			digitalWrite(PIN_BTN_DIN,0);
+
+			delayMicroseconds(LATCH_DELAY);
+			digitalWrite(PIN_BTN_CLK,1);		// 0 goes into shift register 1 goes to output A
+			delayMicroseconds(LATCH_DELAY);
+			digitalWrite(PIN_BTN_CLK,0);
+
+			delayMicroseconds(LATCH_DELAY);
+			digitalWrite(PIN_BTN_CLK,1);		// 0 goes into shift register 1 goes to output B
+			delayMicroseconds(LATCH_DELAY);
+			digitalWrite(PIN_BTN_CLK,0);
+
+			button_num++;						// there will be almost 1 full ms before we read button zero
+		}
+		else
+		{
+			cur_button_state[button_num] = digitalRead(PIN_BTN_SENSE);
+			// display(dbg_buttons+1,"button_num[%d] = %d",button_num,cur_button_state[button_num]);
+
+			digitalWrite(PIN_BTN_CLK,1);		// 1 goes to next pin
+			delayMicroseconds(LATCH_DELAY);
+			digitalWrite(PIN_BTN_CLK,0);
+			button_num++;
+
+			if (button_num == NUM_BUTTONS)		// done with cycle
+			{
+				button_num = -1;
+				if (dbg_buttons < 0)
+					delay(1000);
+			}
+			else if (button_num % NUM_BUTTON_COLS == 0)		// skip outputs G,H, and subsequent A
+			{
+				for (int i=0; i<3; i++)
+				{
+					delayMicroseconds(LATCH_DELAY);
+					digitalWrite(PIN_BTN_CLK,1);
+					delayMicroseconds(LATCH_DELAY);
+					digitalWrite(PIN_BTN_CLK,0);
+				}
+			}
+		}
+	}	// btn_read_time
+
+
+	//-------------------------------------------
+	// PROCESS BUTTON CHANGES
+	//-------------------------------------------
+	// this will be done by a non-time critical process
+
+	static bool prev_button_state[NUM_BUTTONS];		// handled by event handler of some kind
+
+	for (int num=0; num<NUM_BUTTONS; num++)
+	{
+		bool state = cur_button_state[num];
+		if (prev_button_state[num] != state)
+		{
+			prev_button_state[num] = state;
+			display(dbg_buttons,"BUTTON_NUM[%d] changed to %d",num,state);
+
+			int use_button =
+				num == PROTO_LEFT_BNUM ? 0 :
+				num == PROTO_RIGHT_BNUM ? 1 : -1;
+
+			if (use_button >= 0)
+			{
+				setLED(use_button,state?LED_BLUE:LED_BLACK);
+				showLEDs();
+			}
+		}
+	}	// process the buttons
+
+
+
+}	// loop()
 
 
 // end of TE3.ino

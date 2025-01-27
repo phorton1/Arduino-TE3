@@ -21,6 +21,7 @@ extern void handleSerial();
 
 #define NUM_BUTTON_ROWS		5
 #define NUM_BUTTON_COLS		5
+#define NUM_BUTTONS			(NUM_BUTTON_ROWS * NUM_BUTTON_COLS)
 
 //-------------------------------------
 // PINS
