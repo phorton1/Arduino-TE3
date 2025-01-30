@@ -70,7 +70,7 @@ void setUSBSerialNum()
 	// in the defined structure
 {
 	extern struct usb_string_descriptor_struct usb_string_serial_number_default;
-	int len = 3;
+	int len = 3;	// TE3
 	memcpy(&usb_string_serial_number.wString[len],usb_string_serial_number_default.wString,10 * sizeof(uint16_t));
 	usb_string_serial_number.bLength = 2 + (len + 10) * 2;
 }
