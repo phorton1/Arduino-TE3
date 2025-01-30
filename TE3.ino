@@ -19,33 +19,31 @@
 #include "src/te3_leds.h"
 
 #define WITH_ROTARIES		0
-// #define WITH_MIDI_HOST      1
-	// defined in midiHost.cpp
 
 #if WITH_ROTARIES
     #include "src/rotaryBoard.h"
 #endif
 
-#if WITH_ROTARIES
+#if WITH_MIDI_HOST	// defined in midiHost.h
     #include "src/midiHost.h"
 #endif
 
 
+// I am still using my copied _usb.c and _usbdesc.c, although
+// I *could* get away with just using the official _usbNames.c
+// approach.  My _usb.c was introduced to allow me to change the
+// device descriptors via preferences, mostly to spoof the FTP,
+// by deferring Paul's static usb_init() call to a runtime call.
+//
+// The only thing it actually does in this incarnation is to
+// copy the actual teensy serial number into my serial number
+// descriptor before initializing the USB devie, so that each
+// device has a unique TE3xxxx serial number.
 
 extern "C" {
     extern void my_usb_init();          	// in usb.c
-    // extern void setFTPDescriptors();    	// _usbNames.c
-	extern const char *getUSBSerialNum();	// _usbNames.c
-}
-
-
-
-//---------------------------------------------
-// 595 test
-//---------------------------------------------
-
-void test595()
-{
+    // extern void setFTPDescriptors();    	// commented out in _usbNames.c
+	extern const char *getUSBSerialNum();	// in _usbNames.c
 }
 
 
@@ -67,10 +65,13 @@ void setup()
 
     delay(500);
 	my_usb_init();
+		// calls setUSBSerialNum() in _usbNames.c
+		// before staring USB device
+		
 	USB_SERIAL_PORT.begin(115200);
 
 	delay(500);
-    display(0,"TE3.ino setup() started",0);
+    display(0,"TE3.ino setup(%s) started",getUSBSerialNum());
 	HUB_SERIAL_PORT.begin(115200);
 
     #if PIN_LED_T3_ALIVE
@@ -150,27 +151,25 @@ void setup()
 
 
 
-//---------------------------------------------
-// loop()
-//---------------------------------------------
-
-
-
+//-------------------------------------------------
+// button handler (to be moved to te3_buttons.cpp)
+//-------------------------------------------------
 
 
 static bool cur_button_state[NUM_BUTTONS];		// contantly updated
 
 
 void send595bit()
-{
-	// DIP16 vs SMT chips on breadboard issue
+	// takes at most 1 us plus a little
 	//
 	//  OH' (portH prime) that is forwarded to the next chip
 	//	ACTUALLY goes high at the same time as portG, not portH
 	//	as one might expect.
+{
+	// DIP16 vs SMT chips on breadboard issue
 	//
 	//	On the DIP16 chips it works as I originally designed it.
-	//	Howevewr, with the SMT chips there was an anomoly that
+	//	However, with the SMT chips there was an anomoly that
 	//	was only revealed with the breadboard full of LEDs.
 	//
 	//	The issue was ultimately resolved by merely writing
@@ -200,7 +199,7 @@ void send595bit()
 		// If we had eight buttons, we would read the 0th (portA)
 		// 		on the 2nd cycle.  But we skip portA as our zero'th
 		//      button is on portB, so we read button0 (portB) on
-		//		the third cycle.
+		//		the 2nd cycle.
 		// Otherwise it's all div and mod by 8.
 
 	static bool in_button_cycle = 0;
@@ -229,10 +228,8 @@ void send595bit()
 				{
 					int row = abs_num / 8;
 					int button_num = row * NUM_BUTTON_COLS + col;
-					int sense = digitalRead(PIN_BTN_SENSE);
+					cur_button_state[button_num] = digitalRead(PIN_BTN_SENSE);
 
-					if (col<5)
-						cur_button_state[button_num] = sense;
 					#if DEBUG_SLOW
 						display(0,"READ cycle(%2d) abs(%2d) row(%d) col(%d) button(%d) state == %s",
 							button_cycle,
@@ -240,16 +237,7 @@ void send595bit()
 							row,
 							col,
 							button_num,
-							sense ? "PRESSED" : "");
-					#else
-						if (sense)
-							display(0,"READ cycle(%2d) abs(%2d) row(%d) col(%d) button(%d) state == %s",
-								button_cycle,
-								abs_num,
-								row,
-								col,
-								button_num,
-								sense ? "PRESSED" : "");
+							cur_button_state[button_num] ? "PRESSED" : "");
 					#endif
 
 					#if DEBUG_SLOW
@@ -276,7 +264,7 @@ void send595bit()
 				#if DEBUG_SLOW
 					display(0," LOW(%d)",button_cycle);
 				#endif
-				last_clock_toggle =  micros();;
+				last_clock_toggle =  micros();
 			}
 		}
 	}
@@ -313,6 +301,9 @@ void send595bit()
 
 
 
+//---------------------------------------------
+// loop()
+//---------------------------------------------
 
 void loop()
 {
@@ -332,109 +323,12 @@ void loop()
         handleRotaries();
     #endif
 
-    //                         handleSerial();
-    // delay(1);
+    #if !DEBUG_SLOW
+		handleSerial();
+		// delay(1);	// not sure if this is needed
+	#endif
 
 	send595bit();
-
-
-	#if 0
-
-		//----------------------------------
-		// 74hc595 button test
-		//----------------------------------
-		// I think maybe better would be to supply voltage to all the
-		// pins and multiplex the inputs, but I would need to order 495's
-		// and redesign the row_board.
-		//
-		// When I first implemented this as a loopt to read all buttons,
-		// there was an issue with timing, both with the latching
-		// out outputs, AND the reading of the input.  I presume
-		// it's because of the capacitance of the wires and traces,
-		// and would probably get worse when I add more buttons
-		// to each row_board and add more row_boards.
-		//
-		// This algorithm polls starts the 595 bit process on the 0th
-		// itereation, then reads subsequent buttons each ms thereafter.
-		// It only uses a few us per loop, and defers event handling to some
-		//
-		// Note that need to do a full 8 cycles per row board, and assumes we
-		// are using the 595 B-F outputs for the attached buttons.
-		// The test prototype board only has two buttons, with the left
-		// button is on the 595 'B' channel, and the right button is on the
-		// 'F' channel.  Therefor their "actual" button numbers are 0 and 5.
-
-		//-------------------------------------------
-		// RAW BUTTON IO
-		//-------------------------------------------
-
-		static int button_num = -1;
-		static bool cur_button_state[NUM_BUTTONS];		// contantly updated
-
-		#define LATCH_DELAY		50			// us
-		#define BTN_READ_TIME	0			// every ms
-
-		static uint32_t btn_read_time = 0;
-		uint32_t now = millis();
-		if (now - btn_read_time > BTN_READ_TIME)
-		{
-			btn_read_time = now;
-
-			// the clock is always left LOW be
-			if (button_num == -1)	// starting new cycle
-			{
-				bit_num = 0;
-
-				digitalWrite(PIN_BTN_DIN,1);
-				digitalWrite(PIN_BTN_CLK,1);		// 0 = 1 goes into the shift register
-				delayMicroseconds(LATCH_DELAY);
-				digitalWrite(PIN_BTN_CLK,0);
-				digitalWrite(PIN_BTN_DIN,0);
-
-				delayMicroseconds(LATCH_DELAY);
-				digitalWrite(PIN_BTN_CLK,1);		// 1 = 0 goes into shift register 1 goes to output A
-				delayMicroseconds(LATCH_DELAY);
-				digitalWrite(PIN_BTN_CLK,0);
-
-				delayMicroseconds(LATCH_DELAY);
-				digitalWrite(PIN_BTN_CLK,1);		// 2 = 0 goes into shift register 1 goes to output B
-				delayMicroseconds(LATCH_DELAY);
-				digitalWrite(PIN_BTN_CLK,0);
-
-				button_num++;						// there will be almost 1 full ms before we read button zero
-			}
-			else
-			{
-				cur_button_state[button_num] = digitalRead(PIN_BTN_SENSE);
-				// display(dbg_buttons+1,"button_num[%d] = %d",button_num,cur_button_state[button_num]);
-
-				// 3,4,5,6,7
-
-				digitalWrite(PIN_BTN_CLK,1);		// 1 goes to next pin
-				delayMicroseconds(LATCH_DELAY);
-				digitalWrite(PIN_BTN_CLK,0);
-				button_num++;
-
-				if (button_num == NUM_BUTTONS)		// done with cycle
-				{
-					button_num = -1;
-					if (dbg_buttons < 0)
-						delay(1000);
-				}
-				else if (button_num % NUM_BUTTON_COLS == 0)		// skip outputs G,H, and subsequent A
-				{
-					for (int i=0; i<3; i++)
-					{
-						delayMicroseconds(LATCH_DELAY);
-						digitalWrite(PIN_BTN_CLK,1);
-						delayMicroseconds(LATCH_DELAY);
-						digitalWrite(PIN_BTN_CLK,0);
-					}
-				}
-			}
-		}	// btn_read_time
-
-	#endif
 
 
 	//-------------------------------------------
@@ -449,7 +343,6 @@ void loop()
 	#define PROTO_1_LEFT_BNUM		7		// portD on second prototype row_board
 	#define PROTO_1_RIGHT_BNUM		8		// portE on second prototype row_board
 
-	
 	static bool prev_button_state[NUM_BUTTONS];		// handled by event handler of some kind
 
 	for (int num=0; num<NUM_BUTTONS; num++)
@@ -474,8 +367,6 @@ void loop()
 			}
 		}
 	}	// process the buttons
-
-
 
 }	// loop()
 
