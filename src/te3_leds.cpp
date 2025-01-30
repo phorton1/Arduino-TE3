@@ -17,12 +17,13 @@
 //---------------------------------
 // LEDS
 //---------------------------------
-// Usable pins:
+// WS2812Serial library usable pins:
 //
 //   Teensy LC:   1, 4, 5, 24
 //   Teensy 3.2:  1, 5, 8, 10, 31   (overclock to 120 MHz for pin 8)
 //   Teensy 3.5:  1, 5, 8, 10, 26, 32, 33, 48
 //   Teensy 3.6:  1, 5, 8, 10, 26, 32, 33
+//   Teensy 4.x:  20, period.
 
 // in defines.h:  #define PIN_LED_DIN          20
     // Note that choosing to use pin 5 eats up Serial1
@@ -67,7 +68,7 @@
 #endif
 
 
-unsigned brightness = 10;
+unsigned brightness = 30;
 bool leds_changed = 0;
 
 void initLEDs()
