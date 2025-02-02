@@ -58,10 +58,10 @@ U 1 1 6148DFD0
 P 3600 3150
 F 0 "R2" V 3550 2950 50  0000 C CNN
 F 1 "10K" V 3600 3150 50  0000 C CNN
-F 2 "cnc3018-PCB:myResistor" V 3530 3150 50  0001 C CNN
+F 2 "0_my_footprints:myResistor" V 3530 3150 50  0001 C CNN
 F 3 "~" H 3600 3150 50  0001 C CNN
 	1    3600 3150
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 Wire Wire Line
 	3450 3550 3450 3750
@@ -102,10 +102,10 @@ U 1 1 6149A29E
 P 3250 2750
 F 0 "R1" V 3200 2550 50  0000 C CNN
 F 1 "100" V 3250 2750 50  0000 C CNN
-F 2 "cnc3018-PCB:myResistor" V 3180 2750 50  0001 C CNN
+F 2 "0_my_footprints:myResistor" V 3180 2750 50  0001 C CNN
 F 3 "~" H 3250 2750 50  0001 C CNN
 	1    3250 2750
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 NoConn ~ 3000 4150
 $Comp
@@ -114,10 +114,10 @@ U 1 1 6147A123
 P 1950 3600
 F 0 "M1" H 1417 2635 50  0000 C CNN
 F 1 "TFT_ILI9341" H 1417 2726 50  0000 C CNN
-F 2 "cnc3018-PCB:my14Pin" H 1450 3350 50  0001 C CNN
+F 2 "0_my_footprints:myPinSocket_1x14" H 1450 3350 50  0001 C CNN
 F 3 "" H 1450 3350 50  0001 C CNN
 	1    1950 3600
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J1
@@ -128,7 +128,7 @@ F 1 "5V" H 5250 2850 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 2850 50  0001 C CNN
 F 3 "~" H 4900 2850 50  0001 C CNN
 	1    4900 2850
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J2
@@ -139,7 +139,7 @@ F 1 "T_CS" H 5250 2950 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 2950 50  0001 C CNN
 F 3 "~" H 4900 2950 50  0001 C CNN
 	1    4900 2950
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J3
@@ -150,7 +150,7 @@ F 1 "CLK" H 5250 3050 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 3050 50  0001 C CNN
 F 3 "~" H 4900 3050 50  0001 C CNN
 	1    4900 3050
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J4
@@ -161,7 +161,7 @@ F 1 "MISO" H 5250 3150 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 3150 50  0001 C CNN
 F 3 "~" H 4900 3150 50  0001 C CNN
 	1    4900 3150
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J5
@@ -172,7 +172,7 @@ F 1 "DC" H 5250 3250 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 3250 50  0001 C CNN
 F 3 "~" H 4900 3250 50  0001 C CNN
 	1    4900 3250
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J6
@@ -183,7 +183,7 @@ F 1 "CS" H 5250 3350 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 3350 50  0001 C CNN
 F 3 "~" H 4900 3350 50  0001 C CNN
 	1    4900 3350
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J7
@@ -194,7 +194,7 @@ F 1 "MOSI" H 5250 3450 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 3450 50  0001 C CNN
 F 3 "~" H 4900 3450 50  0001 C CNN
 	1    4900 3450
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 J8
@@ -205,7 +205,7 @@ F 1 "GND" H 5250 3550 50  0000 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4900 3550 50  0001 C CNN
 F 3 "~" H 4900 3550 50  0001 C CNN
 	1    4900 3550
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V7
@@ -216,7 +216,7 @@ F 1 "Conn_01x01" H 4230 3601 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4150 3650 50  0001 C CNN
 F 3 "~" H 4150 3650 50  0001 C CNN
 	1    4150 3650
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V9
@@ -227,7 +227,7 @@ F 1 "Conn_01x01" H 4330 3601 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4250 3650 50  0001 C CNN
 F 3 "~" H 4250 3650 50  0001 C CNN
 	1    4250 3650
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V6
@@ -238,7 +238,7 @@ F 1 "Conn_01x01" H 4180 4201 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4100 4250 50  0001 C CNN
 F 3 "~" H 4100 4250 50  0001 C CNN
 	1    4100 4250
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V8
@@ -249,7 +249,7 @@ F 1 "Conn_01x01" H 4280 4201 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 4200 4250 50  0001 C CNN
 F 3 "~" H 4200 4250 50  0001 C CNN
 	1    4200 4250
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V3
@@ -260,7 +260,7 @@ F 1 "Conn_01x01" H 3930 3701 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 3850 3750 50  0001 C CNN
 F 3 "~" H 3850 3750 50  0001 C CNN
 	1    3850 3750
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V5
@@ -271,7 +271,7 @@ F 1 "Conn_01x01" H 4030 3701 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 3950 3750 50  0001 C CNN
 F 3 "~" H 3950 3750 50  0001 C CNN
 	1    3950 3750
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V1
@@ -282,7 +282,7 @@ F 1 "Conn_01x01" H 3080 2351 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 3000 2400 50  0001 C CNN
 F 3 "~" H 3000 2400 50  0001 C CNN
 	1    3000 2400
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x01 V2
@@ -293,7 +293,7 @@ F 1 "Conn_01x01" H 3180 2351 50  0001 L CNN
 F 2 "cnc3018-PCB:my1pin" H 3100 2400 50  0001 C CNN
 F 3 "~" H 3100 2400 50  0001 C CNN
 	1    3100 2400
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Connection ~ 4150 3450
 Wire Wire Line
