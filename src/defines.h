@@ -12,8 +12,8 @@
 
 #define USB_SERIAL_PORT     Serial
 #define DBG_SERIAL_PORT		Serial1		// 0,1
-#define HUB_SERIAL_PORT     Serial7		// 28,29
-#define RPI_SERIAL_PORT     Serial8		// 34,35
+#define RPI_SERIAL_PORT     Serial7		// 28,29
+#define HUB_SERIAL_PORT     Serial8		// 34,35
 
 extern void handleSerial();
 	// in serial.cpp
@@ -48,11 +48,9 @@ extern void handleSerial();
 
 // LEDs
 
-#if 1	// breadboard
-	#define PIN_LED_T3_ALIVE 	13		// onboard LED
-#else	// production
-	#define PIN_LED_T3_ALIVE 	6		// RED LED with 100 ohm resistor
-#endif
+
+#define PIN_LED_T3_ALIVE 	13		// onboard LED hearbeat
+#define PIN_LED_T3_BUSY 	6		// RED LED with 220 ohm resistor
 
 #define PIN_LED_RPI_RUN		7		// GREEN LED with 100 ohm resistor
 #define PIN_LED_RPI_READY	8		// BLUE LED with 220 ohm reisitor
@@ -78,6 +76,12 @@ extern void handleSerial();
 #define PIN_BTN_DIN				15
 #define PIN_LED_DIN				20		// only pin on teensy4.x that supports ws3812bSerial
 #define PIN_BTN_SENSE			16
+
+
+// in TE3.ino
+
+void setTE3Busy();
+void clearTE3Busy();
 
 
 // end of TE3 defines.h

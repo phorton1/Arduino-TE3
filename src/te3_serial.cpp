@@ -167,6 +167,7 @@ static char *bufferLine(Stream *stream, char *buf, int *len)
 {
     while (stream->available())
     {
+        setTE3Busy();
         char c = stream->read();
         // display(0,"stream got(%c)=0x%2x",(c>=' '?c:' '),c);
 
@@ -238,5 +239,6 @@ void handleSerial()
     {
         processCommandLine(usb_line);
     }
+    clearTE3Busy();
 }
 

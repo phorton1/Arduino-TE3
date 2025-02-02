@@ -47,6 +47,27 @@ extern "C" {
 }
 
 
+static bool flash_on = 0;
+static uint32_t flash_last = 0;
+static uint32_t te3_busy_led_time = 0;
+
+
+// externs
+void setTE3Busy()
+{
+	digitalWrite(PIN_LED_T3_BUSY,1);
+	te3_busy_led_time = millis();
+}
+void clearTE3Busy()
+{
+	if (!flash_on && te3_busy_led_time && millis() - te3_busy_led_time > 200)
+	{
+		te3_busy_led_time = 0;
+		digitalWrite(PIN_LED_T3_BUSY,0);
+	}
+}
+
+
 
 //---------------------------------------------
 // setup
@@ -54,6 +75,19 @@ extern "C" {
 
 void setup()
 {
+	pinMode(PIN_LED_T3_ALIVE,OUTPUT);
+	pinMode(PIN_LED_T3_BUSY,OUTPUT);
+	digitalWrite(PIN_LED_T3_ALIVE,1);
+	digitalWrite(PIN_LED_T3_BUSY,1);
+
+	for (int i=0; i<23; i++)
+	{
+		digitalWrite(PIN_LED_T3_ALIVE,i&1);
+		digitalWrite(PIN_LED_T3_BUSY,i&1);
+		delay(40);
+	}
+
+
     // setColorString(COLOR_CONST_DEFAULT, "\033[94m");  // example for bright blue
         // TE3's normal (default) display color is green
         // TE3_hubs normal display color is bright blue
@@ -67,18 +101,17 @@ void setup()
 	my_usb_init();
 		// calls setUSBSerialNum() in _usbNames.c
 		// before staring USB device
-		
 	USB_SERIAL_PORT.begin(115200);
+
+    digitalWrite(PIN_LED_T3_ALIVE,1);
+    digitalWrite(PIN_LED_T3_BUSY,1);
 
 	delay(500);
     display(0,"TE3.ino setup(%s) started",getUSBSerialNum());
 	HUB_SERIAL_PORT.begin(115200);
 
-    #if PIN_LED_T3_ALIVE
-		pinMode(PIN_LED_T3_ALIVE,OUTPUT);
-        digitalWrite(PIN_LED_T3_ALIVE,0);
-    #endif
-
+    digitalWrite(PIN_LED_T3_ALIVE,0);
+    digitalWrite(PIN_LED_T3_BUSY,0);
 
 	pinMode(PIN_LED_RPI_RUN,OUTPUT);
 	pinMode(PIN_LED_RPI_READY,OUTPUT);
@@ -90,9 +123,9 @@ void setup()
 			delay(200);
 		}
 	#endif
+
 	digitalWrite(PIN_LED_RPI_RUN,0);
 	digitalWrite(PIN_LED_RPI_READY,0);
-
 
     initLEDs();
     LEDFancyStart();
@@ -307,17 +340,15 @@ void send595bit()
 
 void loop()
 {
-    #if PIN_LED_T3_ALIVE
-        static bool flash_on = 0;
-        static uint32_t flash_last = 0;
-        uint32_t flash_now = millis();
-        if (flash_now > flash_last + 250)
-        {
-            flash_last = flash_now;
-            flash_on = !flash_on;
-            digitalWrite(PIN_LED_T3_ALIVE,flash_on);
-        }
-    #endif
+	uint32_t led_delay = flash_on ? 20 : 1980;
+	uint32_t flash_now = millis();
+	if (flash_now - flash_last > led_delay)
+	{
+		flash_last = flash_now;
+		flash_on = !flash_on;
+		digitalWrite(PIN_LED_T3_ALIVE,flash_on);
+		digitalWrite(PIN_LED_T3_BUSY,flash_on);
+	}
 
     #if WITH_ROTARIES
         handleRotaries();
