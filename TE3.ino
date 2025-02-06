@@ -87,6 +87,12 @@ void setup()
 		delay(40);
 	}
 
+	#if 1
+		DBG_SERIAL_PORT.begin(115200);
+		// delay(500);
+		DBG_SERIAL_PORT.println("TE3 Debug Serial port output");
+		extraSerial = &DBG_SERIAL_PORT;
+	#endif
 
     // setColorString(COLOR_CONST_DEFAULT, "\033[94m");  // example for bright blue
         // TE3's normal (default) display color is green
@@ -334,6 +340,28 @@ void send595bit()
 
 
 
+//--------------------------
+// sendTestMidi()
+//--------------------------
+
+#define GUITAR_EFFECTS_CHANNEL  			9   // one based
+#define GUITAR_DISTORTION_EFFECT_CC        26
+// #define GUITAR_WAH_EFFECT_CC               27
+// #define GUITAR_FLANGER_EFFECT_CC           28
+// #define GUITAR_CHORUS_EFFECT_CC            29
+// #define GUITAR_ECHO_EFFECT_CC              30
+
+static void sendTestMidi()
+{
+	static uint8_t effect_state = 0x00;
+	effect_state = effect_state ? 0 : 0x7f;
+
+	uint8_t channel = GUITAR_EFFECTS_CHANNEL;
+	uint8_t cc_num = GUITAR_DISTORTION_EFFECT_CC;
+	usbMIDI.sendControlChange(cc_num, effect_state, channel);
+}
+
+
 //---------------------------------------------
 // loop()
 //---------------------------------------------
@@ -383,6 +411,13 @@ void loop()
 		{
 			prev_button_state[num] = state;
 			display(dbg_buttons,"BUTTON_NUM[%d] changed to %d",num,state);
+
+			// send a test midi message
+
+			if (state && num == PROTO_1_LEFT_BNUM)
+			{
+				sendTestMidi();
+			}
 
 			int led_num =
 				num == PROTO_0_LEFT_BNUM ? 0 :
