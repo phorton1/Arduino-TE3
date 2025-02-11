@@ -375,7 +375,7 @@ U 1 1 6608525E
 P 1100 3600
 F 0 "J2" V 1000 4100 50  0000 R CNN
 F 1 "Conn_01x06" V 900 4350 50  0000 R CNN
-F 2 "0_my_footprints:invRightAngleJSTx06" H 1100 3600 50  0001 C CNN
+F 2 "0_my_footprints:my6Pin-08mm" H 1100 3600 50  0001 C CNN
 F 3 "~" H 1100 3600 50  0001 C CNN
 	1    1100 3600
 	0    1    1    0   

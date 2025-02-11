@@ -1,7 +1,7 @@
 (export (version D)
   (design
     (source C:\src\Arduino\TE3\docs\kicad\row_board\row_board.sch)
-    (date "2/9/2025 3:34:59 AM")
+    (date "2/10/2025 9:51:34 AM")
     (tool "Eeschema (5.1.6)-1")
     (sheet (number 1) (name /) (tstamps /)
       (title_block
@@ -107,7 +107,7 @@
       (tstamp 660FEFBF))
     (comp (ref J2)
       (value Conn_01x06)
-      (footprint 0_my_footprints:invRightAngleJSTx06)
+      (footprint 0_my_footprints:my6Pin-08mm)
       (datasheet ~)
       (libsource (lib Connector_Generic) (part Conn_01x06) (description "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)"))
       (sheetpath (names /) (tstamps /))

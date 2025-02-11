@@ -55,7 +55,7 @@ F 1 "ROTARIES" V 3100 1350 50  0000 L CNN
 F 2 "0_my_footprints:myJSTx05" H 3000 1450 50  0001 C CNN
 F 3 "~" H 3000 1450 50  0001 C CNN
 	1    3000 1450
-	0    -1   -1   0   
+	0    1    -1   0   
 $EndComp
 $Comp
 L power:GND #PWR03
@@ -68,11 +68,11 @@ F 3 "" H 2800 1650 50  0001 C CNN
 	1    2800 1650
 	1    0    0    -1  
 $EndComp
-Text GLabel 2900 1650 3    50   Input ~ 0
+Text GLabel 3200 1650 3    50   Input ~ 0
 T41_SCL
-Text GLabel 3000 1650 3    50   Input ~ 0
-T41_SDA
 Text GLabel 3100 1650 3    50   Input ~ 0
+T41_SDA
+Text GLabel 2900 1650 3    50   Input ~ 0
 ROT_INT
 $Comp
 L Connector_Generic:Conn_01x06 J1
@@ -380,7 +380,7 @@ Text GLabel 3000 3350 1    50   Input ~ 0
 T41_SCL
 Text GLabel 2500 3350 1    50   Input ~ 0
 T41_3V3
-Text GLabel 3200 1650 3    50   Input ~ 0
+Text GLabel 3000 1650 3    50   Input ~ 0
 T41_3V3
 Text GLabel 3300 3350 1    50   Input ~ 0
 SENS_PI_RUN
