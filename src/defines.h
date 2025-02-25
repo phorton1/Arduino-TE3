@@ -56,7 +56,7 @@ extern void handleSerial();
 // display (ili9488_t3)
 
 #define PIN_LCD_SCLK		7
-#define PIN_TS_CS			8
+#define PIN_TS_CS			3
 #define PIN_LCD_DC			9
 #define PIN_LCD_CS			10
 // #define PIN_MOSI			11

@@ -168,7 +168,7 @@ Text GLabel 3300 5400 3    50   Input ~ 0
 T41_LCD_DC
 Text GLabel 3400 5400 3    50   Input ~ 0
 T41_LCD_CS
-Text GLabel 3200 5400 3    50   Input ~ 0
+Text GLabel 2700 5400 3    50   Input ~ 0
 T41_T_CS
 Text GLabel 2800 5400 3    50   Input ~ 0
 LED_T3_BUSY

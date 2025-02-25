@@ -1,4 +1,4 @@
-update=2/9/2025 2:31:03 AM
+update=2/24/2025 8:52:48 AM
 version=1
 last_client=pcbnew
 [general]
@@ -43,10 +43,12 @@ TrackWidth2=0.25
 TrackWidth3=0.4
 TrackWidth4=0.5
 TrackWidth5=0.8
-TrackWidth6=1
-TrackWidth7=1.5
-TrackWidth8=2
-TrackWidth9=2.2
+TrackWidth6=0.9
+TrackWidth7=1
+TrackWidth8=1.2
+TrackWidth9=1.5
+TrackWidth10=2
+TrackWidth11=2.2
 ViaDiameter1=0.8
 ViaDrill1=0.4
 ViaDiameter2=0.6
@@ -257,21 +259,10 @@ Enabled=0
 [pcbnew/Netclasses]
 [pcbnew/Netclasses/Default]
 Name=Default
-Clearance=0.2
+Clearance=0.3
 TrackWidth=0.25
 ViaDiameter=0.8
 ViaDrill=0.4
-uViaDiameter=0.3
-uViaDrill=0.1
-dPairWidth=0.2
-dPairGap=0.25
-dPairViaGap=0.25
-[pcbnew/Netclasses/1]
-Name=small
-Clearance=0.15
-TrackWidth=0.4
-ViaDiameter=0.6
-ViaDrill=0.3
 uViaDiameter=0.3
 uViaDrill=0.1
 dPairWidth=0.2
