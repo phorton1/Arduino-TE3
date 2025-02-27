@@ -73,16 +73,13 @@ ROW BOARD (NEW)
 			finish: 4:45
 			duration: 35
 
-		had to re-align laser after first few movements
-		lots of goobers - DONT WIPE WITH PAPER TOWEL!!
-		toothbrush, vacuum, sand, vacuum, toothbrush, vacuum
+		USE BLUE TAPE FOR HEIGHT AND PAINT KNIFE TO SPREAD
 
-		400x60 is too hot unless the dot is big.
-		I ended up using spindle 80% and liveZ to change the dot
-			effectively spindle 48
-			
-		It is damn hard to get the epoxy right
-		looking into an airbrush to do it
+		F400S60 is too hot.
+
+		I used F70% and S50% adjusters to get it to
+			effective F280 and S30.  I think even better
+			would be F200 and S30 (i.e. F50%)
 
 
 ---------------------- OLD -----------------------------
