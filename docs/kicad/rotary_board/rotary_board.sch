@@ -47,28 +47,6 @@ F 3 "~" H 6500 2560 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:Rotary_Encoder_Switch SW3
-U 1 1 663F4490
-P 6500 3150
-F 0 "SW3" H 6500 3517 50  0001 C CNN
-F 1 "ROT3" H 6500 3425 50  0000 C CNN
-F 2 "0_my_footprints:myRotaryEncoder" H 6350 3310 50  0001 C CNN
-F 3 "~" H 6500 3410 50  0001 C CNN
-	1    6500 3150
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:Rotary_Encoder_Switch SW4
-U 1 1 663F4B46
-P 6500 4050
-F 0 "SW4" H 6500 4417 50  0001 C CNN
-F 1 "ROT4" H 6500 4325 50  0000 C CNN
-F 2 "0_my_footprints:myRotaryEncoder" H 6350 4210 50  0001 C CNN
-F 3 "~" H 6500 4310 50  0001 C CNN
-	1    6500 4050
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:GND #PWR03
 U 1 1 663F4E53
 P 2650 1850
@@ -102,29 +80,17 @@ F 3 "" H 2650 2050 50  0001 C CNN
 	0    1    -1   0   
 $EndComp
 Text GLabel 6800 1350 2    50   Input ~ 0
-SW1
-Text GLabel 6800 2200 2    50   Input ~ 0
-SW2
+SW0
 Text GLabel 6800 3050 2    50   Input ~ 0
-SW3
-Text GLabel 6800 3950 2    50   Input ~ 0
-SW4
+SW2
 Text GLabel 6200 1350 0    50   Input ~ 0
-ROT1A
+ROT0A
 Text GLabel 6200 1550 0    50   Input ~ 0
-ROT1B
-Text GLabel 6200 2200 0    50   Input ~ 0
-ROT2A
-Text GLabel 6200 2400 0    50   Input ~ 0
-ROT2B
+ROT0B
 Text GLabel 6200 3050 0    50   Input ~ 0
-ROT3A
+ROT2A
 Text GLabel 6200 3250 0    50   Input ~ 0
-ROT3B
-Text GLabel 6200 3950 0    50   Input ~ 0
-ROT4A
-Text GLabel 6200 4150 0    50   Input ~ 0
-ROT4B
+ROT2B
 $Comp
 L power:GND #PWR012
 U 1 1 664272DF
@@ -134,28 +100,6 @@ F 1 "GND" V 6800 2200 50  0000 C CNN
 F 2 "" H 6800 2400 50  0001 C CNN
 F 3 "" H 6800 2400 50  0001 C CNN
 	1    6800 2400
-	0    -1   -1   0   
-$EndComp
-$Comp
-L power:GND #PWR020
-U 1 1 66427662
-P 6800 3250
-F 0 "#PWR020" H 6800 3000 50  0001 C CNN
-F 1 "GND" V 6800 3050 50  0000 C CNN
-F 2 "" H 6800 3250 50  0001 C CNN
-F 3 "" H 6800 3250 50  0001 C CNN
-	1    6800 3250
-	0    -1   -1   0   
-$EndComp
-$Comp
-L power:GND #PWR024
-U 1 1 66427948
-P 6800 4150
-F 0 "#PWR024" H 6800 3900 50  0001 C CNN
-F 1 "GND" V 6800 3950 50  0000 C CNN
-F 2 "" H 6800 4150 50  0001 C CNN
-F 3 "" H 6800 4150 50  0001 C CNN
-	1    6800 4150
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -189,28 +133,6 @@ F 1 "GND" V 6200 2100 50  0000 C CNN
 F 2 "" H 6200 2300 50  0001 C CNN
 F 3 "" H 6200 2300 50  0001 C CNN
 	1    6200 2300
-	0    1    1    0   
-$EndComp
-$Comp
-L power:GND #PWR019
-U 1 1 6642A07A
-P 6200 3150
-F 0 "#PWR019" H 6200 2900 50  0001 C CNN
-F 1 "GND" V 6200 2950 50  0000 C CNN
-F 2 "" H 6200 3150 50  0001 C CNN
-F 3 "" H 6200 3150 50  0001 C CNN
-	1    6200 3150
-	0    1    1    0   
-$EndComp
-$Comp
-L power:GND #PWR023
-U 1 1 6642A3A3
-P 6200 4050
-F 0 "#PWR023" H 6200 3800 50  0001 C CNN
-F 1 "GND" V 6200 3850 50  0000 C CNN
-F 2 "" H 6200 4050 50  0001 C CNN
-F 3 "" H 6200 4050 50  0001 C CNN
-	1    6200 4050
 	0    1    1    0   
 $EndComp
 $Comp
@@ -283,30 +205,12 @@ Wire Wire Line
 	4850 2200 4850 2300
 Wire Wire Line
 	4850 1800 4850 1900
-Text GLabel 4550 2300 1    50   Input ~ 0
-ROT1A
-Text GLabel 4450 2300 1    50   Input ~ 0
-ROT1B
-Text GLabel 4150 2300 1    50   Input ~ 0
-ROT2A
-Text GLabel 4050 2300 1    50   Input ~ 0
-ROT2B
 Text GLabel 3850 3100 3    50   Input ~ 0
 ROT3A
 Text GLabel 3950 3100 3    50   Input ~ 0
 ROT3B
-Text GLabel 4250 3100 3    50   Input ~ 0
-ROT4A
-Text GLabel 4350 3100 3    50   Input ~ 0
-ROT4B
-Text GLabel 4350 2300 1    50   Input ~ 0
-SW1
-Text GLabel 3950 2300 1    50   Input ~ 0
-SW2
 Text GLabel 4050 3100 3    50   Input ~ 0
 SW3
-Text GLabel 4450 3100 3    50   Input ~ 0
-SW4
 $Comp
 L 0_my_symbols:mcp23017 U1
 U 1 1 663ECAFA
@@ -438,4 +342,100 @@ F 3 "" H 3850 2300 50  0001 C CNN
 	1    3850 2300
 	-1   0    0    1   
 $EndComp
+$Comp
+L power:GND #PWR023
+U 1 1 6642A3A3
+P 6200 4050
+F 0 "#PWR023" H 6200 3800 50  0001 C CNN
+F 1 "GND" V 6200 3850 50  0000 C CNN
+F 2 "" H 6200 4050 50  0001 C CNN
+F 3 "" H 6200 4050 50  0001 C CNN
+	1    6200 4050
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GND #PWR024
+U 1 1 66427948
+P 6800 4150
+F 0 "#PWR024" H 6800 3900 50  0001 C CNN
+F 1 "GND" V 6800 3950 50  0000 C CNN
+F 2 "" H 6800 4150 50  0001 C CNN
+F 3 "" H 6800 4150 50  0001 C CNN
+	1    6800 4150
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:Rotary_Encoder_Switch SW4
+U 1 1 663F4B46
+P 6500 4050
+F 0 "SW4" H 6500 4417 50  0001 C CNN
+F 1 "ROT4" H 6500 4325 50  0000 C CNN
+F 2 "0_my_footprints:myRotaryEncoder" H 6350 4210 50  0001 C CNN
+F 3 "~" H 6500 4310 50  0001 C CNN
+	1    6500 4050
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR019
+U 1 1 6642A07A
+P 6200 3150
+F 0 "#PWR019" H 6200 2900 50  0001 C CNN
+F 1 "GND" V 6200 2950 50  0000 C CNN
+F 2 "" H 6200 3150 50  0001 C CNN
+F 3 "" H 6200 3150 50  0001 C CNN
+	1    6200 3150
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GND #PWR020
+U 1 1 66427662
+P 6800 3250
+F 0 "#PWR020" H 6800 3000 50  0001 C CNN
+F 1 "GND" V 6800 3050 50  0000 C CNN
+F 2 "" H 6800 3250 50  0001 C CNN
+F 3 "" H 6800 3250 50  0001 C CNN
+	1    6800 3250
+	0    -1   -1   0   
+$EndComp
+Text GLabel 6200 4150 0    50   Input ~ 0
+ROT3B
+Text GLabel 6200 3950 0    50   Input ~ 0
+ROT3A
+Text GLabel 6800 3950 2    50   Input ~ 0
+SW3
+$Comp
+L Device:Rotary_Encoder_Switch SW3
+U 1 1 663F4490
+P 6500 3150
+F 0 "SW3" H 6500 3517 50  0001 C CNN
+F 1 "ROT3" H 6500 3425 50  0000 C CNN
+F 2 "0_my_footprints:myRotaryEncoder" H 6350 3310 50  0001 C CNN
+F 3 "~" H 6500 3410 50  0001 C CNN
+	1    6500 3150
+	1    0    0    -1  
+$EndComp
+Text GLabel 4350 2300 1    50   Input ~ 0
+SW0
+Text GLabel 4450 2300 1    50   Input ~ 0
+ROT0B
+Text GLabel 4550 2300 1    50   Input ~ 0
+ROT0A
+Text GLabel 4350 3100 3    50   Input ~ 0
+ROT2B
+Text GLabel 4450 3100 3    50   Input ~ 0
+SW2
+Text GLabel 4250 3100 3    50   Input ~ 0
+ROT2A
+Text GLabel 3950 2300 1    50   Input ~ 0
+SW1
+Text GLabel 4050 2300 1    50   Input ~ 0
+ROT1B
+Text GLabel 4150 2300 1    50   Input ~ 0
+ROT1A
+Text GLabel 6200 2200 0    50   Input ~ 0
+ROT1A
+Text GLabel 6200 2400 0    50   Input ~ 0
+ROT1B
+Text GLabel 6800 2200 2    50   Input ~ 0
+SW1
 $EndSCHEMATC

@@ -154,7 +154,7 @@ Text GLabel 12600 3300 1    50   Input ~ 0
 RPI_MOSI
 Text Notes 5400 1300 0    50   ~ 0
 ILI9488_T3
-Text GLabel 3100 5400 3    50   Input ~ 0
+Text GLabel 3600 3350 1    50   Input ~ 0
 T41_SCLK
 Text GLabel 3600 5400 3    50   Input ~ 0
 T41_MISO
