@@ -24,11 +24,11 @@
 
 // The rotaries I have are 40 incs per rev.
 // The sensitivity is an aribrary floating point increment per indent.
-// Set here for 270 degrees == 0..127
+// Set here for 360 degrees == 0..127
 // Perhaps will be user defined
 
 #define MAX_ROTARY_VALUE    127.0
-#define INC_PER_INDENT      (MAX_ROTARY_VALUE/30.0)
+#define INC_PER_INDENT      (MAX_ROTARY_VALUE/40.0)
 
 
 // teensy 4.x pin reminders
@@ -38,6 +38,9 @@
 #define MPC_ADDR    0x20
 
 // mpc23017 register addresses (in IOCON mode "bank" zero)
+// By virtue of the fact that in this bank mapping, all 8 bit Ax registers
+// are followed by their Bx registers, we can use mpcWrite2 to configure
+// both the GPAx and GPBx registers, treating them as 16 bit values.
 
 #define IODIRA   0x00   // IO direction  (0 = output, 1 = input (Default))
 #define IODIRB   0x01
@@ -87,6 +90,7 @@ volatile int rotaryBoard::s_int_count;
 volatile uint16_t rotaryBoard::s_gpio_val;
 
 float rotaryBoard::rot_value[NUM_ROTARIES];
+bool rotaryBoard::button_value[NUM_ROTARIES];
 
 
 //-------------------------------
@@ -105,26 +109,34 @@ void rotaryBoard::begin(int int_pin, uint32_t freq /*=100000*/)
     else
         display(dbg_mpc,"rotaryBoard::begin() started",0);
 
-    // We use most of the mpc23017 default values
-    // IOCONN (configuration) register really should be set first
-    // as it determines that the defined register address are used
+    // We use most of the mpc23017 default values, esp the
+    // IOCONN (configuration) register which determines the
+    // register addrssing scheme as given by the defines above.
 
-    // mpcWrite2(IODIRA, 0xff);    // (default) 1=set pin to input
-    // mpcWrite2(IOPOLA, 0x00);    // (default) 0=set pin to non-inverted polarity
-    mpcWrite(GPINTENA, 0xFF);   // 1=set pin to generate interrupt
-    // mpcWrite(GPINTENB, 0xFF);
-    // mpcWrite2(DEFVALA,0x00);    // (default) 0=unused default values of zero
-    // mpcWrite2(INTCONA,0x00);    // (default) 0=use state change, not defval
     // mpcWrite(IOCONN0,0x00);     // (default)
         // 7 = BANK = use sequential register address scheme (as #defines above)
-        // 6 = MIRROR = connect int pins .. test program does not connect them, TE3 will
+        // 6 = MIRROR = connect int pins .. they are connected on the TE3 rotary_board
         // 5 = SEQOP = 0 means address pointer increments (as we use it)
         // 4 = DSSLW = slew rate enabled for SDA output (whatever that means)
-        // 3 = HAEN = enable hard ware address pins for SPI chip variant (we are using the I2C one)
+        // 3 = HAEN = enable hardware address pins for SPI chip variant (we are using the I2C variant)
         // 2 = ODR = configure INT pin as an open drain output (1 overrides INTPOL bit)
         // 1 = INTPOL = 0 = active low interrupts
         // 0 = unused (reads as a zero)
-    mpcWrite2(GPPUA,  0xff);    // enable pullups
+
+    // We use 3 pins per rotary controller, 2 for the A/B inputs, and one for the button.
+    // To optimize the PCB layout, Rotary 3 and 4 are positionally switched
+
+    //    Rotary 0 : A=GPA0, B=GPA1, SW=GPA2, GPA3 unused (tied to ground)
+    //    Rotary 1 : A=GPA4, B=GPA5, SW=GPA6, GPA7 unused (tied to ground)
+    //    Rotary 2 : A=GPB4, B=GPB5, SW=GPB6, GPB7 unused (tied to ground)
+    //    Rotary 3 : A=GPB0, B=GPB1, SW=GPB2, GPB3 unused (tied to ground)
+
+    // mpcWrite2(IODIRA, 0xff);     // (default) 1=set pin to input
+    // mpcWrite2(IOPOLA, 0x00);     // (default) 0=set pin to non-inverted polarity
+    mpcWrite2(GPINTENA, 0xff);      // 1=set pin to generate interrupt
+    // mpcWrite2(DEFVALA,0x00);     // (default) 0=unused default values of zero
+    // mpcWrite2(INTCONA,0x00);     // (default) 0=use state change, not defval
+    mpcWrite2(GPPUA,  0xff);        // enable pullups
 
     if (dbg_mpc < 0)
         dumpMpcRegs("after initialization");
@@ -190,7 +202,7 @@ void rotaryBoard::mpcRead(uint8_t reg, uint8_t *buf, int bytes)
 
 
 uint8_t rotaryBoard::mpcReadByte(uint8_t reg)
-    // Read a byte from a single register
+    // unused - Read a byte from a single register
 {
     Wire.setClock(s_freq);
     Wire.beginTransmission(MPC_ADDR);
@@ -226,9 +238,23 @@ void rotaryBoard::swIRQ()
 }
 
 
-void rotaryBoard::calcRotary(int i, uint16_t last_val)
+void rotaryBoard::calcRotary(int rot_num, uint16_t last_val)
 {
-    uint16_t a_mask = 1 << (i * 4);
+    // logically switch rotary 3 and 4 (zero based 2 and 3)
+    // as Rotary3 uses the upper nibble of the 2nd byte
+
+    int mask_num = rot_num;
+    if (rot_num == 2) mask_num=3;
+    else if (rot_num == 3) mask_num=2;
+
+    // get the button raw value with no debouncing
+
+    uint16_t button_mask = 4 << (mask_num * 4);
+    button_value[rot_num] = s_gpio_val & button_mask;
+
+    // check the rotary A pin
+    
+    uint16_t a_mask = 1 << (mask_num * 4);
     bool cur_a = s_gpio_val & a_mask ? 1 : 0;
     bool last_a = last_val & a_mask ? 1 : 0;
 
@@ -237,10 +263,9 @@ void rotaryBoard::calcRotary(int i, uint16_t last_val)
     if (cur_a == last_a)
         return;
 
-    uint16_t b_mask = 2 << (i * 4);
+    uint16_t b_mask = 2 << (mask_num * 4);
     bool cur_b = s_gpio_val & b_mask ? 1 : 0;
-    float val = rot_value[i];
-        // change to signed
+    float val = rot_value[rot_num];
 
     if (cur_a == cur_b)
     {
@@ -257,7 +282,7 @@ void rotaryBoard::calcRotary(int i, uint16_t last_val)
             val -= INC_PER_INDENT;
     }
 
-    rot_value[i] = val;
+    rot_value[rot_num] = val;
 }
 
 

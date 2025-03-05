@@ -4,6 +4,7 @@
 
 #pragma once
 
+
 #include <Arduino.h>
 
 #define NUM_BUTTON_ROWS		5
@@ -48,19 +49,20 @@ extern void handleSerial();
 
 // LEDs
 
-#define PIN_LED_T3_ALIVE 	13		// onboard LED hearbeat
+#define PIN_LED_T3_ALIVE 	0		// onboard LED hearbeat
 #define PIN_LED_T3_BUSY 	4		// RED LED with 220 ohm resistor
 #define PIN_LED_RPI_RUN		5		// GREEN LED with 100 ohm resistor
 #define PIN_LED_RPI_READY	6		// BLUE LED with 220 ohm reisitor
 
 // display (ili9488_t3)
 
-#define PIN_LCD_SCLK		7
+
+#define PIN_TFT_DC			9
+#define PIN_TFT_CS			10  // hardware SPI0 teensy 4.1
+#define PIN_TFT_MOSI		11  // hardware SPI0 teensy 4.1
+#define PIN_TFT_MISO		12  // hardware SPI0 teensy 4.1
+#define PIN_TFT_SCLK		13	// hardware SPI0 teensy 4.1
 #define PIN_TS_CS			3
-#define PIN_LCD_DC			9
-#define PIN_LCD_CS			10
-// #define PIN_MOSI			11
-// #define PIN_MISO			12
 
 
 // rotary board

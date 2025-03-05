@@ -14,13 +14,16 @@ class rotaryBoard
 	//
 	// The default teensy Wire library frequency is 100 kHz
 	//      works at 500kHz with 1K pullups on SDA & SCL
-	//          those pullups will likely go on the T3 board
-	//          and not the rotary board.
-	//      may want decoupling caps on the rotary board
-	//          but there are none in my test circuit
+	//          those pullups sre on the T3 mother_board
+	//          and not the rotary_board.
 	//      doesn't work at 1Mhz
 	//
 	// The rotary controls values are 0..127
+	//
+	// The interrupt instantaneously changes the rotary and
+	// button values and does NOT call back to the user.
+	// It is expected that a secondary process will handle
+	// button debouncing.
 {
 public:
 
@@ -34,6 +37,9 @@ public:
 	static uint8_t getValue(uint8_t num)
 		{ return rot_value[num]; }
 
+	static bool getRawButton(uint8_t num)	// NOT debounced
+		{ return button_value[num]; }
+
 private:
 
 	static int s_int_pin;
@@ -42,6 +48,7 @@ private:
 	static volatile uint16_t s_gpio_val;
 
 	static float rot_value[NUM_ROTARIES];
+	static bool button_value[NUM_ROTARIES];
 
 	static void mpcWrite(uint8_t reg, uint8_t data);
 	static void mpcWrite2(uint8_t reg, uint8_t data);
