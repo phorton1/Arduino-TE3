@@ -1,13 +1,71 @@
 //-------------------------------------------
 // te3_serial.cpp
 //-------------------------------------------
-// Serial Port and Command Line handler
+// Handles up to 4 Serial Ports with some capabilities to
+// be turned on/off and/or driven by preferences.
+//
+//      USB_SERIAL_PORT
+//          typically the main debugging serial port to console.pm
+//          - provides display() debug output from TE3 itself
+//          - consolidates debug output from RPI and the HUB
+//          - handles text commands to TE3 itself
+//          - handles commands to HUB by sending serial midi to it
+//          - handles rPI kernel uploads to the RPI_SERIAL port
+//          - handles FileSystem commands for the TE3 SD card
+//          - typically displays Midi monitor output
+//      DBG_SERIAL_PORT
+//          an alternative 3 pin output serial port that can
+//              do all of the things the USB_SERIAL_PORT can do for
+//              debugging the TE3 in-vitro while the usbC hub is hooked
+//              up to an iPad
+//          can also perhaps be used as a way to separate debug output
+//              streams to two different console invocations, i.e. separating
+//              midi-monitoring from debugging output, or focusing on one
+//              device in particular
+//      RPI_SERIAL_PORT
+//          - sends debugging output from the Looper/circle program(s)
+//          - sends serial midi, mostly to TE3 from the Looper program
+//          - accepts serial midi to control the Looper program
+//          - can accept binary file kernel uploads during bootstrap phase
+//      HUB_SERIAL_PORT
+//          - sends debugging oiutput from the TE3_audio device including
+//            "dumps" of the SGTL5000 and TE3_audio device states
+//          - accepts serial midi to constrol the TE3_audio device,
+//            mixers, reboot, etc, and to configure the SGTL5000
+//
+// This could get exceedingly complicated, esp if we have to, for example,
+// route serial midi messages of specific types between the rPi Looper and
+// the teensy4.0 SGTL audio device.
+//
+// For now this is prototype code, starting with the ability to reboot the
+//      rPi on ctrl-B.
+// ctrl-A is received from the console to enter "file_server_mode";
+//
+// The previous teensyPiLooper had no concept of handling anything itself,
+//      and just forwarded everything from the USB Serial port to the rPi, so
+//      no special "mode" was needed for kernel uploads .. just reboot and the
+//      rest was handled by console.pm.
+// I'd like to retain the notion that there are serial commands to TE3/TE3_auduio
+//      which means I will have to identify when a serial kernel upload is
+//      taking place.
+// We *could* see if the RPI sends my $KERNEL_UPLOAD_RE = 'Press <space> within 3 seconds to upload file';
+//      and check if the USB port responds with a space in that window to "enter" a mode, but then
+//      getting out of the mode would be problematic.
+// Alternatively could add yet another param to console that says "this is Looper3, so send ctrl-E
+//      to bracket rPI uploads.
+// For now I'm gonna TEMPORARILY modify console.pm to bracket binary uploads with a pair of ctrl-E's
+// In either case we have the issue of sending ctrl-A, B, or E within the binary upload itself which
+//      was typically handled by isolating those using a timer.
+
+
 
 #include "defines.h"
 #include <myDebug.h>
 #include <teMIDI.h>
 #include <teCommon.h>
 #include <sgtl5000midi.h>
+#include "commonDefines.h"
+
 
 #define dbg_cmd  0
 
@@ -38,6 +96,17 @@ static void reset()
     reboot();
 }
 
+static void rebootPi()
+{
+    display(0,"te3_serial::rebootPi() called",0);
+    digitalWrite(PIN_LED_RPI_RUN,0);
+    digitalWrite(PIN_LED_RPI_READY,0);
+    digitalWrite(PIN_RPI_BOOT,1);
+    // rpi_running = 0;
+    // rpi_ready = 0;
+    delay(900);
+    digitalWrite(PIN_RPI_BOOT,0);
+}
 
 
 //---------------------------------------------
@@ -90,6 +159,21 @@ static void handleCommand(const String &left, const String &right)
     {
         reset();
     }
+    else if (StringEqI(left,"REBOOT_PI"))
+    {
+        rebootPi();
+    }
+    else if (StringEqI(left,"DUMP_LOOPER"))
+    {
+        display(0,"Sending LOOP_COMMAND_GET_STATE to rPi",0);
+        uint8_t midi_message[4] = {
+            0x0b,
+            0xb0,
+            LOOP_COMMAND_CC,
+            LOOP_COMMAND_GET_STATE };
+        RPI_SERIAL_PORT.write(midi_message,4);
+    }
+
 
     // commands to TE3_audio or it's SGTL5000
 
@@ -162,29 +246,106 @@ static void handleCommand(const String &left, const String &right)
 //---------------------------------------------
 // handleSerial() Implementation
 //---------------------------------------------
+// I'm not sure a single method fits-all approach is in order here.
+// At a minimum we need to know what port is in play and whether
+// we are in a kernel upload or file_server mode for TE3 and the rPi.
 
-static char *bufferLine(Stream *stream, char *buf, int *len)
+#define SERIAL_PORT_NUM_USB     0
+#define SERIAL_PORT_NUM_HUB     1
+#define SERIAL_PORT_NUM_RPI     2
+#define SERIAL_PORT_NUM_DBG     3
+
+static const char *serialPortName(int serial_port_num)
+{
+    switch (serial_port_num)
+    {
+        case SERIAL_PORT_NUM_USB : return "USB";
+        case SERIAL_PORT_NUM_HUB : return "HUB";
+        case SERIAL_PORT_NUM_RPI : return "RPI";
+        case SERIAL_PORT_NUM_DBG : return "DBG";
+    }
+    return "";
+}
+
+
+
+static bool in_upload_binary = 0;
+
+
+
+static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len)
 {
     while (stream->available())
     {
         setTE3Busy();
-        char c = stream->read();
+        uint8_t byte = stream->read();
         // display(0,"stream got(%c)=0x%2x",(c>=' '?c:' '),c);
 
-        if (c == 0x08)
+        if ((serial_port_num == SERIAL_PORT_NUM_USB ||
+             serial_port_num == SERIAL_PORT_NUM_DBG))
+        {
+            if (byte == 0x02)      // ctrl-B
+            {
+                rebootPi();
+                return 0;
+            }
+            if (byte == 0x05)   // ctrl-E
+            {
+                display(0,"starting in_upload_binary mode",0);
+                in_upload_binary = 1;
+                return 0;
+            }
+        }
+        else if (byte == 0x0b)     // midi message
+        {
+            uint8_t midi_msg[4];
+            memset(midi_msg,0,4);
+            midi_msg[0] = byte;
+
+            uint32_t timeout = micros();
+
+            int i=1;
+            while (i<4)
+            {
+                uint32_t now = micros();
+                if (stream->available())
+                {
+                    midi_msg[i++] = stream->read();
+                    timeout = now;
+                }
+                else if (now - timeout > 10000) // 10 ms
+                {
+                    i = 999;
+                }
+            }
+
+            if (i==999)
+                my_error("timeout getting midi message",0);
+
+            display(0,"%s MIDI: %02x %02x %02x %02x",
+                serialPortName(serial_port_num),
+                midi_msg[0],
+                midi_msg[1],
+                midi_msg[2],
+                midi_msg[3]);
+            return 0;
+        }
+
+
+        if (byte == 0x08)
         {
             if (*len)
                 (*len)--;
         }
-        else if (c == 0x0A || *len > MAX_STRING - 3)
+        else if (byte == 0x0A || *len > MAX_STRING - 3)
         {
             buf[(*len)++] = 0;
             *len = 0;
             return buf;
         }
-        else if (c && c != 0x0D && *len < MAX_STRING)
+        else if (byte && byte != 0x0D && *len < MAX_STRING)
         {
-            buf[(*len)++] = c;
+            buf[(*len)++] = byte;
         }
     }
     return 0;
@@ -212,19 +373,47 @@ static void processCommandLine(const char *line)
 
 
 
+
+
 void handleSerial()
 {
+    if (in_upload_binary)
+    {
+        static uint32_t ctrl_E_time = 0;
+        while (USB_SERIAL_PORT.available())
+        {
+            uint8_t c = USB_SERIAL_PORT.read();
+            if (c == 5)
+                ctrl_E_time = millis();
+            else
+                ctrl_E_time = 0;
+            RPI_SERIAL_PORT.write(c);
+        }
+        while (RPI_SERIAL_PORT.available())
+        {
+            uint8_t c = RPI_SERIAL_PORT.read();
+            USB_SERIAL_PORT.write(c);
+        }
+        if (ctrl_E_time && millis() - ctrl_E_time > 200)
+        {
+            in_upload_binary = 0;
+            display(0,"ending in_upload_binary mode",0);
+        }
+        return;
+    }
+
+
     // process RPI_SERIAL_PORT
 
     static int rpi_serial_len = 0;
     static char rpi_serial_buf[MAX_STRING+1];
     char *rpi_line = bufferLine(
+        SERIAL_PORT_NUM_RPI,
         &RPI_SERIAL_PORT,
         rpi_serial_buf,
         &rpi_serial_len);
     if (rpi_line)
     {
-        USB_SERIAL_PORT.println("RPI:");
         USB_SERIAL_PORT.println(rpi_line);
     }
 
@@ -233,6 +422,7 @@ void handleSerial()
     static int hub_serial_len = 0;
     static char hub_serial_buf[MAX_STRING+1];
     char *hub_line = bufferLine(
+        SERIAL_PORT_NUM_HUB,
         &HUB_SERIAL_PORT,
         hub_serial_buf,
         &hub_serial_len);
@@ -242,10 +432,12 @@ void handleSerial()
     }
 
     // process USB_SERIAL_PORT
+    // duplicate this code for SERIAL_PORT_NUM_DBG
 
     static int usb_serial_len = 0;
     static char usb_serial_buf[MAX_STRING+1];
     char *usb_line = bufferLine(
+        SERIAL_PORT_NUM_USB,
         &USB_SERIAL_PORT,
         usb_serial_buf,
         &usb_serial_len);

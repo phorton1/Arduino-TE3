@@ -4,7 +4,6 @@
 
 #pragma once
 
-
 #include <Arduino.h>
 
 #define NUM_BUTTON_ROWS		5
@@ -12,9 +11,14 @@
 #define NUM_BUTTONS			(NUM_BUTTON_ROWS * NUM_BUTTON_COLS)
 
 #define USB_SERIAL_PORT     Serial
-#define RPI_SERIAL_PORT     Serial1		// 0,1
-#define DBG_SERIAL_PORT		Serial7		// 28,29
-#define HUB_SERIAL_PORT     Serial8		// 34,35
+#define RPI_SERIAL_PORT     Serial1		// pins 0,1
+#define DBG_SERIAL_PORT		Serial7		// pins 28,29
+#define HUB_SERIAL_PORT     Serial8		// pins 34,35
+
+
+#define USE_DBG_SERIAL_PORT		0
+	// initially turned off
+
 
 extern void handleSerial();
 	// in serial.cpp
@@ -49,7 +53,6 @@ extern void handleSerial();
 
 // LEDs
 
-#define PIN_LED_T3_ALIVE 	0		// onboard LED hearbeat
 #define PIN_LED_T3_BUSY 	4		// RED LED with 220 ohm resistor
 #define PIN_LED_RPI_RUN		5		// GREEN LED with 100 ohm resistor
 #define PIN_LED_RPI_READY	6		// BLUE LED with 220 ohm reisitor

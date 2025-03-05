@@ -16,6 +16,7 @@
 
 
 #define WITH_SCREEN		1
+#define WITH_ROTARIES	0
 
 
 #include "src/defines.h"
@@ -25,9 +26,6 @@
 #if WITH_SCREEN
 	#include "src/te3_tft.h"
 #endif
-
-
-#define WITH_ROTARIES		0
 
 #if WITH_ROTARIES
     #include "src/rotaryBoard.h"
@@ -56,12 +54,16 @@ extern "C" {
 }
 
 
+
+//-------------------------------------------------
+// TE3_BUSY led functions externed in defines.h
+//-------------------------------------------------
+// used in te3_serial.cpp
+
 static bool flash_on = 0;
 static uint32_t flash_last = 0;
 static uint32_t te3_busy_led_time = 0;
 
-
-// externs
 void setTE3Busy()
 {
 	digitalWrite(PIN_LED_T3_BUSY,1);
@@ -87,23 +89,14 @@ void setup()
 	pinMode(PIN_LED_T3_BUSY,OUTPUT);
 	digitalWrite(PIN_LED_T3_BUSY,1);
 
-	#if PIN_LED_T3_ALIVE
-		pinMode(PIN_LED_T3_ALIVE,OUTPUT);
-		digitalWrite(PIN_LED_T3_ALIVE,1);
-	#endif
-
 	for (int i=0; i<23; i++)
 	{
-		#if PIN_LED_T3_ALIVE
-			digitalWrite(PIN_LED_T3_ALIVE,i&1);
-		#endif
 		digitalWrite(PIN_LED_T3_BUSY,i&1);
 		delay(40);
 	}
 
-	#if 1
+	#if USE_DBG_SERIAL_PORT
 		DBG_SERIAL_PORT.begin(115200);
-		// delay(500);
 		DBG_SERIAL_PORT.println("TE3 Debug Serial port output");
 		extraSerial = &DBG_SERIAL_PORT;
 	#endif
@@ -123,27 +116,30 @@ void setup()
 		// before staring USB device
 	USB_SERIAL_PORT.begin(115200);
 
-    #if PIN_LED_T3_ALIVE
-		digitalWrite(PIN_LED_T3_ALIVE,1);
-	#endif
 	digitalWrite(PIN_LED_T3_BUSY,1);
 
 	delay(500);
     display(0,"TE3.ino setup(%s) started",getUSBSerialNum());
 
-
 	#if WITH_SCREEN
 		init_te3_tft();
 	#endif
 	
-
 	HUB_SERIAL_PORT.begin(115200);
-	RPI_SERIAL_PORT.begin(115200); 	// last test of looper was apparently using 460800
+	RPI_SERIAL_PORT.begin(115200);		// 460800);	// 115200);
+		// grumble; apparently the bootloader on the current SD
+		// 		card is running at 460800,
+		// even tho the bootloader AND the std_kernel used by
+		// the Looper, as well as teensyPiLooper were all
+		// checked in at 115200!!
+		// I'm gonna try updating the boot loader on that SD card
 
-    #if PIN_LED_T3_ALIVE
-		digitalWrite(PIN_LED_T3_ALIVE,0);
-    #endif
 	digitalWrite(PIN_LED_T3_BUSY,0);
+
+
+	//----------------------------------
+	// flash LEDS
+	//----------------------------------
 
 	pinMode(PIN_LED_RPI_RUN,OUTPUT);
 	pinMode(PIN_LED_RPI_READY,OUTPUT);
@@ -159,13 +155,13 @@ void setup()
 	digitalWrite(PIN_LED_RPI_RUN,0);
 	digitalWrite(PIN_LED_RPI_READY,0);
 
+	//----------------------------------
+	// setup for row_boards
+	//----------------------------------
+	// start the WS2812's and set the 595 pinModes
+
     initLEDs();
     LEDFancyStart();
-
-	
-    #if WITH_ROTARIES
-        rotaryBoard::begin(PIN_ROTARY_INTERRUPT);
-    #endif
 
 	#if 1
 		pinMode(PIN_BTN_CLK,OUTPUT);
@@ -177,6 +173,24 @@ void setup()
 		pinMode(PIN_BTN_SENSE,INPUT_PULLDOWN);
 	#endif
 
+
+	//--------------------------------------------
+	// final pinModes for rPi Rotaries, Pedals, etc
+	//--------------------------------------------
+	// may want rPI pinModes earlier and/or to automaticaly
+	// reboot pi on TE3 restarts
+
+	pinMode(PIN_SENSE_RPI_RUN,INPUT);
+	pinMode(PIN_SENSE_RPI_READY,INPUT_PULLDOWN);
+	digitalWrite(PIN_RPI_BOOT,0);	// DONT REBOOT PI automatically!
+	pinMode(PIN_RPI_BOOT,OUTPUT);
+
+
+    #if WITH_ROTARIES
+        rotaryBoard::begin(PIN_ROTARY_INTERRUPT);
+    #endif
+
+
     display(0,"TE3.ino setup() finished",0);
 }
 
@@ -184,12 +198,10 @@ void setup()
 
 
 //--------------------------------------
-// rotary board
+// rotary board prototype code
 //--------------------------------------
 
 #if WITH_ROTARIES
-
-
 
     void handleRotaries()
     {
@@ -237,9 +249,8 @@ void setup()
 
 
 //-------------------------------------------------
-// button handler (to be moved to te3_buttons.cpp)
+// row_button (74HC595) prototype handler
 //-------------------------------------------------
-
 
 static bool cur_button_state[NUM_BUTTONS];		// contantly updated
 
@@ -252,7 +263,7 @@ static bool cur_button_state[NUM_BUTTONS];		// contantly updated
 
 	// However it is arguably simpler and does not take much time.
 
-	void send595bit()
+	void poll_row_buttons()
 	{
 		#define BUTTON_CYCLE_INTERVAL		33				// ms
 		#define BUTTON_POLL_INTERVAL		1				// us between polls
@@ -319,11 +330,11 @@ static bool cur_button_state[NUM_BUTTONS];		// contantly updated
 				last_button_poll = micros();
 			}	// start new cycle
 		}	// check if time to start new cycle
-	}	// send595bit()
+	}	// poll_row_buttons()
 
 #else 	// OLD
 
-	void send595bit()
+	void poll_row_buttons()
 		// takes at most 1 us plus a little
 		//
 		//  OH' (portH prime) that is forwarded to the next chip
@@ -489,9 +500,10 @@ static void sendTestMidi()
 }
 
 
-//---------------------------------------------
+
+//==========================================================================
 // loop()
-//---------------------------------------------
+//==========================================================================
 
 void loop()
 {
@@ -501,9 +513,6 @@ void loop()
 	{
 		flash_last = flash_now;
 		flash_on = !flash_on;
-		#if PIN_LED_T3_ALIVE
-			digitalWrite(PIN_LED_T3_ALIVE,flash_on);
-		#endif
 		digitalWrite(PIN_LED_T3_BUSY,flash_on);
 	}
 
@@ -511,23 +520,21 @@ void loop()
         handleRotaries();
     #endif
 
-    #if 1	// !DEBUG_SLOW
+    #if 1
 		handleSerial();
-		// delay(1);	// not sure if this is needed
 	#endif
 
-	send595bit();
 
 
 	//-------------------------------------------
-	// PROCESS BUTTON CHANGES
+	// prototype row_button handling
 	//-------------------------------------------
-	// this will be done by a non-time critical process
+
+	poll_row_buttons();
+		// POLL THE ROW_BUTTONS OFTEN
 
 	#define dbg_buttons 		0
-
 	#define HOW_TEST_PROTO		0			// test with two prototype two button boards
-
 
 	#if HOW_TEST_PROTO
 		#define PROTO_0_LEFT_BNUM		0		// portB on first prototype row_board
@@ -576,6 +583,31 @@ void loop()
 			}
 		}
 	}	// process the buttons
+
+
+	//--------------------------------------------
+	// handle rPI state changes (LEDS)
+	//--------------------------------------------
+
+	static int rpi_running = -1;
+	static int rpi_ready = -1;
+
+	int r_running = digitalRead(PIN_SENSE_RPI_RUN) ? 1 : 0;
+	int r_ready = digitalRead(PIN_SENSE_RPI_READY) ? 1 : 0;
+
+	if (rpi_running != r_running)
+	{
+		rpi_running = r_running;
+		display(0,"RPI%s RUNNING",rpi_running?"":" NOT");
+		analogWrite(PIN_LED_RPI_RUN,rpi_running * 50); // PWM brightness
+	}
+	if (rpi_ready != r_ready)
+	{
+		rpi_ready = r_ready;
+		display(0,"RPI%s READY",rpi_ready?"":" NOT");
+		analogWrite(PIN_LED_RPI_READY,rpi_ready * 128);	// PWM brightness
+	}
+
 
 }	// loop()
 
