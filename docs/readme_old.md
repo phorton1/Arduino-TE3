@@ -1,52 +1,5 @@
 # TE3 - teensyExpression3
 
-At the highest level of abstraction, **TE3** is a
-commercial quality **guitar** *effects*, *synthesizer*,
-and *looper* **foot pedal**.  It is designed to be
-reliable and practical for *working musicians* who need
-a system that is **simple to setup and tear down** on a
-daily basis, that provides *sophisticated and powerful*
-capabilities in a compact package for use in a **live gig**.
-
-**TE3**
-
-- **is** a *USB Audio Device* that has a standard **1/4" guitar jack** for input and
-  a pair of **RCA audio outputs** to connecct to any *PA* or amplifier.
-- **has** an internal **USB Hub** that *connects to, and **charges*** an **iPad** (or other
-  phone, tablet, or computer) over a single *USBC* cable.
-- **is** a *USB Midi Controller* with **25 buttons**, each with an individual *multi-colored LED*,
-  **four rotary controllers** with push buttons, and **two touch screens**.
-- **has** *1/4" jacks* for plugging in **four** standard, inexpensive **expression pedals**.
-- **has** a built-in **Multi-Track Looper** which, unlike *any other available guitar looper*,
-  provides **four separate sequential loops**, each consisting of up to **four layers** of
-  recorded clips.
-- **is** powered by a single **USBC connector**, using any commonly available external
-  **USBC** power supply of *30 watts* or more.
-
-
-**ALL** of the information needed to build TE3 as a *DIY project*
-is available in this and linked **github repos**.
-
-- All of the **3D printing** *designs and STL* files are in this repo.
-- All of the **electronics** *schematics and PCB design files* are in this repo.
-- The *high level design* **documentation** and **user manual** are in this repo.
-- The **software** and *detailed technical design* **documentation** is split
-  among several separate repositories,.
-
-
-
-
-
-
-
-
-
-
-
-
-## OLD
-
-
 This is the third, and hopefully last, major iteration of
 the teensyExpression/vGuitar rig design and implementation.
 
