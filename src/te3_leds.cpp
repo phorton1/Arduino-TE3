@@ -106,9 +106,12 @@ void setLEDBrightness(int i)   // 0..100
 
 void setLED(int num, unsigned color)
 {
-    int row = num / NUM_BUTTON_COLS;
-    int col = num % NUM_BUTTON_COLS;
-    setLED(row,col,color);
+    #if USE_ADAFRUIT
+        leds.setPixelColor(num,color);
+    #else
+        drawingMemory[num] = color;
+    #endif
+    leds_changed = 1;
 }
 
 
@@ -119,21 +122,8 @@ void setLED(int row, int col, unsigned color)
     // 19,18,17,16,15
     // 20,21,22,23,24
 {
-    int i;
-    if (row & 1)
-    {
-        i = (row+1) * NUM_BUTTON_COLS - col - 1;
-    }
-    else
-    {
-        i = row * NUM_BUTTON_COLS + col; 
-    }
-    #if USE_ADAFRUIT
-        leds.setPixelColor(i,color);
-    #else
-        drawingMemory[i] = color;
-    #endif
-    leds_changed = 1;
+    int num = row * NUM_BUTTON_COLS + col;
+    setLED(num,color);
 }
 
 
