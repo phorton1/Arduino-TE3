@@ -214,6 +214,20 @@ static void processCommandLine(const char *line)
 
 void handleSerial()
 {
+    // process RPI_SERIAL_PORT
+
+    static int rpi_serial_len = 0;
+    static char rpi_serial_buf[MAX_STRING+1];
+    char *rpi_line = bufferLine(
+        &RPI_SERIAL_PORT,
+        rpi_serial_buf,
+        &rpi_serial_len);
+    if (rpi_line)
+    {
+        USB_SERIAL_PORT.println("RPI:");
+        USB_SERIAL_PORT.println(rpi_line);
+    }
+
     // process HUB_SERIAL_PORT
 
     static int hub_serial_len = 0;

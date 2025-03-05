@@ -1,0 +1,51 @@
+I thought I had tested the rPI and left it pretty much setup to work with 
+the TE3 motherboard I am now testing.  However, apparently that was not the
+case, as, in failing miserably on the first attempt to test the rPI display,
+I noted several problems in the circle Looper build.
+
+- the baud rate was left at 460800 in the last test Looper build.
+  I was expecting 115200, as that is what is checked in for the
+  /_prh/system/std_kernel.cpp SERIAL_BAUD_RATE
+- I've completely forgotten how I was gonna do the I2S.  
+  The build was checked in with CS42448 set in Looper::audio.cpp,
+  and so, of the four choices, I picked the TEENSY_QUAD_SLAVE define,
+  although I *suspect* it should just be a simple i2s_input/output device.
+- The code was stubbornly trying to talk I2C to an SGTL5000, which, of
+  course does not exist for the rPI since in TE3 the SGTL5000 is configured
+  and completely owned by the teensy 4.0
+- So I put #ifdef LOOPER3 around the define blocks to USE_TEENSY_QUAD_SLAVE
+  for LOOPER3 and the CS42448 otherwise. 
+- When I got that working, I got an assert in LoopMachine.cpp at line91,
+  because it was asserting(pCodec) and there isn't one for the TEENSY_QUAD
+  which is as good as a crash within the circle project.
+- So additionally I made the looper not set the codec INPUT_LEVEL or 
+  OUTPUT_VOLUME (though Looper has two sliders for these), and hence
+  I have no idea what the plan is to replace these.  Serial Midi to
+  the teensy4.1 to the teensy4.0 to control the SGTL5000?
+
+The circle build process and compile defines are a mess, spread out all
+over the place, and I absolutely hate the source organization.  
+#ifdef LOOPER3 is supposed to cleanly drive either building the old
+looper with the 7" rPI touch screen and CS42448 if not defined, or
+using the ILI9488 touch screen with no codec.
+
+Right now I am trying to get the display to work, and notice that the
+breadboarded circuit which DOES, thankfully, display ok, uses rPI GPIO17
+for the DC (CD) pin to the display, but the circuit board uses GPIOI4.
+The comments in devices/ili_base.cpp suggest I was still thinking about
+the rPI directly controlling an SGTL5000, and there is an apparently
+vestigial define #elif define(OCTO_TEST_SETUP) that sets the CD pin to
+GPIO4, that is apparently not defined anywhere, so the #elif 1 case is
+used instead which defines it as GPIO17, matching the breadboard.
+
+If I change it to 4, which I must to match the TE3 mother_board, then
+I will need to remove the I2S orange/blue/yellow/red jumper from the
+rPI breakout board to get to that pin.  Since I'm obviously not using
+the I2S (at least "as is") on the breadboard/rPI breakout board, I'm
+gonna go ahead and do that.  
+
+I guess my goal will be to get the breadboard (incl the TE3/TE_Audio board)
+to work just like the motherboard, including regression testing I2S.
+
+
+  
