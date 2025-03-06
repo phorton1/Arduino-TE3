@@ -1,35 +1,4 @@
 
-
--------------------------------------------------------------------------
-
-SUBMODULE TEST
-- led board
-- teensy 4.1 display
-- teensy 4.0 led works?
-- rPI display
-- rPi power experiments - can I turn the rPI "off"?
-
-At this point I am going to need to write software to complete 
-submodule testing and begin software devlopement (i.e. testing
-audio, implementing pedals, reboot rPi, etc), and it would be 
-much more convenient to have a partially assembled box than all 
-the circuit boards on my desk.
-
-For testing I don't need the row covers or buttons.
-
-For the real assembly montage I would prefer to add the buttons to
-the row bases before mounting them on the base.
-
-Therefore I will mount only the button bases and row boards, and
-will disassemble them to finish the BASE ASSEMBLY MONTAGE.
-
-However, I will go ahead and do the SLIDER ASSEMBLY MONTAGE 
-at this time. 
-
--------------------------------------------------------------------------
-
-3D print buttons - clear PLA
-
 Laser cut base wood
 - video and photos
 - paint
@@ -39,56 +8,38 @@ PHOTO ALL
 - all circuits and cables
 - all 3D parts
 
---------------------------------------------------------------------------
+Hot Glue wires
 
-By now I will know if I am going to interrupt the RPI power
-with a switch and will have modified the slider back plastic
-accordingly.
+Solder Audio Connectors
 
-BEGIN PHOTO/VIDEO BASE ASSEMBLY MONTAGE
+Clean 3D printed buttons
+
+
+
+BEGIN ASSEMBLY MONTAGE
 - screw button bases to wood
 - glue slider connectors
+- attach button bases
+- attach row boards to base
+- assemble buttons with wires
+- add tops
 
-NOT PART OF BASE ASSEMBLY MONTAGE
-- gently attach row boards to base
-
-VIDEO SLIDER BOTTOM ASSEMBLY MONTAGE
 - usbC hub and breakouts
-- mother board
+- mother board and USB cables
 - usbHost 
 
-VIDEO SLIDER TOP ASSEMBLY MONTAGE
 - led board to bezel
 - USB Port
 - rotary board
 - displays
-- attach bezel (gently)
+- attach bezel
 
-NOT FINAL ASSEMBLY MONTAGE
-- attach slider top with 2 screws (gently)
+- attach slider top to slider
 - slide everything together
+- add rotary knobs
 
-==================================================================
 
 BEGIN SOFTWARE DEVELOPMENT
-- reboot pi, teensyPiLooper integration, circle compilation
-- initial audio test
-- initial pedal implementation
-
-==================================================================
-
-
-COMPLETE BASE ASSEMBLY MONTAGE
-- dissasemble row boards
-- attach buttons
-- mount row boards and covers
-
-FINAL ASSEMBLY MONTAGE
-- slider top to bottom
-- slider bottom in with screws
-- rotary knobs
-
-----------------------------------------------------------------------
 
 Make old projects container
   

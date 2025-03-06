@@ -16,12 +16,14 @@
 
 
 #define WITH_SCREEN		1
-#define WITH_ROTARIES	0
+#define WITH_ROTARIES	1
 
 
 #include "src/defines.h"
 #include <myDebug.h>
 #include "src/te3_leds.h"
+#include "src/commonDefines.h"		// Looper defines
+#include "src/iPadDefines.h"		// SampleTank, Tonestack, etc
 
 #if WITH_SCREEN
 	#include "src/te3_tft.h"
@@ -482,21 +484,62 @@ static bool cur_button_state[NUM_BUTTONS];		// contantly updated
 // sendTestMidi()
 //--------------------------
 
-#define GUITAR_EFFECTS_CHANNEL  			9   // one based
-#define GUITAR_DISTORTION_EFFECT_CC        26
-// #define GUITAR_WAH_EFFECT_CC               27
-// #define GUITAR_FLANGER_EFFECT_CC           28
-// #define GUITAR_CHORUS_EFFECT_CC            29
-// #define GUITAR_ECHO_EFFECT_CC              30
-
-static void sendTestMidi()
+static void sendTestMidi(int num)
 {
-	static uint8_t effect_state = 0x00;
-	effect_state = effect_state ? 0 : 0x7f;
+	#define PORT_USB 	1
+	#define PORT_RPI 	2
+	#define PORT_HUB    3
 
-	uint8_t channel = GUITAR_EFFECTS_CHANNEL;
-	uint8_t cc_num = GUITAR_DISTORTION_EFFECT_CC;
-	usbMIDI.sendControlChange(cc_num, effect_state, channel);
+	uint8_t port = 0;
+	uint8_t channel = 0;
+	uint8_t cc_num = 0;
+	uint8_t value = 0;
+
+	/// with USB midi
+
+	if (num == 0) 		// turn guitar distortion on/off
+	{
+		port = PORT_USB;
+		channel = GUITAR_EFFECTS_CHANNEL;
+		cc_num = GUITAR_DISTORTION_EFFECT_CC;
+		static uint8_t effect_state = 0x00;
+		effect_state = effect_state ? 0 : 0x7f;
+		value = effect_state;
+	}
+	else if (num == 1)	// press Looper Track1 button
+	{
+		port = PORT_RPI;
+		cc_num = LOOP_COMMAND_CC;
+		value = LOOP_COMMAND_TRACK_BASE + 0;
+	}
+	else if (num == 2)	// clear the Looper
+	{
+		port = PORT_RPI;
+		cc_num = LOOP_COMMAND_CC;
+		value = LOOP_COMMAND_CLEAR_ALL;
+	}
+
+	if (port == PORT_USB)
+	{
+		display(0,"Sending USB MIDI channel(%d) cc(%02x) value(%02x)",channel,cc_num,value);
+		usbMIDI.sendControlChange(cc_num, value, channel);
+	}
+	else if (port)
+	{
+		uint8_t msg[4];
+		msg[0] = 0x0b;
+		msg[1] = 0xb0;
+		msg[2] = cc_num;
+		msg[3] = value;
+
+		display(0,"Sending %s SERIAL MIDI cc(%02x) value(%02x)",
+			port == PORT_RPI ? "RPI" : "HUB",cc_num,value);
+
+		Stream *out = port == PORT_RPI ? &RPI_SERIAL_PORT : &HUB_SERIAL_PORT;
+		out->write(msg,4);
+	}
+	
+
 }
 
 
@@ -534,14 +577,6 @@ void loop()
 		// POLL THE ROW_BUTTONS OFTEN
 
 	#define dbg_buttons 		0
-	#define HOW_TEST_PROTO		0			// test with two prototype two button boards
-
-	#if HOW_TEST_PROTO
-		#define PROTO_0_LEFT_BNUM		0		// portB on first prototype row_board
-		#define PROTO_0_RIGHT_BNUM		4		// portF on first prototype row_board
-		#define PROTO_1_LEFT_BNUM		7		// portD on second prototype row_board
-		#define PROTO_1_RIGHT_BNUM		8		// portE on second prototype row_board
-	#endif
 
 	static bool prev_button_state[NUM_BUTTONS];		// handled by event handler of some kind
 
@@ -553,34 +588,12 @@ void loop()
 			prev_button_state[num] = state;
 			// display(dbg_buttons,"BUTTON_NUM[%d] changed to %d",num,state);
 
-			// send a test midi message
+			if (state)
+				sendTestMidi(num);
 
-			bool send_test_midi = num == 0;		// 0th button
-			#if HOW_TEST_PROTO
-				send_test_midi = num == PROTO_1_LEFT_BNUM;
-			#endif
+			setLED(num,state?LED_BLUE:LED_BLACK);
+			showLEDs();
 
-			if (state && send_test_midi)
-			{
-				sendTestMidi();
-			}
-
-			int led_num =
-				#if HOW_TEST_PROTO
-					num == PROTO_0_LEFT_BNUM ? 0 :
-					num == PROTO_0_RIGHT_BNUM ? 1 :
-					num == PROTO_1_LEFT_BNUM ? 2 :
-					num == PROTO_1_RIGHT_BNUM ? 3 :
-					-1;
-				#else
-					num;
-				#endif
-				
-			if (led_num >= 0)
-			{
-				setLED(led_num,state?LED_BLUE:LED_BLACK);
-				showLEDs();
-			}
 		}
 	}	// process the buttons
 
