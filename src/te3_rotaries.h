@@ -8,7 +8,7 @@
 
 #define NUM_ROTARIES        4
 
-class rotaryBoard
+class te3_rotaries
 	// mcp23017 based board that handles four rotary
 	//      encoders with buttons.
 	//
@@ -27,9 +27,10 @@ class rotaryBoard
 {
 public:
 
-	rotaryBoard() {}
+	te3_rotaries() {}
 
-	static void begin(int int_pin, uint32_t freq=100000);
+	static void init();
+	static void loop();
 
 	static void setValue(uint8_t num, uint8_t val)
 		{ rot_value[num] = val; }
@@ -47,8 +48,9 @@ private:
 	static volatile int s_int_count;
 	static volatile uint16_t s_gpio_val;
 
-	static float rot_value[NUM_ROTARIES];
+	static float rot_value[NUM_ROTARIES];			// instantenous set by interrupt
 	static bool button_value[NUM_ROTARIES];
+	static uint8_t last_value[NUM_ROTARIES];			// last value to generate event in loop()
 
 	static void mpcWrite(uint8_t reg, uint8_t data);
 	static void mpcWrite2(uint8_t reg, uint8_t data);

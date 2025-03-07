@@ -65,6 +65,7 @@
 #include <teCommon.h>
 #include <sgtl5000midi.h>
 #include "commonDefines.h"
+#include "expSystem.h"
 
 
 #define dbg_cmd  0
@@ -322,13 +323,17 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
             if (i==999)
                 my_error("timeout getting midi message",0);
 
-            display(0,"%s MIDI: %02x %02x %02x %02x",
+            display(0,"--> %s MIDI: %02x %02x %02x %02x",
                 serialPortName(serial_port_num),
                 midi_msg[0],
                 midi_msg[1],
                 midi_msg[2],
                 midi_msg[3]);
-            return 0;
+
+            if (serial_port_num == SERIAL_PORT_NUM_RPI)
+            {
+                handleCommonMidiSerial(midi_msg);
+            }
         }
 
 

@@ -1,5 +1,5 @@
 //-------------------------------------------------
-// rotaryBoard.cpp
+// te3_rotaries.cpp
 //-------------------------------------------------
 // rotary board implementation using interrupt driven
 // i2C based mpc23017 3 wire communications
@@ -15,12 +15,13 @@
 // push_button debouncing done in process()
 
 #include "defines.h"
-#include "rotaryBoard.h"
+#include "te3_rotaries.h"
 #include <Wire.h>
 #include <myDebug.h>
+#include "expSystem.h"
 
-
-#define dbg_mpc  -1
+#define dbg_rots    0
+#define dbg_mpc     -1
 
 // The rotaries I have are 40 incs per rev.
 // The sensitivity is an aribrary floating point increment per indent.
@@ -84,30 +85,31 @@ static const char *reg_name[] = {
 
 // member variable declarations
 
-int rotaryBoard::s_int_pin;
-uint32_t rotaryBoard::s_freq;
-volatile int rotaryBoard::s_int_count;
-volatile uint16_t rotaryBoard::s_gpio_val;
+int te3_rotaries::s_int_pin;
+uint32_t te3_rotaries::s_freq;
+volatile int te3_rotaries::s_int_count;
+volatile uint16_t te3_rotaries::s_gpio_val;
 
-float rotaryBoard::rot_value[NUM_ROTARIES];
-bool rotaryBoard::button_value[NUM_ROTARIES];
+float te3_rotaries::rot_value[NUM_ROTARIES];
+bool te3_rotaries::button_value[NUM_ROTARIES];
+uint8_t te3_rotaries::last_value[NUM_ROTARIES];
 
 
 //-------------------------------
-// rotaryBoard.cpp methods
+// te3_rotaries.cpp methods
 //-------------------------------
 
-void rotaryBoard::begin(int int_pin, uint32_t freq /*=100000*/)
+void te3_rotaries::init()   // int int_pin, uint32_t freq /*= 100000*/)
 {
-    s_freq = freq;
-    s_int_pin = int_pin;
+    s_freq = 100000;         
+    s_int_pin = PIN_ROTARY_INTERRUPT;
 
     Wire.begin();
 
     if (dbg_mpc < 0)
         dumpMpcRegs("initializing mpc23017");
     else
-        display(dbg_mpc,"rotaryBoard::begin() started",0);
+        display(dbg_mpc,"te3_rotaries::init() started",0);
 
     // We use most of the mpc23017 default values, esp the
     // IOCONN (configuration) register which determines the
@@ -146,11 +148,11 @@ void rotaryBoard::begin(int int_pin, uint32_t freq /*=100000*/)
     attachInterrupt(digitalPinToInterrupt(s_int_pin), swIRQ, FALLING);
 
     if (dbg_mpc == 0)
-        display(dbg_mpc,"rotaryBoard::begin() finished",0);
+        display(dbg_mpc,"te3_rotaries::init() finished",0);
 }
 
 
-void rotaryBoard::dumpMpcRegs(const char *what)
+void te3_rotaries::dumpMpcRegs(const char *what)
 {
     uint16_t regs[NUM_DUMP_WORDS];
     memset(regs,0,2*NUM_DUMP_WORDS);
@@ -163,7 +165,7 @@ void rotaryBoard::dumpMpcRegs(const char *what)
 }
 
 
-void rotaryBoard::mpcWrite(uint8_t reg, uint8_t data)
+void te3_rotaries::mpcWrite(uint8_t reg, uint8_t data)
     // Write a byte to a single register
 {
     Wire.setClock(s_freq);
@@ -174,7 +176,7 @@ void rotaryBoard::mpcWrite(uint8_t reg, uint8_t data)
 }
 
 
-void rotaryBoard::mpcWrite2(uint8_t reg, uint8_t data)
+void te3_rotaries::mpcWrite2(uint8_t reg, uint8_t data)
     // Write the same data byte to two sequential registers
 {
     Wire.setClock(s_freq);
@@ -186,7 +188,7 @@ void rotaryBoard::mpcWrite2(uint8_t reg, uint8_t data)
 }
 
 
-void rotaryBoard::mpcRead(uint8_t reg, uint8_t *buf, int bytes)
+void te3_rotaries::mpcRead(uint8_t reg, uint8_t *buf, int bytes)
    // Read bytes from sequential registers
 {
     Wire.setClock(s_freq);
@@ -201,7 +203,7 @@ void rotaryBoard::mpcRead(uint8_t reg, uint8_t *buf, int bytes)
 }
 
 
-uint8_t rotaryBoard::mpcReadByte(uint8_t reg)
+uint8_t te3_rotaries::mpcReadByte(uint8_t reg)
     // unused - Read a byte from a single register
 {
     Wire.setClock(s_freq);
@@ -214,7 +216,7 @@ uint8_t rotaryBoard::mpcReadByte(uint8_t reg)
 }
 
 
-void rotaryBoard::swIRQ()
+void te3_rotaries::swIRQ()
     // Interrupt Service Routine for the MCP23017.
     // The time to read registers is approximately
     // 12 clock cycles + 8 * the number of bytes.
@@ -238,7 +240,7 @@ void rotaryBoard::swIRQ()
 }
 
 
-void rotaryBoard::calcRotary(int rot_num, uint16_t last_val)
+void te3_rotaries::calcRotary(int rot_num, uint16_t last_val)
 {
     // logically switch rotary 3 and 4 (zero based 2 and 3)
     // as Rotary3 uses the upper nibble of the 2nd byte
@@ -285,5 +287,20 @@ void rotaryBoard::calcRotary(int rot_num, uint16_t last_val)
     rot_value[rot_num] = val;
 }
 
+
+
+void te3_rotaries::loop()
+{
+    for (int i=0; i<NUM_ROTARIES; i++)
+    {
+        uint8_t val = rot_value[i];
+        if (last_value[i] != val)
+        {
+            last_value[i] = val;
+            display(dbg_rots,"ROTARY[%d]=%d",i,val);
+            theSystem.rotaryEvent(i,val);
+        }
+    }
+}
 
 

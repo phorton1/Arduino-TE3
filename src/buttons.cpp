@@ -1,9 +1,9 @@
 #include <myDebug.h>
 #include "buttons.h"
 #include "expSystem.h"
-#include "myLeds.h"
+#include "te3_leds.h"
 
-#define dbg_btn 1
+#define dbg_btn 0
 
 
 #define BUTTON_STATE_PRESSED       0x0001
@@ -22,8 +22,6 @@
 
 
 buttonArray theButtons;
-int row_pins[NUM_BUTTON_COLS] = {PIN_BUTTON_OUT0,PIN_BUTTON_OUT1,PIN_BUTTON_OUT2,PIN_BUTTON_OUT3,PIN_BUTTON_OUT4};
-int col_pins[NUM_BUTTON_ROWS] = {PIN_BUTTON_IN0,PIN_BUTTON_IN1,PIN_BUTTON_IN2,PIN_BUTTON_IN3,PIN_BUTTON_IN4};
 volatile bool in_button = 0;
 
 
@@ -37,6 +35,7 @@ arrayedButton::arrayedButton()
     // see notes below why event state is not
     // cleared during initDefaults()
 
+	m_down = 0;
     m_event_state = 0;
     initDefaults();
 }
@@ -44,8 +43,8 @@ arrayedButton::arrayedButton()
 
 void arrayedButton::initDefaults()
 {
-    m_event_mask = 0;
-    m_press_time = 0;
+	m_event_mask = 0;
+	m_press_time = 0;
     m_repeat_time = 0;
     m_default_color = LED_BLUE;
     m_pressed_color = LED_WHITE;
@@ -79,19 +78,13 @@ buttonArray::buttonArray()
 
 void buttonArray::init()
 {
-    display(dbg_btn,"buttonArray::init()",0);
-
-    for (int row=0; row<NUM_BUTTON_ROWS; row++)
-    {
-        pinMode(row_pins[row],OUTPUT);
-        digitalWrite(row_pins[row],0);
-    }
-    for (int col=0; col<NUM_BUTTON_COLS; col++)
-        pinMode(col_pins[col],INPUT_PULLDOWN);            // guessing that pins 7 and 8 doent have pulldowns
-
-#if DO_DEBOUNCE
-    display(dbg_btn,"    WITH DEBOUNCE!",0);
-#endif
+	pinMode(PIN_BTN_CLK,OUTPUT);
+	pinMode(PIN_BTN_DIN,OUTPUT);
+	digitalWrite(PIN_BTN_CLK,0);
+		// initial master clock is LOW for 1st prototype board
+		// but will be HIGH for actual inverting board
+	digitalWrite(PIN_BTN_DIN,0);
+	pinMode(PIN_BTN_SENSE,INPUT_PULLDOWN);
 }
 
 
@@ -201,7 +194,7 @@ void buttonArray::select(int num, int pressed)
 
 
 
-void buttonArray::task()
+void buttonArray::loop()
 {
     unsigned time = millis();
 	static unsigned last_time = 0;
@@ -216,24 +209,6 @@ void buttonArray::task()
 
 	last_time = time;
 	
-
-	// read all the buttons at once
-
-	bool down[NUM_BUTTON_ROWS * NUM_BUTTON_COLS];
-    for (int row=0; row<NUM_BUTTON_ROWS; row++)
-    {
-        digitalWrite(row_pins[row],1);
-		delayMicroseconds(20);	// let voltage stabilize
-        for (int col=0; col<NUM_BUTTON_COLS; col++)
-        {
-            int num = row * NUM_BUTTON_COLS + col;
-            down[num] = digitalRead(col_pins[col]);
-		}
-        digitalWrite(row_pins[row],0);
-	}
-
-	// then process them
-
     for (int row=0; row<NUM_BUTTON_ROWS; row++)
     {
         for (int col=0; col<NUM_BUTTON_COLS; col++)
@@ -241,13 +216,13 @@ void buttonArray::task()
             // only act on registered buttons
 
             arrayedButton *pButton = &m_buttons[row][col];
-            int mask = pButton->m_event_mask;
-            if (!mask) continue;
-
+			int mask = pButton->m_event_mask;
+			if (!mask) continue;
+			
             // if state changed, process the button
 
             int num = row * NUM_BUTTON_COLS + col;
-            bool is_pressed = down[num];
+            bool is_pressed = pButton->m_down;
             bool was_pressed = pButton->m_event_state & BUTTON_STATE_PRESSED;
             if (is_pressed != was_pressed)
             {
@@ -265,7 +240,7 @@ void buttonArray::task()
                     if (mask & BUTTON_EVENT_PRESS)
                     {
                         display(dbg_btn,"BUTTON_EVENT_PRESS(%d,%d)",row,col);
-                        theSystem.buttonEvent(row, col, BUTTON_EVENT_PRESS);
+						theSystem.buttonEvent(row, col, BUTTON_EVENT_PRESS);
                     }
                     pButton->m_press_time = time;
                 }
@@ -285,13 +260,13 @@ void buttonArray::task()
                         if (mask & BUTTON_EVENT_RELEASE)
                         {
                             display(dbg_btn,"BUTTON_EVENT_RELEASE(%d,%d)",row,col);
-                            theSystem.buttonEvent(row, col, BUTTON_EVENT_RELEASE);
+							theSystem.buttonEvent(row, col, BUTTON_EVENT_RELEASE);
                         }
                         if (mask & BUTTON_EVENT_CLICK)
                         {
                             display(dbg_btn,"BUTTON_EVENT_CLICK(%d,%d)",row,col);
-                            theSystem.buttonEvent(row, col, BUTTON_EVENT_CLICK);
-                        }
+							theSystem.buttonEvent(row, col, BUTTON_EVENT_CLICK);
+						}
                     }
                 }
             }
@@ -320,8 +295,8 @@ void buttonArray::task()
                     if (pButton->m_repeat_time > interval)
                     {
                         display(dbg_btn,"repeat BUTTON_EVENT_PRESS(%d,%d)",row,col);
-                        theSystem.buttonEvent(row, col, BUTTON_EVENT_PRESS);
-                        pButton->m_repeat_time = 0;
+						theSystem.buttonEvent(row, col, BUTTON_EVENT_PRESS);
+						pButton->m_repeat_time = 0;
                     }
                 }
 
@@ -331,8 +306,8 @@ void buttonArray::task()
                 {
                     display(dbg_btn,"BUTTON_EVENT_LONG_CLICK(%d,%d)",row,col);
 					select(num,-1);
-                    theSystem.buttonEvent(row, col, BUTTON_EVENT_LONG_CLICK);
-                }
+					theSystem.buttonEvent(row, col, BUTTON_EVENT_LONG_CLICK);
+				}
 
             }   // pressed and not handled yet
         }   // for each col
@@ -340,7 +315,92 @@ void buttonArray::task()
 
 	in_button = 0;
 
-}	// buttonManager::task();
+}	// buttonManager::loop();
+
+
+
+
+
+
+//-------------------------------------------------
+// row_button (74HC595) prototype handler
+//-------------------------------------------------
+
+void buttonArray::poll()
+{
+	#define BUTTON_CYCLE_INTERVAL		33				// ms
+	#define BUTTON_POLL_INTERVAL		1				// us between polls
+	#define BUTTON_LATCH_DELAY			1				// us between clock up/down
+
+	static int button_cycle = 0;
+	static bool in_button_cycle = 0;
+	static uint32_t last_button_cycle = 0;		// ms timer
+	static uint32_t last_button_poll = 0;		// us timer
+
+	if (in_button_cycle)
+	{
+		if (micros() - last_button_poll > BUTTON_POLL_INTERVAL)
+		{
+			// don't need to do last two latches
+			if (button_cycle == NUM_BUTTON_ROWS * 8 - 2)
+			{
+				in_button_cycle = 0;	// finished
+			}
+			else
+			{
+				digitalWrite(PIN_BTN_CLK,1);
+				delayMicroseconds(BUTTON_LATCH_DELAY);
+				digitalWrite(PIN_BTN_CLK,0);
+
+				int col = (button_cycle % 8) - 1;
+				if (col >= 0 && col <= NUM_BUTTON_COLS)
+				{
+					delayMicroseconds(BUTTON_LATCH_DELAY);
+
+					int row = button_cycle / 8;
+					// int button_num = row * NUM_BUTTON_COLS + col;
+					arrayedButton *pButton = &m_buttons[row][col];
+					pButton->m_down = digitalRead(PIN_BTN_SENSE);
+
+					if (pButton->m_down)
+						display(dbg_btn+1,"BUTTON[%d,%d] DOWN",row,col);
+
+					// cur_button_state[button_num] = digitalRead(PIN_BTN_SENSE);
+				}	// valid button
+
+				last_button_poll = micros();
+				button_cycle++;
+
+			}	// still polling
+		}	// time to do a poll
+	} 	// in_button_cyckle
+
+	else	// time to start new cycle?
+	{
+		uint32_t now_ms = millis();
+		if (!last_button_cycle || (now_ms - last_button_cycle >= BUTTON_CYCLE_INTERVAL))
+		{
+			last_button_cycle = now_ms;
+			in_button_cycle = 1;
+			button_cycle = 0;
+
+			// latch the 1 into the first 595
+
+			digitalWrite(PIN_BTN_CLK,0);	// this line 'fixed' the SMT problem
+			digitalWrite(PIN_BTN_DIN,1);
+			digitalWrite(PIN_BTN_CLK,1);
+			delayMicroseconds(BUTTON_LATCH_DELAY);
+			digitalWrite(PIN_BTN_CLK,0);
+			digitalWrite(PIN_BTN_DIN,0);
+			#if DEBUG_SLOW
+				display(0," LOW(%d)",button_cycle);
+			#endif
+
+			last_button_poll = micros();
+		}	// start new cycle
+	}	// check if time to start new cycle
+}	// poll_row_buttons()
+
 
 
 

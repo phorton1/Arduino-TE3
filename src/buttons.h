@@ -1,5 +1,4 @@
-#ifndef __buttons_h__
-#define __buttons_h__
+#pragma once
 
 #include "defines.h"
 
@@ -80,6 +79,9 @@ class arrayedButton
         int m_selected_color;
         int m_touch_color;
 
+        bool m_down;
+            // undebounced state as set by poll()
+
 };
 
 
@@ -93,7 +95,9 @@ class buttonArray
 
         void init();        // called once
         void clear();       // called on new windows
-        void task();
+        void poll();        // poll one button (595) at a time - fast - takes a few microseconds
+        void loop();        // debounce and handle buttons; slow; may call expSystem buttonEvent
+        
 
         static const char *buttonEventName(int event);
         arrayedButton *getButton(int num)            { return &m_buttons[num / NUM_BUTTON_COLS][num % NUM_BUTTON_COLS]; }
@@ -126,6 +130,3 @@ class buttonArray
 
 extern buttonArray theButtons;
 
-
-
-#endif // !__buttons_h__

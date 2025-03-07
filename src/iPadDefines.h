@@ -44,7 +44,7 @@
 
 // #define SYNTH_DEFAULT_VOICE_VOLUME   (0.7 * 127)
 
-// #define SYNTH_PROGRAM_CHANNEL       7       // 1 based
+#define SYNTH_PROGRAM_CHANNEL       7       // 1 based
 //     // program change come on specific channels
 //
 // #define SYNTH_PATCH_PIANO1          0       // Mellow Grand 2

@@ -6,6 +6,10 @@
 
 #include <Arduino.h>
 
+#define TEENSY_EXPRESSION_VERSION  "3.0"
+
+
+
 #define NUM_BUTTON_ROWS		5
 #define NUM_BUTTON_COLS		5
 #define NUM_BUTTONS			(NUM_BUTTON_ROWS * NUM_BUTTON_COLS)
@@ -97,6 +101,131 @@ extern void handleSerial();
 
 void setTE3Busy();
 void clearTE3Busy();
+
+
+//-----------------------------------------------------------
+// STUFF RUDELY IMPORTED FROM TE1
+//-----------------------------------------------------------
+// TE1 specific defines
+
+#define NUM_PORTS           8       // ports defined in midiQueue.h
+#define NUM_PEDALS          4
+#define NUM_MIDI_PORTS      8
+
+#define THE_SYSTEM_BUTTON   4
+
+#define BUTTON_NUM(r,c)    ((r) * NUM_BUTTON_COLS + (c))
+#define BUTTON_ROW(i)      ((i) / NUM_BUTTON_COLS)
+#define BUTTON_COL(i)      ((i) % NUM_BUTTON_COLS)
+
+#define BUTTON_MOVE_UP          12
+#define BUTTON_MOVE_LEFT        16
+#define BUTTON_MOVE_RIGHT       18
+#define BUTTON_MOVE_DOWN        22
+#define BUTTON_SELECT           17
+
+#define PEDAL_SYNTH     0
+#define PEDAL_LOOP      1
+#define PEDAL_WAH       2
+#define PEDAL_GUITAR    3
+
+#define LOOPER_NUM_TRACKS_TIMES_LAYERS    (LOOPER_NUM_TRACKS * LOOPER_NUM_LAYERS)
+
+
+typedef struct
+    // structure common to New and Old rig patches
+{
+    int prog_num;
+    const char *short_name;         // SHOULD BE 6 CHARS OR LESS
+    const char *long_name;          // NOT USED IN NEW RIG
+    bool mono_mode;                 // NOT USED IN OLD RIG
+}   synthPatch_t;
+
+
+// .........
+
+// ansi colors
+
+#define ansi_color_black 	            30
+#define ansi_color_red 	     	        31
+#define ansi_color_green 	            32
+#define ansi_color_brown 	 	        33
+#define ansi_color_blue 	            34
+#define ansi_color_magenta 	 	        35
+#define ansi_color_cyan 	            36
+#define ansi_color_light_grey 	        37
+
+#define ansi_color_grey  	            90
+#define ansi_color_light_red 	        91
+#define ansi_color_light_green 	        92
+#define ansi_color_yellow 		        93
+#define ansi_color_light_blue  	        94
+#define ansi_color_light_magenta        95
+#define ansi_color_light_cyan 	        96
+#define ansi_color_white  		        97
+
+#define ansi_color_bg_black 	        40
+#define ansi_color_bg_red 	     	    41
+#define ansi_color_bg_green 	        42
+#define ansi_color_bg_brown 	 	    43
+#define ansi_color_bg_blue 	            44
+#define ansi_color_bg_magenta 	 	    45
+#define ansi_color_bg_cyan 	            46
+#define ansi_color_bg_light_grey 	    47
+
+#define ansi_color_bg_grey  	        100
+#define ansi_color_bg_light_red 	    101
+#define ansi_color_bg_light_green 	    102
+#define ansi_color_bg_yellow 		    103
+#define ansi_color_bg_light_blue  	    104
+#define ansi_color_bg_light_magenta     105
+#define ansi_color_bg_light_cyan 	    106
+#define ansi_color_bg_white  		    107
+
+
+// int_rect
+
+class int_rect
+{
+public:
+
+    int_rect()
+    {
+        xs = 0;
+        ys = 0;
+        xe = 0;
+        ye = 0;
+    }
+
+    int_rect(int ixs, int iys, int ixe, int iye)
+    {
+        xs = ixs;
+        ys = iys;
+        xe = ixe;
+        ye = iye;
+    }
+
+    void assign(int ixs, int iys, int ixe, int iye)
+    {
+        xs = ixs;
+        ys = iys;
+        xe = ixe;
+        ye = iye;
+    }
+
+
+    int width() { return xe-xs+1; }
+    int height()  { return ye-ys+1; }
+
+    int xs;
+    int ys;
+    int xe;
+    int ye;
+};
+
+
+
+
 
 
 // end of TE3 defines.h

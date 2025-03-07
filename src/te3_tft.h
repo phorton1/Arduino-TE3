@@ -43,3 +43,46 @@ extern ILI9488_t3 tft;
 
 extern void init_te3_tft();
 
+
+
+#define LCD_JUST_LEFT    0
+#define LCD_JUST_CENTER  1
+#define LCD_JUST_RIGHT   2
+
+
+extern void fillRect(int_rect &rect, int color);
+extern void drawBorder(int x, int y, int w, int h, int b, int color);
+
+extern void printfJustified(
+    int x,
+    int y,
+    int w,
+    int h,
+    int just,
+    uint16_t fc,
+    uint16_t bc,
+    bool use_bc,
+    const char *format,
+    ...);
+extern void printfvJustified(
+    int x,
+    int y,
+    int w,
+    int h,
+    int just,
+    uint16_t fc,
+    uint16_t bc,
+    bool use_bc,
+    const char *format,
+    va_list args);
+extern void printJustified(
+    int x,
+    int y,
+    int w,
+    int h,
+    int just,
+    uint16_t fc,
+    uint16_t bc,
+    bool use_bc,
+    const char *text);
+

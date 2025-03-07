@@ -13,29 +13,16 @@
 // USB Audio Device running on a teensy 4.0 with a revD SGTL5000 sound
 // card, which replaces the iRigHD2 from the previous Looper2 box.
 
-
-
-#define WITH_SCREEN		1
-#define WITH_ROTARIES	1
-
-
-#include "src/defines.h"
 #include <myDebug.h>
+#include "src/prefs.h"
+#include "src/te3_tft.h"
 #include "src/te3_leds.h"
-#include "src/commonDefines.h"		// Looper defines
-#include "src/iPadDefines.h"		// SampleTank, Tonestack, etc
+#include "src/buttons.h"
+#include "src/pedals.h"
+#include "src/te3_rotaries.h"
+#include "src/expSystem.h"
+#include "src/midiHost.h"
 
-#if WITH_SCREEN
-	#include "src/te3_tft.h"
-#endif
-
-#if WITH_ROTARIES
-    #include "src/rotaryBoard.h"
-#endif
-
-#if WITH_MIDI_HOST	// defined in midiHost.h
-    #include "src/midiHost.h"
-#endif
 
 
 // I am still using my copied _usb.c and _usbdesc.c, although
@@ -90,12 +77,13 @@ void setup()
 {
 	pinMode(PIN_LED_T3_BUSY,OUTPUT);
 	digitalWrite(PIN_LED_T3_BUSY,1);
-
 	for (int i=0; i<23; i++)
 	{
 		digitalWrite(PIN_LED_T3_BUSY,i&1);
 		delay(40);
 	}
+
+    bool prefs_reset = init_global_prefs();
 
 	#if USE_DBG_SERIAL_PORT
 		DBG_SERIAL_PORT.begin(115200);
@@ -123,24 +111,34 @@ void setup()
 	delay(500);
     display(0,"TE3.ino setup(%s) started",getUSBSerialNum());
 
-	#if WITH_SCREEN
-		init_te3_tft();
-	#endif
+	init_te3_tft();
+    tft.setTextColor(TFT_WHITE,TFT_BLACK);
+    tft.setFont(Arial_16);
+    tft.setCursor(5,5);
+    tft.print("teensyExpression ");
+    tft.print(TEENSY_EXPRESSION_VERSION);
+    tft.println(" started ... ");
+
+    int do_delay = 2000;
+    tft.setTextColor(TFT_YELLOW);
+
+    if (prefs_reset)
+    {
+        const char *msg = "    PREFS WERE AUTOMATICALLY RESET!!";
+        warning(0,"%s",msg);
+        tft.println(msg);
+        do_delay = 5000;
+    }
 	
 	HUB_SERIAL_PORT.begin(115200);
 	RPI_SERIAL_PORT.begin(115200);		// 460800);	// 115200);
-		// grumble; apparently the bootloader on the current SD
-		// 		card is running at 460800,
-		// even tho the bootloader AND the std_kernel used by
-		// the Looper, as well as teensyPiLooper were all
-		// checked in at 115200!!
-		// I'm gonna try updating the boot loader on that SD card
 
+	delay(do_delay);
+	
 	digitalWrite(PIN_LED_T3_BUSY,0);
 
-
 	//----------------------------------
-	// flash LEDS
+	// flash rPi LEDS
 	//----------------------------------
 
 	pinMode(PIN_LED_RPI_RUN,OUTPUT);
@@ -153,31 +151,22 @@ void setup()
 			delay(200);
 		}
 	#endif
-
 	digitalWrite(PIN_LED_RPI_RUN,0);
 	digitalWrite(PIN_LED_RPI_READY,0);
 
+
 	//----------------------------------
-	// setup for row_boards
+	// setup global handlers
 	//----------------------------------
-	// start the WS2812's and set the 595 pinModes
 
     initLEDs();
     LEDFancyStart();
-
-	#if 1
-		pinMode(PIN_BTN_CLK,OUTPUT);
-		pinMode(PIN_BTN_DIN,OUTPUT);
-		digitalWrite(PIN_BTN_CLK,0);
-			// initial master clock is LOW for 1st prototype board
-			// but will be HIGH for actual inverting board
-		digitalWrite(PIN_BTN_DIN,0);
-		pinMode(PIN_BTN_SENSE,INPUT_PULLDOWN);
-	#endif
-
+	theButtons.init();
+	thePedals.init();
+	te3_rotaries::init();
 
 	//--------------------------------------------
-	// final pinModes for rPi Rotaries, Pedals, etc
+	// final pinModes for rPi
 	//--------------------------------------------
 	// may want rPI pinModes earlier and/or to automaticaly
 	// reboot pi on TE3 restarts
@@ -187,428 +176,12 @@ void setup()
 	digitalWrite(PIN_RPI_BOOT,0);	// DONT REBOOT PI automatically!
 	pinMode(PIN_RPI_BOOT,OUTPUT);
 
-
-    #if WITH_ROTARIES
-        rotaryBoard::begin(PIN_ROTARY_INTERRUPT);
-    #endif
-
+	theSystem.begin();
 
     display(0,"TE3.ino setup() finished",0);
 }
 
 
-
-
-//--------------------------------------
-// rotary board prototype code
-//--------------------------------------
-
-#if WITH_ROTARIES
-
-    void handleRotaries()
-    {
-		#define DEBOUNCE_TIME	6	// ms
-
-		static uint8_t last_rot[NUM_ROTARIES];
-		static bool last_button[NUM_ROTARIES];
-		static uint32_t bounce_time = 0;
-		uint32_t now = millis();
-		if (now - bounce_time < DEBOUNCE_TIME)
-			return;
-
-        bool changed = false;
-        for (int i=0; i<NUM_ROTARIES; i++)
-        {
-            uint8_t val = rotaryBoard::getValue(i);
-            if (last_rot[i] != val)
-            {
-                changed = 1;
-                last_rot[i] = val;
-            }
-
-			bool pressed = rotaryBoard::getRawButton(i);
-			if (last_button[i] != pressed)
-			{
-				changed = 1;
-				last_button[i] = pressed;
-			}
-        }
-
-        if (changed)
-            display(0,"rotaries:  %-3d  %-3d  %-3d  %-3d  buttons: %d %d %d %d",
-                last_rot[0],
-                last_rot[1],
-                last_rot[2],
-                last_rot[3],
-				last_button[0],
-				last_button[1],
-				last_button[2],
-				last_button[3]);
-    }
-
-#endif
-
-
-
-//-------------------------------------------------
-// row_button (74HC595) prototype handler
-//-------------------------------------------------
-
-static bool cur_button_state[NUM_BUTTONS];		// contantly updated
-
-#if 1	// NEW
-
-	// alternative implementation
-	// entirely polls one button per cycle
-	// was written while trying to debug what turned out
-	// to be a bad solder joint on the button DOUT on board $4
-
-	// However it is arguably simpler and does not take much time.
-
-	void poll_row_buttons()
-	{
-		#define BUTTON_CYCLE_INTERVAL		33				// ms
-		#define BUTTON_POLL_INTERVAL		1				// us between polls
-		#define BUTTON_LATCH_DELAY			1				// us between clock up/down
-
-		static int button_cycle = 0;
-		static bool in_button_cycle = 0;
-		static uint32_t last_button_cycle = 0;		// ms timer
-		static uint32_t last_button_poll = 0;		// us timer
-
-		if (in_button_cycle)
-		{
-			if (micros() - last_button_poll > BUTTON_POLL_INTERVAL)
-			{
-				// don't need to do last two latches
-				if (button_cycle == NUM_BUTTON_ROWS * 8 - 2)
-				{
-					in_button_cycle = 0;	// finished
-				}
-				else
-				{
-					digitalWrite(PIN_BTN_CLK,1);
-					delayMicroseconds(BUTTON_LATCH_DELAY);
-					digitalWrite(PIN_BTN_CLK,0);
-
-					int col = (button_cycle % 8) - 1;
-					if (col >= 0 && col <= NUM_BUTTON_COLS)
-					{
-						delayMicroseconds(BUTTON_LATCH_DELAY);
-
-						int row = button_cycle / 8;
-						int button_num = row * NUM_BUTTON_COLS + col;
-						cur_button_state[button_num] = digitalRead(PIN_BTN_SENSE);
-					}	// valid button
-
-					last_button_poll = micros();
-					button_cycle++;
-
-				}	// still polling
-			}	// time to do a poll
-		} 	// in_button_cyckle
-
-		else	// time to start new cycle?
-		{
-			uint32_t now_ms = millis();
-			if (!last_button_cycle || (now_ms - last_button_cycle >= BUTTON_CYCLE_INTERVAL))
-			{
-				last_button_cycle = now_ms;
-				in_button_cycle = 1;
-				button_cycle = 0;
-
-				// latch the 1 into the first 595
-
-				digitalWrite(PIN_BTN_CLK,0);	// this line 'fixed' the SMT problem
-				digitalWrite(PIN_BTN_DIN,1);
-				digitalWrite(PIN_BTN_CLK,1);
-				delayMicroseconds(BUTTON_LATCH_DELAY);
-				digitalWrite(PIN_BTN_CLK,0);
-				digitalWrite(PIN_BTN_DIN,0);
-				#if DEBUG_SLOW
-					display(0," LOW(%d)",button_cycle);
-				#endif
-
-				last_button_poll = micros();
-			}	// start new cycle
-		}	// check if time to start new cycle
-	}	// poll_row_buttons()
-
-#else 	// OLD
-
-	void poll_row_buttons()
-		// takes at most 1 us plus a little
-		//
-		//  OH' (portH prime) that is forwarded to the next chip
-		//	ACTUALLY goes high at the same time as portG, not portH
-		//	as one might expect.
-	{
-		// DIP16 vs SMT chips on breadboard issue
-		//
-		//	On the DIP16 chips it works as I originally designed it.
-		//	However, with the SMT chips there was an anomoly that
-		//	was only revealed with the breadboard full of LEDs.
-		//
-		//	The issue was ultimately resolved by merely writing
-		//	a zero to the BTN_CLOCK at the start of each cycle
-
-		#define DEBUG_SLOW	0
-
-		// One full microsecond should be more than enough time
-		// for everybody to synchronize and the sense voltage
-		// to rise. We use GT (not GTE) to ensure that a full
-		// microsecond has passed.
-
-		#if DEBUG_SLOW
-			uint32_t BUTTON_LATCH_INTERVAL = 1000000;
-		#else
-			#define BUTTON_LATCH_INTERVAL	1		// us
-		#endif
-
-		#define BUTTON_CYCLE_INTERVAL		33		// ms; 0 for visualizing !DEBUG_SLOW
-			// Polling the buttons every 33 ms handles debouncing.
-			// Set this to zero on the breadboard with !DEBUG_SLOW
-			//		to get enough duty cycle to light up all the leds
-
-		static int button_cycle = 0;
-			// The 0th cycle cycles the 1 into the shift register.
-			// The 1st cycle puts it out to port0A.
-			// If we had eight buttons, we would read the 0th (portA)
-			// 		on the 2nd cycle.  But we skip portA as our zero'th
-			//      button is on portB, so we read button0 (portB) on
-			//		the 2nd cycle.
-			// Otherwise it's all div and mod by 8.
-
-		static bool in_button_cycle = 0;
-			// cycle started every BUTTON_CYCLE_INTERVAL ms
-		static uint32_t last_button_cycle = 0;		// ms timer
-		static uint32_t last_clock_toggle = 0;		// us timer
-
-		#if DEBUG_SLOW
-			if (Serial.available());
-			{
-				int c = Serial.read();
-				if (c == ' ')
-					BUTTON_LATCH_INTERVAL = 1;
-			}
-		#endif
-
-		if (in_button_cycle)
-		{
-			if (micros() - last_clock_toggle > BUTTON_LATCH_INTERVAL)
-			{
-				if (button_cycle > 1)
-				{
-					int abs_num = button_cycle - 2;
-					int col = abs_num % 8;
-					if (col<5)
-					{
-						int row = abs_num / 8;
-						int button_num = row * NUM_BUTTON_COLS + col;
-						cur_button_state[button_num] = digitalRead(PIN_BTN_SENSE);
-
-						#if DEBUG_SLOW
-							display(0,"READ cycle(%2d) abs(%2d) row(%d) col(%d) button(%d) state == %s",
-								button_cycle,
-								abs_num,
-								row,
-								col,
-								button_num,
-								cur_button_state[button_num] ? "PRESSED" : "");
-						#endif
-
-						#if DEBUG_SLOW
-							if (button_num == 9)
-						#else
-							if (button_num == 24)
-						#endif
-						{
-							in_button_cycle = 0;
-						}
-					}
-				}
-
-				if (in_button_cycle)	// slight optimization to check if cycle ended
-				{
-					button_cycle++;
-
-					digitalWrite(PIN_BTN_CLK,1);
-					#if DEBUG_SLOW
-						display(0,"HIGH(%d)",button_cycle);
-					#endif
-					delayMicroseconds(BUTTON_LATCH_INTERVAL);
-					digitalWrite(PIN_BTN_CLK,0);
-					#if DEBUG_SLOW
-						display(0," LOW(%d)",button_cycle);
-					#endif
-					last_clock_toggle =  micros();
-				}
-			}
-		}
-		else
-		{
-			uint32_t now_ms = millis();
-			if (now_ms - last_button_cycle >= BUTTON_CYCLE_INTERVAL)
-			{
-				#if DEBUG_SLOW
-					display(0,"-------------------------",0);
-				#endif
-
-				last_button_cycle = now_ms;
-				in_button_cycle = 1;
-				button_cycle = 0;
-
-				digitalWrite(PIN_BTN_CLK,0);	// this line 'fixed' the SMT problem
-				digitalWrite(PIN_BTN_DIN,1);
-				digitalWrite(PIN_BTN_CLK,1);
-				#if DEBUG_SLOW
-					display(0,"HIGH(%d)",button_cycle);
-				#endif
-				delayMicroseconds(BUTTON_LATCH_INTERVAL);
-				digitalWrite(PIN_BTN_CLK,0);
-				digitalWrite(PIN_BTN_DIN,0);
-				#if DEBUG_SLOW
-					display(0," LOW(%d)",button_cycle);
-				#endif
-
-				last_clock_toggle = micros();
-			}
-		}
-	}
-
-#endif 	// OLD
-
-
-
-//--------------------------
-// sendTestMidi()
-//--------------------------
-
-static void sendTestMidi(int num)
-{
-	#define PORT_USB 	1
-	#define PORT_RPI 	2
-	#define PORT_HUB    3
-
-	uint8_t port = 0;
-	uint8_t channel = 0;
-	uint8_t cc_num = 0;
-	uint8_t value = 0;
-
-	/// with USB midi
-
-	if (num == 0) 		// turn guitar distortion on/off
-	{
-		port = PORT_USB;
-		channel = GUITAR_EFFECTS_CHANNEL;
-		cc_num = GUITAR_DISTORTION_EFFECT_CC;
-		static uint8_t effect_state = 0x00;
-		effect_state = effect_state ? 0 : 0x7f;
-		value = effect_state;
-	}
-	else if (num == 1)	// press Looper Track1 button
-	{
-		port = PORT_RPI;
-		cc_num = LOOP_COMMAND_CC;
-		value = LOOP_COMMAND_TRACK_BASE + 0;
-	}
-	else if (num == 2)	// clear the Looper
-	{
-		port = PORT_RPI;
-		cc_num = LOOP_COMMAND_CC;
-		value = LOOP_COMMAND_CLEAR_ALL;
-	}
-
-	if (port == PORT_USB)
-	{
-		display(0,"Sending USB MIDI channel(%d) cc(%02x) value(%02x)",channel,cc_num,value);
-		usbMIDI.sendControlChange(cc_num, value, channel);
-	}
-	else if (port)
-	{
-		uint8_t msg[4];
-		msg[0] = 0x0b;
-		msg[1] = 0xb0;
-		msg[2] = cc_num;
-		msg[3] = value;
-
-		display(0,"Sending %s SERIAL MIDI cc(%02x) value(%02x)",
-			port == PORT_RPI ? "RPI" : "HUB",cc_num,value);
-
-		Stream *out = port == PORT_RPI ? &RPI_SERIAL_PORT : &HUB_SERIAL_PORT;
-		out->write(msg,4);
-	}
-	
-
-}
-
-
-
-
-//-----------------------------------
-// pedalTest
-//-----------------------------------
-
-#define HYSTERISIS	20
-#define NUM_PEDALS	4
-
-typedef struct
-{
-	uint8_t pin;
-	int last_val;
-} pedalInfo;
-
-pedalInfo pedals[NUM_PEDALS] = {
-	{ PIN_PEDAL_0, 0 },
-	{ PIN_PEDAL_1, 0 },
-	{ PIN_PEDAL_2, 0 },
-	{ PIN_PEDAL_3, 0 } };
-
-void pedalTest()
-{
-	static uint32_t last_pedal_time = 0;
-	uint32_t now = millis();
-	if (!last_pedal_time)
-	{
-		for (int i=0; i<NUM_PEDALS; i++)
-		{
-			pinMode(pedals[i].pin,INPUT_PULLDOWN);
-				// grumble - the circuit is incorrectly designed
-				// the pulldowns are not actually hooked up. theoretically
-				// we lose about 10% of the range by always having
-				// the internal pulldown connected, but I am currently
-				// getting like 50..988 out of 0..1024, so I think I
-				// will henceforth leave them out of the design.
-				// The single 220K power resistor prevents the thing
-				// from rebooting so I don't even need switched jacks
-				// really.
-		}
-		last_pedal_time = now;
-	}
-	else if (now - last_pedal_time >  50)
-	{
-		bool changed = 0;
-		for (int i=0; i<NUM_PEDALS; i++)
-		{
-			int val = analogRead(pedals[i].pin);
-			int cur = pedals[i].last_val;
-			if (val < cur - HYSTERISIS || val > cur + HYSTERISIS)
-			{
-				pedals[i].last_val = val;
-				changed = 1;
-			}
-		}
-		if (changed)
-		{
-			display(0,"PEDALS  %-4d  %-4d  %-4d  %-4d",
-				pedals[0].last_val,
-				pedals[1].last_val,
-				pedals[2].last_val,
-				pedals[3].last_val);
-		}
-		last_pedal_time = now;
-	}
-}
 
 
 //==========================================================================
@@ -626,46 +199,11 @@ void loop()
 		digitalWrite(PIN_LED_T3_BUSY,flash_on);
 	}
 
-	pedalTest();
+	theSystem.updateUI();
 
-    #if WITH_ROTARIES
-        handleRotaries();
-    #endif
-
-    #if 1
+	#if 1
 		handleSerial();
 	#endif
-
-
-
-	//-------------------------------------------
-	// prototype row_button handling
-	//-------------------------------------------
-
-	poll_row_buttons();
-		// POLL THE ROW_BUTTONS OFTEN
-
-	#define dbg_buttons 		0
-
-	static bool prev_button_state[NUM_BUTTONS];		// handled by event handler of some kind
-
-	for (int num=0; num<NUM_BUTTONS; num++)
-	{
-		bool state = cur_button_state[num];
-		if (prev_button_state[num] != state)
-		{
-			prev_button_state[num] = state;
-			// display(dbg_buttons,"BUTTON_NUM[%d] changed to %d",num,state);
-
-			if (state)
-				sendTestMidi(num);
-
-			setLED(num,state?LED_BLUE:LED_BLACK);
-			showLEDs();
-
-		}
-	}	// process the buttons
-
 
 	//--------------------------------------------
 	// handle rPI state changes (LEDS)
@@ -690,8 +228,8 @@ void loop()
 		analogWrite(PIN_LED_RPI_READY,rpi_ready * 128);	// PWM brightness
 	}
 
-
 }	// loop()
+
 
 
 // end of TE3.ino
