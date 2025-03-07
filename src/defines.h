@@ -79,7 +79,18 @@ extern void handleSerial();
 #define PIN_LED_DIN				20	// only pin on teensy4.x that supports ws3812bSerial
 #define PIN_BTN_CLK				21
 #define PIN_BTN_DIN				22
-#define PIN_BTN_SENSE			23	
+#define PIN_BTN_SENSE			23
+
+// pedals
+// the pin numbers in the schematic are currently backwards
+// as the LEFTMOST (from the front) is #1, but the PCB is
+// designed from the back, lol
+
+#define PIN_PEDAL_0				27	// A13
+#define PIN_PEDAL_1				26	// A12
+#define PIN_PEDAL_2				25	// A11
+#define PIN_PEDAL_3				24	// A10
+
 
 
 // in TE3.ino

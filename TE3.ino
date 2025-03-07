@@ -544,6 +544,73 @@ static void sendTestMidi(int num)
 
 
 
+
+//-----------------------------------
+// pedalTest
+//-----------------------------------
+
+#define HYSTERISIS	20
+#define NUM_PEDALS	4
+
+typedef struct
+{
+	uint8_t pin;
+	int last_val;
+} pedalInfo;
+
+pedalInfo pedals[NUM_PEDALS] = {
+	{ PIN_PEDAL_0, 0 },
+	{ PIN_PEDAL_1, 0 },
+	{ PIN_PEDAL_2, 0 },
+	{ PIN_PEDAL_3, 0 } };
+
+void pedalTest()
+{
+	static uint32_t last_pedal_time = 0;
+	uint32_t now = millis();
+	if (!last_pedal_time)
+	{
+		for (int i=0; i<NUM_PEDALS; i++)
+		{
+			pinMode(pedals[i].pin,INPUT_PULLDOWN);
+				// grumble - the circuit is incorrectly designed
+				// the pulldowns are not actually hooked up. theoretically
+				// we lose about 10% of the range by always having
+				// the internal pulldown connected, but I am currently
+				// getting like 50..988 out of 0..1024, so I think I
+				// will henceforth leave them out of the design.
+				// The single 220K power resistor prevents the thing
+				// from rebooting so I don't even need switched jacks
+				// really.
+		}
+		last_pedal_time = now;
+	}
+	else if (now - last_pedal_time >  50)
+	{
+		bool changed = 0;
+		for (int i=0; i<NUM_PEDALS; i++)
+		{
+			int val = analogRead(pedals[i].pin);
+			int cur = pedals[i].last_val;
+			if (val < cur - HYSTERISIS || val > cur + HYSTERISIS)
+			{
+				pedals[i].last_val = val;
+				changed = 1;
+			}
+		}
+		if (changed)
+		{
+			display(0,"PEDALS  %-4d  %-4d  %-4d  %-4d",
+				pedals[0].last_val,
+				pedals[1].last_val,
+				pedals[2].last_val,
+				pedals[3].last_val);
+		}
+		last_pedal_time = now;
+	}
+}
+
+
 //==========================================================================
 // loop()
 //==========================================================================
@@ -558,6 +625,8 @@ void loop()
 		flash_on = !flash_on;
 		digitalWrite(PIN_LED_T3_BUSY,flash_on);
 	}
+
+	pedalTest();
 
     #if WITH_ROTARIES
         handleRotaries();
