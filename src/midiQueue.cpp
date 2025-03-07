@@ -574,12 +574,15 @@ void _processMessage(uint32_t i)
     const char *port_name = portName(pindex);
     bool is_ftp_port = isFtpPort(pindex);
     bool is_ftp_controller = isFtpController(pindex);
-    int monitor = getPref8(PREF_MIDI_MONITOR);   // off, DebugPort, USB, Serial   default(DebugPort)
+
+    uint8_t monitor_output = getPref8(PREF_MONITOR_OUTPUT);   // off, USB, Serial, Follows, default(Off)
+    if (monitor_output == OUTPUT_DEVICE_FOLLOW)
+        monitor_output = getPref8(PREF_FOLLOW_DEVICE);
 
     Stream *out_stream =
-        monitor == 3 ? 0   :    // &SERIAL_DEVICE :
-        monitor == 2 ? (Stream *) &USB_SERIAL_PORT :
-        monitor == 1 ? (Stream *) &DBG_SERIAL_PORT : 0;
+        monitor_output == FOLLOW_DEVICE_SERIAL ? (Stream *) &DBG_SERIAL_PORT :
+        monitor_output == FOLLOW_DEVICE_USB ? (Stream *) &USB_SERIAL_PORT :
+        0;
 
     bool show_it =
         out_stream &&

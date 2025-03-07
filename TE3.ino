@@ -75,6 +75,15 @@ void clearTE3Busy()
 
 void setup()
 {
+	dbgSerial = 0;		// turn off myDebug output
+
+    // setColorString(COLOR_CONST_DEFAULT, "\033[94m");  // example for bright blue
+        // TE3's normal (default) display color is green
+        // TE3_audio (hub) normal display color is bright blue
+        // Looper's normal display color, is cyan for bootloader, or white in Looper
+
+	// quickly flash the busy led to indicate a boot is happening
+
 	pinMode(PIN_LED_T3_BUSY,OUTPUT);
 	digitalWrite(PIN_LED_T3_BUSY,1);
 	for (int i=0; i<23; i++)
@@ -83,45 +92,58 @@ void setup()
 		delay(40);
 	}
 
+	// load the prefs and set how_debug_te3 based on them
+
     bool prefs_reset = init_global_prefs();
+	uint8_t how_follow = getPref8(PREF_FOLLOW_DEVICE);
+	uint8_t how_debug_te3 = getPref8(PREF_TE3_DEBUG_OUTPUT);
+	if (how_debug_te3 == OUTPUT_DEVICE_FOLLOW)
+		how_debug_te3 = how_follow;
 
-	#if USE_DBG_SERIAL_PORT
-		DBG_SERIAL_PORT.begin(115200);
-		DBG_SERIAL_PORT.println("TE3 Debug Serial port output");
-		extraSerial = &DBG_SERIAL_PORT;
-	#endif
+	//-----------------------------------
+	// start the dbg SERIAL PORT
+	//-----------------------------------
+	// and assign it to myDebug based on pref
 
-    // setColorString(COLOR_CONST_DEFAULT, "\033[94m");  // example for bright blue
-        // TE3's normal (default) display color is green
-        // TE3_hubs normal display color is bright blue
-        // Looper's normal display color, is cyan
+	DBG_SERIAL_PORT.begin(115200);
+	DBG_SERIAL_PORT.println("TE3 DBG_SERIAL_PORT");
+	if (how_debug_te3 == OUTPUT_DEVICE_SERIAL)
+		dbgSerial = (Stream *) &DBG_SERIAL_PORT;
 
-	//-------------------------------------------
-	// initialize usb and serial ports
-	//-------------------------------------------
+	// start ourself as a USB device
+	// and assign it to myDebug based on pref
 
     delay(500);
 	my_usb_init();
 		// calls setUSBSerialNum() in _usbNames.c
 		// before staring USB device
 	USB_SERIAL_PORT.begin(115200);
+	if (how_debug_te3 == OUTPUT_DEVICE_USB)
+		dbgSerial = (Stream *) &USB_SERIAL_PORT;
+
+	// show the version with myDebug
+
+	delay(500);
+	const char *version_msg = "teensyExpression " TEENSY_EXPRESSION_VERSION " setup() started ... ";
+	display(0,version_msg,0);
+
 
 	digitalWrite(PIN_LED_T3_BUSY,1);
 
-	delay(500);
-    display(0,"TE3.ino setup(%s) started",getUSBSerialNum());
+
+	//-----------------------------------
+	// start the TFT
+	//-----------------------------------
+	// and show yellow warning messages as needed
 
 	tft.init();
     tft.setTextColor(TFT_WHITE,TFT_BLACK);
     tft.setFont(Arial_16);
     tft.setCursor(5,5);
-    tft.print("teensyExpression ");
-    tft.print(TEENSY_EXPRESSION_VERSION);
-    tft.println(" started ... ");
+    tft.println(version_msg);
 
-    int do_delay = 2000;
-    tft.setTextColor(TFT_YELLOW);
-
+    tft.setTextColor(TFT_YELLOW,TFT_BLACK);
+    int do_delay = 5000;
     if (prefs_reset)
     {
         const char *msg = "    PREFS WERE AUTOMATICALLY RESET!!";
@@ -129,17 +151,27 @@ void setup()
         tft.println(msg);
         do_delay = 5000;
     }
+
+	const char *te3_dbg_output_name =
+		how_debug_te3 == OUTPUT_DEVICE_OFF ? "OFF" :
+		how_debug_te3 == OUTPUT_DEVICE_SERIAL ? "SERIAL PORT" :
+		"USB PORT";
+	tft.print("    TE3_DEBUG_OUTPUT IS ");
+	tft.println(te3_dbg_output_name);
+
+	delay(do_delay);
+
+	digitalWrite(PIN_LED_T3_BUSY,0);
+
+
+	//-------------------------------------------
+	// start other serial ports
+	//-------------------------------------------
+	// and flash rPi LEDS
 	
 	HUB_SERIAL_PORT.begin(115200);
 	RPI_SERIAL_PORT.begin(115200);		// 460800);	// 115200);
-
-	delay(do_delay);
-	
 	digitalWrite(PIN_LED_T3_BUSY,0);
-
-	//----------------------------------
-	// flash rPi LEDS
-	//----------------------------------
 
 	pinMode(PIN_LED_RPI_RUN,OUTPUT);
 	pinMode(PIN_LED_RPI_READY,OUTPUT);
@@ -154,9 +186,10 @@ void setup()
 	digitalWrite(PIN_LED_RPI_RUN,0);
 	digitalWrite(PIN_LED_RPI_READY,0);
 
+	digitalWrite(PIN_LED_T3_BUSY,1);
 
 	//----------------------------------
-	// setup global handlers
+	// initialize other devices
 	//----------------------------------
 
     initLEDs();
@@ -164,6 +197,8 @@ void setup()
 	theButtons.init();
 	thePedals.init();
 	te3_rotaries::init();
+
+	digitalWrite(PIN_LED_T3_BUSY,0);
 
 	//--------------------------------------------
 	// final pinModes for rPi
@@ -176,7 +211,15 @@ void setup()
 	digitalWrite(PIN_RPI_BOOT,0);	// DONT REBOOT PI automatically!
 	pinMode(PIN_RPI_BOOT,OUTPUT);
 
+	digitalWrite(PIN_LED_T3_BUSY,1);
+
+	//--------------------------------------------------
+	// start the system
+	//--------------------------------------------------
+
 	theSystem.begin();
+
+	digitalWrite(PIN_LED_T3_BUSY,0);
 
     display(0,"TE3.ino setup() finished",0);
 }

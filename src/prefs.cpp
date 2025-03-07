@@ -14,8 +14,7 @@ const char **pref_strings[NUM_EEPROM_USED];
 
 const char *off_on[]                  = {"Off","On"};
 const char *off_usb_serial[]          = {"Off","USB","Serial"};
-const char *off_debug_usb_serial[]    = {"Off","Debug Port","USB","Serial"};
-const char *default_off_usb_serial[]  = {"default","Off","USB","Serial"};
+const char *off_usb_serial_follow[]   = {"Off","USB","Serial","Follow"};
 const char *off_host_remote[]         = {"Off","Host","Remote"};
 const char *off_on_detail[]           = {"Off","On","Detail"};
 const char *curve_types[]             = {"linear","asympt","scurve"};
@@ -59,11 +58,14 @@ void setDefaultPrefs()
 {
     _setDefaultPref8(PREF_BRIGHTNESS,        1,100, 30);    // 1..100 - default(30)
 
-    _setDefaultPref8(PREF_DEBUG_PORT,        0,2,   1,  off_usb_serial);            // off, USB, Serial - default(USB)
-    _setDefaultPref8(PREF_FILE_SYSTEM_PORT,  0,1,   0,  file_system_ports);         // MainUSB or AlternateSerial port
+    _setDefaultPref8(PREF_FOLLOW_DEVICE,     0,2, 1,  off_usb_serial);            // off, USB, Serial - default(USB)
+    _setDefaultPref8(PREF_TE3_DEBUG_OUTPUT,  0,3, 3,  off_usb_serial_follow);     // off, USB, Serial, Follow - default(Follow)
+    _setDefaultPref8(PREF_HUB_DEBUG_OUTPUT,  0,3, 3,  off_usb_serial_follow);     // off, USB, Serial, Follow - default(Follow)
+    _setDefaultPref8(PREF_RPI_DEBUG_OUTPUT,  0,3, 3,  off_usb_serial_follow);     // off, USB, Serial, Follow - default(Follow)
 
-    _setDefaultPref8(PREF_SPOOF_FTP,         0,1,   0,  off_on);                    // off, on - default(off)
-    _setDefaultPref8(PREF_FTP_PORT,          0,2,   0,  off_host_remote);           // 2025-01-14 was: 2,  off_host_remote);           // off, Host, Remote, default(Remote)
+    _setDefaultPref8(PREF_FILE_SYSTEM_PORT,  0,1, 0,  file_system_ports);         // MainUSB or AlternateSerial port
+    _setDefaultPref8(PREF_SPOOF_FTP,         0,1, 0,  off_on);                    // off, on - default(off)
+    _setDefaultPref8(PREF_FTP_PORT,          0,2, 0,  off_host_remote);           // 2025-01-14 was: 2,  off_host_remote);           // off, Host, Remote, default(Remote)
 
     //---------------
     // pedals
@@ -139,7 +141,7 @@ void setDefaultPrefs()
     // midi monitor prefs
     //----------------------
 
-    _setDefaultPref8(PREF_MIDI_MONITOR,           0,3,  1,  off_debug_usb_serial); // off, follow, USB, Serial, default(follow debuug)
+    _setDefaultPref8(PREF_MONITOR_OUTPUT,         0,3,  0,  off_usb_serial_follow);     // off, USB, Serial, Follow - default(off)
 
     _setDefaultPref8(PREF_MONITOR_DUINO_INPUT0,   0,1,  0, off_on);    // default(off)
     _setDefaultPref8(PREF_MONITOR_DUINO_INPUT1,   0,1,  1, off_on);    // default(on)

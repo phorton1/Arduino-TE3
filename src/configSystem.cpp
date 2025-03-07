@@ -87,8 +87,8 @@ void createOptions()
 
 	// midi monitor
 
-	configOption *monitor = new configOption(rootOption,"Midi Monitor", 0,  PREF_MIDI_MONITOR);
-	new configOption(monitor,"Midi Monitor", 0, PREF_MIDI_MONITOR);
+	configOption *monitor = new configOption(rootOption,"Midi Monitor", 0,  PREF_MONITOR_OUTPUT);
+	new configOption(monitor,"Midi Monitor", 0, PREF_MONITOR_OUTPUT);
 
 	configOption *mon_ports = new configOption(monitor,"Ports");
 	new configOption(mon_ports,"Duino Input 0",  0, PREF_MONITOR_DUINO_INPUT0);
@@ -155,7 +155,12 @@ void createOptions()
 	// all other preferences
 
 	configOption *system = new configOption(rootOption,"System " TEENSY_EXPRESSION_VERSION);
-	new configOption(system,"Debug Port",	OPTION_TYPE_NEEDS_REBOOT,	PREF_DEBUG_PORT);
+	new configOption(system,"TE3 Debug", 0,	PREF_TE3_DEBUG_OUTPUT);
+	new configOption(system,"HUB Debug", 0,	PREF_HUB_DEBUG_OUTPUT);
+	new configOption(system,"RPI Debug", 0,	PREF_RPI_DEBUG_OUTPUT);
+
+
+
 	new configOption(system,"File Sys Port",	OPTION_TYPE_NEEDS_REBOOT,	PREF_FILE_SYSTEM_PORT);
 	new configOption(system,"Calibrate Touch");
 

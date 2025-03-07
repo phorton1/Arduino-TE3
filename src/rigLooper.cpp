@@ -143,8 +143,8 @@ synthPatch_t rigLooper::synth_patch[RIGLOOPER_NUM_SYNTH_BANKS * RIGLOOPER_NUM_SY
     {20,        "BANJO",     	"Banjo",	  		    0},								// 19
 
     {21,        "CHIME",     	"Vibes+Octave",			0},								// 19
-	{22,        "MARIMNA",     	"Marimba",  			0},					// 19
-	{23,        "FX",          "SFX Collection",		0},					// 17
+	{22,        "MARIMBA",     	"Marimba",  			0},					// 19
+	{23,        "FX",           "SFX Collection",		0},					// 17
 
 	};
 

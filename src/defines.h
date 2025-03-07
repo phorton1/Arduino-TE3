@@ -20,10 +20,6 @@
 #define HUB_SERIAL_PORT     Serial8		// pins 34,35
 
 
-#define USE_DBG_SERIAL_PORT		0
-	// initially turned off
-
-
 extern void handleSerial();
 	// in serial.cpp
 
