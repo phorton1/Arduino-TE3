@@ -325,7 +325,7 @@ void winFtpSensitivity::updateUI()	// draw
 				NUMBER_WIDTH,
 				SENS_BOX_HEIGHT,
 				color);
-			printfJustified(
+			tft.printfJustified(
 				x + 5,
 				y + 7,
 				NUMBER_WIDTH-10,

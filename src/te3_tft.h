@@ -7,7 +7,8 @@
 #include <ILI9488_t3.h>
 #include <ILI9488_t3_font_Arial.h>
 #include <ILI9488_t3_font_ArialBold.h>
-#include "defines.h"
+#include "defines.h"    // for int_rect
+
 
 #define TFT_WIDTH           480
 #define TFT_HEIGHT          320
@@ -39,50 +40,58 @@
 #define TFT_PINK            0xF81F
 
 
-extern ILI9488_t3 tft;
-
-extern void init_te3_tft();
-
-
-
 #define LCD_JUST_LEFT    0
 #define LCD_JUST_CENTER  1
 #define LCD_JUST_RIGHT   2
 
 
-extern void fillRect(int_rect &rect, int color);
-extern void drawBorder(int x, int y, int w, int h, int b, int color);
+class TE3_TFT : public ILI9488_t3
+    // derived so that we can get to protected
+    // charBounds() method for justified printing
+{
+    public:
 
-extern void printfJustified(
-    int x,
-    int y,
-    int w,
-    int h,
-    int just,
-    uint16_t fc,
-    uint16_t bc,
-    bool use_bc,
-    const char *format,
-    ...);
-extern void printfvJustified(
-    int x,
-    int y,
-    int w,
-    int h,
-    int just,
-    uint16_t fc,
-    uint16_t bc,
-    bool use_bc,
-    const char *format,
-    va_list args);
-extern void printJustified(
-    int x,
-    int y,
-    int w,
-    int h,
-    int just,
-    uint16_t fc,
-    uint16_t bc,
-    bool use_bc,
-    const char *text);
+        TE3_TFT(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI=255, uint8_t _SCLK=255, uint8_t _MISO=255);
 
+        void init();
+
+        void fillIntRect(int_rect &rect, uint16_t color);
+        void drawBorder(int x, int y, int w, int h, int b, uint16_t color);
+
+        void printfJustified(
+            int x,
+            int y,
+            int w,
+            int h,
+            int just,
+            uint16_t fc,
+            uint16_t bc,
+            bool use_bc,
+            const char *format,
+            ...);
+        void printfvJustified(
+            int x,
+            int y,
+            int w,
+            int h,
+            int just,
+            uint16_t fc,
+            uint16_t bc,
+            bool use_bc,
+            const char *format,
+            va_list args);
+        void printJustified(
+            int x,
+            int y,
+            int w,
+            int h,
+            int just,
+            uint16_t fc,
+            uint16_t bc,
+            bool use_bc,
+            const char *text);
+
+};  // TE3_TFT
+
+
+extern TE3_TFT tft;

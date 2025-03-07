@@ -537,7 +537,7 @@ void configSystem::updateUI()
 			{
 				uint16_t fc = enabled ? TFT_WHITE : TFT_DARKGREY;
 
-				printfJustified(
+				tft.printfJustified(
 					MID_OFFSET,
 					y + TEXT_OFFSET,
 					MID_OFFSET - RIGHT_OFFSET,

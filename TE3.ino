@@ -111,7 +111,7 @@ void setup()
 	delay(500);
     display(0,"TE3.ino setup(%s) started",getUSBSerialNum());
 
-	init_te3_tft();
+	tft.init();
     tft.setTextColor(TFT_WHITE,TFT_BLACK);
     tft.setFont(Arial_16);
     tft.setCursor(5,5);

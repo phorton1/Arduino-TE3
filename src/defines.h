@@ -197,7 +197,7 @@ public:
         ye = 0;
     }
 
-    int_rect(int ixs, int iys, int ixe, int iye)
+    int_rect(int16_t ixs, int16_t iys, int16_t ixe, int16_t iye)
     {
         xs = ixs;
         ys = iys;
@@ -205,7 +205,7 @@ public:
         ye = iye;
     }
 
-    void assign(int ixs, int iys, int ixe, int iye)
+    void assign(int16_t ixs, int16_t iys, int16_t ixe, int16_t iye)
     {
         xs = ixs;
         ys = iys;
@@ -214,13 +214,13 @@ public:
     }
 
 
-    int width() { return xe-xs+1; }
-    int height()  { return ye-ys+1; }
+    int16_t width() { return xe-xs+1; }
+    int16_t height()  { return ye-ys+1; }
 
-    int xs;
-    int ys;
-    int xe;
-    int ye;
+    int16_t xs;
+    int16_t ys;
+    int16_t xe;
+    int16_t ye;
 };
 
 

@@ -440,7 +440,7 @@ void songMachine::updateUI()
 
     if (redraw)
     {
-        fillRect(song_title_rect,TFT_BLACK);
+        tft.fillIntRect(song_title_rect,TFT_BLACK);
         tft.setFont(Arial_18_Bold);
         tft.setTextColor(TFT_CYAN);
         tft.drawString(songParser::getTheSongName(),song_title_rect.xs+5,song_title_rect.ys+4);
@@ -466,7 +466,7 @@ void songMachine::updateUI()
             m_state & SONG_STATE_RUNNING ? "running" : "";
 
         #if 1
-            printJustified(
+            tft.printJustified(
                 song_state_rect.xs,
                 song_state_rect.ys,
                 song_state_rect.width()-5,
@@ -478,7 +478,7 @@ void songMachine::updateUI()
                 (char *)msg);
         #else
             tft.setTextColor(color);
-            fillRect(song_state_rect,TFT_BLACK);
+            tft.fillIntRect(song_state_rect,TFT_BLACK);
             tft.drawString(
                 msg,
                 song_state_rect.xs,
@@ -500,7 +500,7 @@ void songMachine::updateUI()
             tft.setFont(i?Arial_24:Arial_20_Bold);
             #if 1
                 const char *msg = m_last_show_msg[i] ? m_last_show_msg[i] : "";
-                printJustified(
+                tft.printJustified(
                     song_msg_rect[i].xs+5,
                     song_msg_rect[i].ys,
                     song_msg_rect[i].width()-5,
@@ -512,7 +512,7 @@ void songMachine::updateUI()
                     (char *) msg);
             #else
                 tft.setTextColor(m_last_show_color[i]);
-                fillRect(song_msg_rect[i],TFT_BLACK);
+                tft.(song_msg_rect[i],TFT_BLACK);
                 tft.drawString(
                     m_last_show_msg[i] ? m_last_show_msg[i] : "",
                     song_msg_rect[i].xs+5,

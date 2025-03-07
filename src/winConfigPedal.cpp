@@ -371,7 +371,7 @@ void winConfigPedal::showSelectedItem(int item, int selected)
 
     tft.setFont(Arial_16_Bold);
     tft.fillRect(x,y,w,h,bc);
-    printfJustified(
+    tft.printfJustified(
         x,	// x+5,
         y+5,	// y+7,
         w,	// w-10,
@@ -431,14 +431,14 @@ void winConfigPedal::updateUI()
 
         tft.setFont(Arial_12_Bold);
         int text_y = Y_OFFSET + 3 * RIGHT_LINE_HEIGHT;
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             TFT_YELLOW,
             0,
             false,
             "CALIB");
         text_y += 4*RIGHT_LINE_HEIGHT;
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             TFT_YELLOW,
             0,
@@ -464,7 +464,7 @@ void winConfigPedal::updateUI()
         }
 
         tft.setFont(m_in_calibrate ? Arial_12_Bold : Arial_12);
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             color,
             0,
@@ -473,7 +473,7 @@ void winConfigPedal::updateUI()
             getPrefPedalCalibMin(m_pedal_num));
         text_y += RIGHT_LINE_HEIGHT;
 
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             color,
             0,
@@ -506,7 +506,7 @@ void winConfigPedal::updateUI()
             int cur_point = m_cur_item-NUM_FIXED_ITEMS;
 
             tft.setFont(Arial_12);
-            printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+            tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
                 LCD_JUST_CENTER,
                 TFT_YELLOW,
                 0,
@@ -515,7 +515,7 @@ void winConfigPedal::updateUI()
                 points[cur_point].x);
             text_y += RIGHT_LINE_HEIGHT;
 
-            printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+            tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
                 LCD_JUST_CENTER,
                 TFT_YELLOW,
                 0,
@@ -733,7 +733,7 @@ void winConfigPedal::updateUI()
         tft.fillRect(RIGHT_COL,text_y,RIGHT_WIDTH,3*RIGHT_LINE_HEIGHT,0);
 
         tft.setFont(Arial_12);
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             TFT_YELLOW,
             0,
@@ -742,7 +742,7 @@ void winConfigPedal::updateUI()
             raw_value);
         text_y += RIGHT_LINE_HEIGHT;
 
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             TFT_YELLOW,
             0,
@@ -751,7 +751,7 @@ void winConfigPedal::updateUI()
             pedal->getRawValuePct());
         text_y += RIGHT_LINE_HEIGHT;
 
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             TFT_YELLOW,
             0,
@@ -761,7 +761,7 @@ void winConfigPedal::updateUI()
         text_y += 2*RIGHT_LINE_HEIGHT;
 
         tft.setFont(Arial_16_Bold);
-        printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
+        tft.printfJustified(RIGHT_COL,text_y,RIGHT_WIDTH,RIGHT_LINE_HEIGHT,
             LCD_JUST_CENTER,
             TFT_YELLOW,
             0,

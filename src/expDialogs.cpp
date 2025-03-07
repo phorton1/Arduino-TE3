@@ -50,7 +50,7 @@ void yesNoDialog::updateUI()
     {
         m_draw_needed = 0;
         tft.setFont(Arial_16_Bold);
-        printfvJustified(
+        tft.printfvJustified(
             60,
             100,
             360,

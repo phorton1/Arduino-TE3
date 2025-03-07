@@ -282,7 +282,7 @@ void winFtpTuner::updateUI()	// draw
 
 		// tuner frame
 
-		drawBorder(
+		tft.drawBorder(
 			TUNER_FRAME_X,
 			TUNER_FRAME_Y,
 			TUNER_FRAME_WIDTH,

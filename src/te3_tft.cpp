@@ -6,7 +6,6 @@
 #include <myDebug.h>
 
 
-
 #define dbg_la		1
 
 #define DEBUG_DRAW_FONT_CHAR   0
@@ -16,7 +15,7 @@
 	// Note that var-arg formats can only be half of this ?!?
     
 
-ILI9488_t3 tft(
+TE3_TFT tft(
     PIN_TFT_CS,
     PIN_TFT_DC,
     255,            // no RST
@@ -25,24 +24,23 @@ ILI9488_t3 tft(
     PIN_TFT_MISO);
 
 
-void init_te3_tft()
+TE3_TFT::TE3_TFT(uint8_t _CS, uint8_t _DC, uint8_t _RST, uint8_t _MOSI, uint8_t _SCLK, uint8_t _MISO) :
+    ILI9488_t3(_CS,_DC,_RST,_MOSI,_SCLK,_MISO)
+{}
+
+
+
+void TE3_TFT::init()
 {
-    display(0,"init_te3_tft()",0);
+    display(0,"TE3_TFT::init()",0);
     
     tft.begin();
     tft.setRotation(1);
     tft.fillScreen(TFT_BLACK);
-    // tft.setTextColor(TFT_WHITE);
-    // tft.setTextSize(3);
-    // tft.print("THERES NO SIMPLE PRINT STRING FUNCTION");
 }
 
 
-
-
-
-// extern
-void fillRect(int_rect &rect, int color)
+void TE3_TFT::fillIntRect(int_rect &rect, uint16_t color)
 {
     tft.fillRect(
         rect.xs,
@@ -53,11 +51,7 @@ void fillRect(int_rect &rect, int color)
 }
 
 
-
-
-
-// extern
-void drawBorder(int x, int y, int w, int h, int b, int color)
+void TE3_TFT::drawBorder(int x, int y, int w, int h, int b, uint16_t color)
 	// draw a frigin border
 {
 	tft.fillRect(x,		y,		b,		h,	color);
@@ -67,8 +61,8 @@ void drawBorder(int x, int y, int w, int h, int b, int color)
 }
 
 
-// extern
-void printfJustified(
+
+void TE3_TFT::printfJustified(
 	int x,
 	int y,
 	int w,
@@ -86,8 +80,7 @@ void printfJustified(
 }
 
 
-// extern
-void printfvJustified(
+void TE3_TFT::printfvJustified(
 	int x,
 	int y,
 	int w,
@@ -110,8 +103,7 @@ void printfvJustified(
 }
 
 
-// extern
-void printJustified(
+void TE3_TFT::printJustified(
 	int x,
 	int start_y,
 	int width,
@@ -136,16 +128,23 @@ void printJustified(
 		tft.fillRect(x,start_y,width,height,bc);
 
 	int y = start_y + 1;
-	int yoffset = 16;   // undefined: tft.getTextSizeY();   // getFontHeight();
+	int yoffset;    // paul missing implementation of tft.getTextSizeY();
 
-	// Will do it's best to print whole words on a line.
-	// If at least a single whole word wont fit,
-	//      the part of the word that will fit will be
-	// 		printed and the word will be continued on the next line
-	// If at least one word has been printed
-	//    will push full words to the next line skipping leading whitespace
+    if (font)
+        yoffset = font->line_space;
+    else if (gfxFont)
+        yoffset = 8 * gfxFont->yAdvance;
+    else
+        yoffset = 8 * textsize_y * 8;
 
-	while (*text && y < start_y + height - 1) // while the top of the next line is in the rectangle
+    // Will do it's best to print whole words on a line.
+    // If at least a single whole word wont fit,
+    //      the part of the word that will fit will be
+    // 		printed and the word will be continued on the next line
+    // If at least one word has been printed
+    //    will push full words to the next line skipping leading whitespace
+
+    while (*text && y < start_y + height - 1) // while the top of the next line is in the rectangle
 	{
 		int len = 0;
 		int word_len = 0;
@@ -156,8 +155,15 @@ void printJustified(
 		while (*text && len < MAX_PRINT_LEN)
 		{
 			char c = *text;
-			int pix = 16;   // undefined: tft.getTextSizeX();   // getCharWidth(c);
 
+            // int pix = 16;   // undefined: tft.getTextSizeX();   // getCharWidth(c);
+            // have to call this exceedingly complicated uncommented method with ILI9488_t3.h when
+            // all we simply want is the character width in pixels in the current font setting
+
+            int16_t pix = 0;    // pault missing implementation tft.getTextSizeX();
+            int16_t unused_y, unused_minx, unused_miny, unused_maxx, ununsed_maxy;
+            charBounds(c, &pix, &unused_y, &unused_minx, &unused_miny, &unused_maxx, &ununsed_maxy);
+            
 			if (c == '\n')
 			{
 				text++;

@@ -866,7 +866,7 @@ void rigLooper::updateUI()
 	if (redraw_all || m_quick_mode != m_last_quick_mode)
 	{
 		m_last_quick_mode = m_quick_mode;
-		fillRect(client_rect,TFT_BLACK);
+		tft.fillIntRect(client_rect,TFT_BLACK);
 	}
 
 
@@ -917,7 +917,7 @@ void rigLooper::updateUI()
 				int region_left = REL_VOL_LEFT_SPACE + i * (REL_VOL_BAR_WIDTH + REL_VOL_IN_BETWEEN_SPACE);
 
 		        tft.setFont(Arial_20_Bold);
-				printfJustified(
+				tft.printfJustified(
 					region_left,
 					REL_VOL_TEXT_Y,
 					REL_VOL_BAR_WIDTH,
@@ -1007,7 +1007,7 @@ void rigLooper::updateUI()
 
 			redraw_patch = 1;
 			if (!redraw_all)
-				fillRect(synth_rect,TFT_BLACK);
+				tft.fillIntRect(synth_rect,TFT_BLACK);
 
 			tft.setFont(Arial_32_Bold);
 			tft.setTextColor(TFT_CYAN);
@@ -1031,7 +1031,7 @@ void rigLooper::updateUI()
 		{
 			m_last_displayed_poly_mode = ftp_poly_mode;
 			tft.setFont(Arial_18_Bold);
-			printfJustified(
+			tft.printfJustified(
 				synth_rect.xe - 60,
 				synth_rect.ys + 10,
 				50,

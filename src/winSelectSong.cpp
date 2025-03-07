@@ -186,7 +186,7 @@ void winSelectSong::updateUI()	// draw
 	if (show_song_text && last_top_line != top_text_line)
 	{
 		last_top_line = top_text_line;
-		fillRect(full_client_rect,TFT_BLACK);
+		tft.fillIntRect(full_client_rect,TFT_BLACK);
 
 		int i = 0;
 		tft.setFont(0);			// PRH - was setDefaultFont() I believe that is setFont(0) in ILI9488.h
@@ -213,7 +213,7 @@ void winSelectSong::updateUI()	// draw
 
 	if (full_draw)
 	{
-		fillRect(full_client_rect,TFT_BLACK);
+		tft.fillIntRect(full_client_rect,TFT_BLACK);
 	}
 
 	// bring it into view if needed

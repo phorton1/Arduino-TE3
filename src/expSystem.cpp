@@ -498,7 +498,7 @@ void expSystem::updateUI()
 
 			for (int i=0; i<NUM_PEDALS; i++)
 			{
-				printfJustified(
+				tft.printfJustified(
 					i*pedal_width,
 					pedal_rect.ys + 5,
 					pedal_width,
@@ -533,7 +533,7 @@ void expSystem::updateUI()
 				tft.setFont(Arial_40_Bold);   // Arial_40);
 				tft.setTextColor(TFT_WHITE);
 
-				printfJustified(
+				tft.printfJustified(
 					12+i*pedal_width,
 					pedal_rect.ys + PEDAL_TEXT_AREA_HEIGHT + 7,
 					100,
@@ -557,7 +557,7 @@ void expSystem::updateUI()
 	if (draw_title)
 	{
 		draw_title = false;
-		fillRect(title_rect,TFT_BLACK);
+		tft.fillIntRect(title_rect,TFT_BLACK);
 
 		// title text
 
@@ -593,7 +593,7 @@ void expSystem::updateUI()
 	{
 		//  battery indicator frame
 
-		int battery_frame_color = ftp_battery_level == -1 ?
+		uint16_t battery_frame_color = ftp_battery_level == -1 ?
 			TFT_DARKGREY :
 			TFT_YELLOW;
 
