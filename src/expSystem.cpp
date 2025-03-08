@@ -360,6 +360,12 @@ void expSystem::buttonEvent(int row, int col, int event)
 //-----------------------------------------
 // timer handlers
 //-----------------------------------------
+// The critical timer handler appears to read from
+// the USB port, and if spoofing, send it to the host port,
+// which is all fine and dandy, but who reads from the
+// midi_host port?  And why am I getting device_in_1
+// monitor display after sending something to the midi_host?
+
 
 // static
 void expSystem::critical_timer_handler()
@@ -386,7 +392,8 @@ void expSystem::critical_timer_handler()
 	#endif
 	
         // enqueue it for processing (display from device)
-		// if we are monitoring the input port, or it is the remote FTP
+		// if we are monitoring the input port, or it is the remote FTP;
+		// I remember that I entirely reworked this stuff in TE2
 
 		if (getPref8(PREF_MONITOR_PORT0 + pindex) || (  		// if monitoring the port, OR
 			(getPref8(PREF_FTP_PORT) == FTP_PORT_REMOTE) &&     // if this is the PREF_FTP_PORT==2==Remote, AND
@@ -573,7 +580,6 @@ void expSystem::updateUI()
 
 		// midi indicator frames
 
-        // tft.setDrawColor(TFT_WHITE);
 		for (int i=0; i<NUM_PORTS; i++)
 		{
 			tft.fillCircle(

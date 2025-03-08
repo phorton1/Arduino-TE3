@@ -1,22 +1,18 @@
 //-------------------------------
 // prefs.h
 //-------------------------------
-// Although I loathe and hate this preferences design,
-// I forwarded it to TE3 for shotgun approach to porting TE1.
-// I really want to replace it with something sane.
-
 
 #pragma once
 
 #include "defines.h"
 
-#define TEENSY_EXPRESSION3_PREF_VERSION   30
+#define TEENSY_EXPRESSION3_PREF_VERSION   31
 
 #define PREF_NONE               -1
 
 
 //-------------------------------------------------
-// OUTPUT STREAMS
+// TEXT OUTPUT STREAMS
 //-------------------------------------------------
 // There are two potential output streams to the console,
 // USB_SERIAL_PORT and DBG_SERIAL_PORT. It is envisioned
@@ -39,52 +35,58 @@
 // messages.
 //
 // For sanity not all possible combinations will be implemented.
-// There is be one FOLLOW_DEVICE that can be either "Off",
+// There is one FOLLOW_DEVICE that can be either "Off",
 // or the USB or SERIAL (DBG) port.
 //
 //		FOLLOW 			- Off, USB, SERIAL
 //
 // Then each category of output can either use the FOLLOW device,
-// or be set specifically
+// or be set specifically:
 //
 //		TE3_DEBUG 		- Off, USB, SERIAL, FOLLOW
 //      HUB_DEBUG 		- Off, USB, SERIAL, FOLLOW
 //		RPI_DEBUG		- Off, USB, SERIAL, FOLLOW
 //		MONITOR_OUTPUT	- Off, USB, SERIAL, FOLLOW
 //
+//-----------------------------------------------------------
+// INPUT STREAM
+//-----------------------------------------------------------
+// The TE3_DEBUG Stream is generally used for input from
+// the console to the system.  This serial port does not
+// expect serial MIDI messages, but does expect:
+//
+//		- line oriented TEXT_COMMANDS
+//		  that work directly on TE3 (REBOOT, RESET, etc)
+//		  that are converted to serial midi to the HUB (REBOOT_AUDIO, DUMP_AUDIO, DUMP_SGTL, etc)
+//        that can reboot the rPi (reboot_rpi)
+//      - rPi kernel BINARY_UPLOAD protocol bracketed by ctrl-E (chr(5))
+//      - FILE_SYSTEM text protocol bracketed by ctrl-A (chr(1))
+//
+// I used to differentiate a port for the FILE_SYSTEM, but as of TE3, it is
+// now always synonymous with the TE3_DEBUG stream.
+// NOTE that even though the TPI_DEBUG output can be routed
+// differently than the TE3_DEBUG port, the kernel BINARY_UPLOAD
+// always takes place through the TE3_DEBUG port.
+
 
 // Enumeration of FOLLOW_DEVICE
 
 #define FOLLOW_DEVICE_OFF		0
-#define FOLLOW_DEVICE_USB		1
-#define FOLLOW_DEVICE_SERIAL	2
+#define FOLLOW_DEVICE_USB		1	// the teensy USB port
+#define FOLLOW_DEVICE_DBG		2	// the TE3 serial port plug on back panel
 
-// Enumeration of devices that can follow the FOLLOW_DEVICE
+// Enumeration for devices that can follow the FOLLOW_DEVICE
 
-#define OUTPUT_DEVICE_OFF	    0
-#define OUTPUT_DEVICE_USB		1
-#define OUTPUT_DEVICE_SERIAL	2
-#define OUTPUT_DEVICE_FOLLOW	3		// follows the FOLLOW_DEVICE
+#define SERIAL_DEVICE_OFF	    0
+#define SERIAL_DEVICE_USB		1
+#define SERIAL_DEVICE_DBG		2
+#define SERIAL_DEVICE_FOLLOW	3		// follows the FOLLOW_DEVICE
 
-
-
-
-
-
-
-
-
-//  values for PREF_FTP_PORT
+// values for PREF_FTP_PORT
 
 #define FTP_PORT_OFF            0
 #define FTP_PORT_HOST           1
 #define FTP_PORT_REMOTE         2
-
-// Enumeration of IO ports for FILE_SYSTEM
-
-#define FILE_SYS_DEVICE_OFF	    	0
-#define FILE_SYS_DEVICE_USB	    	1
-#define FILE_SYS_DEVICE_SERIAL		2
 
 
 
@@ -92,10 +94,10 @@
 // SETTINGS (PREFERENCES) OPTIONS
 //--------------------------------------------------------------------------------
 // EEPROM location 0 is magic
-// 		it is 237 for teensyExpression1 and 238 for teensyExpression2
-//      so that we can recognize the difference
-//      and automatically do a factory reset when switching between them
-// Otherwise, these defines are the locations in EEPROM of these items
+// 		it is a version number for the EEPROM itself so that
+//      we can automatically do a factory reset when the layout
+//		of the preferences change.
+// These defines are the locations in EEPROM of these items
 
 #define PREF_VERSION			0			// magic version number
 
@@ -103,15 +105,12 @@
 #define PREF_BRIGHTNESS         1           // 1..100 - default(40)
 
 #define PREF_FOLLOW_DEVICE      2           // off, USB, SERIAL - default(USB)
-
-#define PREF_TE3_DEBUG_OUTPUT 	3			// off, USB, SERIAL, FOLLOW - default(FOLLOW)
+#define PREF_TE3_DEBUG_STREAM 	3			// off, USB, SERIAL, FOLLOW - default(FOLLOW)
 #define PREF_HUB_DEBUG_OUTPUT	4			// off, USB, SERIAL, FOLLOW - default(FOLLOW)
 #define PREF_RPI_DEBUG_OUTPUT	5			// off, USB, SERIAL, FOLLOW - default(FOLLOW)
 
-
-#define PREF_FILE_SYSTEM_PORT   6
-#define PREF_SPOOF_FTP          7           // off, on - default(off)
-#define PREF_FTP_PORT           8           // off, Host, Remote, default(Host)
+#define PREF_SPOOF_FTP          6           // off, on - default(off)
+#define PREF_FTP_PORT           7           // off, Host, Remote, default(Host)
 
 #define FTP_OUTPUT_PORT    (getPref8(PREF_SPOOF_FTP) ? 1 : getPref8(PREF_FTP_PORT))
 
@@ -289,4 +288,3 @@ extern uint8_t portMonitorPref(int p, int off);
 extern int16_t getPrefMin(int i);
 extern int16_t getPrefMax(int i);
 extern const char **getPrefStrings(int i);
-

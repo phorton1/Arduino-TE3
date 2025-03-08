@@ -1,3 +1,9 @@
+// PRH - this needs a major rework.
+// It does not handle serial midi at all, and now I would like
+// to be able to monitor those as well, but even before that
+// the comments and usage are unclear.
+
+
 #include "myDebug.h"
 #include "midiQueue.h"
 #include "defines.h"
@@ -99,7 +105,9 @@ void _processMessage(uint32_t i);
 // immediate sends as device (cable0)
 //-------------------------------------
 
-void mySendMidiMessage(uint8_t msg_type, uint8_t channel, uint8_t p1, uint8_t p2)
+static void mySendMidiMessage(uint8_t msg_type, uint8_t channel, uint8_t p1, uint8_t p2)
+    // now static in TE3
+    // Note #if 1's in the following two methods
 {
     msgUnion msg(
         msg_type,   //  | PORT_MASK_OUTPUT,
@@ -166,77 +174,83 @@ void sendSerialControlChange(uint8_t cc_num, uint8_t value, const char *debug_ms
 
 
 
-void mySendFtpSysex(int length, uint8_t *buf)
-    // called by me: midi_host.sendSysEx(sizeof(ftpRequestPatch),ftpRequestPatch,true);
-    // Pauls API: void sendSysEx(uint32_t length, const uint8_t *data, bool hasTerm=false, uint8_t cable=0)
-{
-    int ftp_output_port = FTP_OUTPUT_PORT;
-    if (ftp_output_port)            // Host or Remote
+#if 0   // not currently called
+    void mySendFtpSysex(int length, uint8_t *buf)
+        // OLD COMMENT:
+        // called by me: midi_host.sendSysEx(sizeof(ftpRequestPatch),ftpRequestPatch,true);
+        // Pauls API: void sendSysEx(uint32_t length, const uint8_t *data, bool hasTerm=false, uint8_t cable=0)
     {
-        int pindex = INDEX_MASK_OUTPUT | INDEX_MASK_CABLE |
-            (ftp_output_port == 1 ? INDEX_MASK_HOST : 0);
-
-        msgUnion msg(0);
-        int len = length;
-        uint8_t *p = buf;
-        bool started = false;
-
-        msg.b[0] = 0x14;
-            // we are always writing to cable 1 (0x10)
-            // the 4 is the message type
-
-        bool flush_usb_midi = false;
-
-        while (len)
+        int ftp_output_port = FTP_OUTPUT_PORT;
+        if (ftp_output_port)            // Host or Remote
         {
-            // create the 32 bit packet
+            int pindex = INDEX_MASK_OUTPUT | INDEX_MASK_CABLE |
+                (ftp_output_port == 1 ? INDEX_MASK_HOST : 0);
 
-            int take = 3;
-            if (started && len <= 3)
-            {
-                take = len;
-                msg.b[0] = 0x15 + len-1;
-            }
-            for (int i=0; i<3; i++)
-            {
-                msg.b[i+1] = (i<take) ? *p++ : 0;
-            }
-            len -= take;
-            started = 1;
+            msgUnion msg(0);
+            int len = length;
+            uint8_t *p = buf;
+            bool started = false;
 
-            if (ftp_output_port == 2)   // Remote
-            {
-                flush_usb_midi = true;
-                usb_midi_write_packed(msg.i);
-                enqueueProcess(msg.i | PORT_MASK_OUTPUT);
-            }
-            #if WITH_MIDI_HOST  // PRH PRH _RH
-            else
-            {
-                midi_host.write_packed(msg.i);
-                enqueueProcess(msg.i | PORT_MASK_OUTPUT | PORT_MASK_HOST);
-            }
-            #endif
+            msg.b[0] = 0x14;
+                // we are always writing to cable 1 (0x10)
+                // the 4 is the message type
 
-            theSystem.midiActivity(pindex);
+            bool flush_usb_midi = false;
+
+            while (len)
+            {
+                // create the 32 bit packet
+
+                int take = 3;
+                if (started && len <= 3)
+                {
+                    take = len;
+                    msg.b[0] = 0x15 + len-1;
+                }
+                for (int i=0; i<3; i++)
+                {
+                    msg.b[i+1] = (i<take) ? *p++ : 0;
+                }
+                len -= take;
+                started = 1;
+
+                if (ftp_output_port == 2)   // Remote
+                {
+                    flush_usb_midi = true;
+                    usb_midi_write_packed(msg.i);
+                    enqueueProcess(msg.i | PORT_MASK_OUTPUT);
+                }
+                #if WITH_MIDI_HOST  // PRH PRH _RH
+                else
+                {
+                    midi_host.write_packed(msg.i);
+                    enqueueProcess(msg.i | PORT_MASK_OUTPUT | PORT_MASK_HOST);
+                }
+                #endif
+
+                theSystem.midiActivity(pindex);
+            }
+
+            if (flush_usb_midi)
+                usb_midi_flush_output();
+
         }
-
-        if (flush_usb_midi)
-            usb_midi_flush_output();
-
+        else
+        {
+            warning(0,"PREF_FTP_PORT is NONE in mySendFtpSysex(%d)",length);
+        }
     }
-    else
-    {
-        warning(0,"PREF_FTP_PORT is NONE in mySendFtpSysex(%d)",length);
-    }
-}
-
+#endif
 
 
 
 //-------------------------------------
 // outgoing Message Processing
 //-------------------------------------
+// Once again, I don't quite understand how this is supposed to work.
+// I'm kind of hoping that all this "outgoing" stuff is only for FTP,
+// and then when we, for instance, send a program change or pedal CC,
+// it happens immediately.
 
 void _enqueueOutgoing(uint32_t msg)
 {
@@ -280,8 +294,32 @@ void sendFTPCommandAndValue(uint8_t command, uint8_t value)
     display(0,"sendFTPCommandAndValue(%02x,%02x) pending_count=%d",command,value,pending_count);
     pending_count++;
 
+    // For USB output the first two bytes of the outgoing message are irrelevant,
+    // as they are setup in the message that is rebuilt below in sendPendingCommand().
+    // On the midiHost the entire 32 bit msg created here is sent to the midi host
+    //
+    // Using MidiOX on windows, I am able to succesfully talk to the FTP if:
+    //
+    //      FTP Port is set to "Remote" in TE3 configuration
+    //      "MIDIIN2(TE3)" is set to an input
+    //      "Fishman TriplePlay" is set to an input
+    //      "MIDIOUT2(TE3)" is set to an output
+    //      "Fishman TriplePlay" is set to an output
+    //      Under View-Port Routings
+    //          - remove all with right-menu command
+    //          - draw line connecting Fishman TriplePlay input to MIDIOUT2(T33)
+    //          - draw line connecting MIDIN2(TE3) input to Fishman TriplePlay output
+    //
+    // Initial MIDI_HOST testing:
+    //
+    //      FTP Port set to "Host" in configuration
+    //      It looks like with either cable 0 or 1 here, we get appropriate
+    //      host_out_0 or host_out_1 message from the midi device, but
+    //      strangely we then get device_in1 messages that look like the replies,
+    //      and which are not handled by the monitor parser
+    
     msgUnion msg(
-        0x1B,
+        0x1B,                    // 0x1n = send to FTP on midi_host on cable "1" (ignored on FTP to USB)
         0xB7,
         FTP_COMMAND_OR_REPLY,    // 0x1f
         command);
@@ -306,6 +344,12 @@ void sendPendingCommand()
     {
         if (ftp_output_port == 2)   // Remote
         {
+            #define FTP_USB_CABLE   1
+                // Use the 1st (not the zeroeth) uSB output
+                // midi port for FTP communications so that
+                // the 0th port is reserved for direct comms
+                // to the iPad
+
             uint32_t cmd = (pending_command >> 24) & 0xFF;
             uint32_t val = (pending_command_value >> 24) & 0xFF;
             display(0,"SENDING cmd=%02x  val=%02x  TO TEENSYDUINO",cmd,val);
@@ -313,12 +357,12 @@ void sendPendingCommand()
                 0x1F,
                 cmd,
                 8,
-                1);         // cable1 !
+                FTP_USB_CABLE);         // cable1 !
             usbMIDI.sendControlChange(
                 0x3F,
                 val,
                 8,
-                1);
+                FTP_USB_CABLE);
 
             theSystem.midiActivity(INDEX_MASK_OUTPUT | INDEX_MASK_CABLE);   // it IS port #3
             enqueueProcess(pending_command | PORT_MASK_OUTPUT);
@@ -432,6 +476,14 @@ void dequeueProcess()
 
 
 // port classification for _processOMessageg;
+
+// I am a little confused.  This code seems to imply that we
+// want to look at the "CONTROL" port, and not the "Fishman TriplePlay"
+// port.  I seem to remember that there is a diffence in some cases,
+// perhaps having to do with tuning/modes.
+//
+// However, that still does not explain why we are getting "device_in_1"
+// message after we send something to the midi_host.
 
 
 bool isFtpPort(int idx)
@@ -575,17 +627,8 @@ void _processMessage(uint32_t i)
     bool is_ftp_port = isFtpPort(pindex);
     bool is_ftp_controller = isFtpController(pindex);
 
-    uint8_t monitor_output = getPref8(PREF_MONITOR_OUTPUT);   // off, USB, Serial, Follows, default(Off)
-    if (monitor_output == OUTPUT_DEVICE_FOLLOW)
-        monitor_output = getPref8(PREF_FOLLOW_DEVICE);
-
-    Stream *out_stream =
-        monitor_output == FOLLOW_DEVICE_SERIAL ? (Stream *) &DBG_SERIAL_PORT :
-        monitor_output == FOLLOW_DEVICE_USB ? (Stream *) &USB_SERIAL_PORT :
-        0;
-
     bool show_it =
-        out_stream &&
+        MONITOR_OUTPUT &&
         getPref8(PREF_MONITOR_PORT0 + pindex);
 
     // display(0,"show_it=%d pindex=%02x type=%d",show_it,pindex,type,channel);
@@ -644,7 +687,7 @@ void _processMessage(uint32_t i)
             if (buf[buf_len-1] != 0xf7)
                 warning(0,"sysex does not end with F7",0);
 
-            if (out_stream &&
+            if (MONITOR_OUTPUT &&
                 getPref8(PREF_MONITOR_PORT0 + pindex))
             {
                 int show_sysex = getPref8(PREF_MONITOR_SYSEX);
@@ -656,15 +699,15 @@ void _processMessage(uint32_t i)
                         port_name,
                         INDEX_CABLE(pindex),
                         buf_len);
-                    out_stream->println(buf2);
+                    MONITOR_OUTPUT->println(buf2);
                 }
 
                 // if (is_ftp_port &&
                 if (getPref8(PREF_MONITOR_PARSE_FTP_PATCHES))
-                    showFtpPatch(out_stream,color,bg_color,is_ftp_controller,buf,buf_len);
+                    showFtpPatch(MONITOR_OUTPUT,color,bg_color,is_ftp_controller,buf,buf_len);
 
                 if (show_sysex == 2)
-                    display_bytes_long(0,0,buf,buf_len,out_stream);
+                    display_bytes_long(0,0,buf,buf_len,MONITOR_OUTPUT);
 
             }   // show_sysex
         }   // is_done
@@ -1086,7 +1129,7 @@ void _processMessage(uint32_t i)
             show_it = show_it && getPref8(PREF_MONITOR_EVERYTHING_ELSE);
         }
 
-        if (show_it && out_stream)
+        if (show_it && MONITOR_OUTPUT)
         {
             char buf[200];
             sprintf(buf,"\033[%d;%dm %s(%d,%2d)  %02X  %-16s  %02x  %02x  %s",
@@ -1103,11 +1146,11 @@ void _processMessage(uint32_t i)
 
             #if 1
                 // putty fix for colors background colors wrapping
-                out_stream->print(buf);
-                out_stream->print("\033[37;40m");
-                out_stream->println();
+                MONITOR_OUTPUT->print(buf);
+                MONITOR_OUTPUT->print("\033[37;40m");
+                MONITOR_OUTPUT->println();
             #else
-                out_stream->println(buf);
+                MONITOR_OUTPUT->println(buf);
             #endif
 
         }   // show_it

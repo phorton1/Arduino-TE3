@@ -21,7 +21,9 @@
 #include "expSystem.h"
 
 #define dbg_rots    0
-#define dbg_mpc     -1
+
+#define DUMP_MPC_REGISTERS     0
+
 
 // The rotaries I have are 40 incs per rev.
 // The sensitivity is an aribrary floating point increment per indent.
@@ -101,15 +103,16 @@ uint8_t te3_rotaries::last_value[NUM_ROTARIES];
 
 void te3_rotaries::init()   // int int_pin, uint32_t freq /*= 100000*/)
 {
+    display(dbg_rots,"te3_rotaries::init() started",0);
+
     s_freq = 100000;         
     s_int_pin = PIN_ROTARY_INTERRUPT;
 
     Wire.begin();
 
-    if (dbg_mpc < 0)
+    #if DUMP_MPC_REGISTERS
         dumpMpcRegs("initializing mpc23017");
-    else
-        display(dbg_mpc,"te3_rotaries::init() started",0);
+    #endif
 
     // We use most of the mpc23017 default values, esp the
     // IOCONN (configuration) register which determines the
@@ -140,15 +143,15 @@ void te3_rotaries::init()   // int int_pin, uint32_t freq /*= 100000*/)
     // mpcWrite2(INTCONA,0x00);     // (default) 0=use state change, not defval
     mpcWrite2(GPPUA,  0xff);        // enable pullups
 
-    if (dbg_mpc < 0)
+    #if DUMP_MPC_REGISTERS
         dumpMpcRegs("after initialization");
-
+    #endif
+    
     // attach the interrupt
 
     attachInterrupt(digitalPinToInterrupt(s_int_pin), swIRQ, FALLING);
 
-    if (dbg_mpc == 0)
-        display(dbg_mpc,"te3_rotaries::init() finished",0);
+    display(dbg_rots,"te3_rotaries::init() finished",0);
 }
 
 
@@ -219,16 +222,16 @@ uint8_t te3_rotaries::mpcReadByte(uint8_t reg)
 void te3_rotaries::swIRQ()
     // Interrupt Service Routine for the MCP23017.
     // The time to read registers is approximately
-    // 12 clock cycles + 8 * the number of bytes.
+    // 12 clock cycles + 8 * the two bytes we read
+    // into the uint16_t s_gpio_val = 28 clock cycles
     //
-    // I don't think we care about which pin caused the interrupt.
+    // We don't care which pin caused the interrupt.
     // Nor do we care about the potential difference between
     // the values "captured" at the time of the interrupt and
     // the "current" values in the gpio register.
     //
-    // Therefore, we want to read 2 bytes, and that should
-    // take approximately 28 clock cycles. At 100kHz, thats
-    // about 280us. At 200kHz, it would be even less.
+    // More time is spent calculating the potentially
+    // changed rotary values.
 {
     s_int_count++;
     uint16_t last_val = s_gpio_val;
@@ -290,6 +293,11 @@ void te3_rotaries::calcRotary(int rot_num, uint16_t last_val)
 
 
 void te3_rotaries::loop()
+    // As opposed to the interrupt handler which is
+    // quick and constant in length, the loop() method
+    // checks for changes (and will eventually debounce
+    // the buttons) and generates events to send serial
+    // midi, update the UI, etc.
 {
     for (int i=0; i<NUM_ROTARIES; i++)
     {

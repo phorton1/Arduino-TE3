@@ -19,6 +19,17 @@
 #define DBG_SERIAL_PORT		Serial7		// pins 28,29
 #define HUB_SERIAL_PORT     Serial8		// pins 34,35
 
+// Serial port accessors (for speed)
+
+extern Stream *TE3_DEBUG_STREAM;
+extern Stream *HUB_DEBUG_OUTPUT;
+extern Stream *RPI_DEBUG_OUTPUT;
+extern Stream *MONITOR_OUTPUT;
+
+
+extern void initDebugStreams();
+	// in TE3.ino
+
 
 extern void handleSerial();
 	// in serial.cpp

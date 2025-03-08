@@ -88,7 +88,7 @@ void createOptions()
 	// midi monitor
 
 	configOption *monitor = new configOption(rootOption,"Midi Monitor", 0,  PREF_MONITOR_OUTPUT);
-	new configOption(monitor,"Midi Monitor", 0, PREF_MONITOR_OUTPUT);
+	new configOption(monitor,"Midi Monitor", OPTION_TYPE_STREAM_CHANGED, PREF_MONITOR_OUTPUT);
 
 	configOption *mon_ports = new configOption(monitor,"Ports");
 	new configOption(mon_ports,"Duino Input 0",  0, PREF_MONITOR_DUINO_INPUT0);
@@ -155,15 +155,15 @@ void createOptions()
 	// all other preferences
 
 	configOption *system = new configOption(rootOption,"System " TEENSY_EXPRESSION_VERSION);
-	new configOption(system,"TE3 Debug", 0,	PREF_TE3_DEBUG_OUTPUT);
-	new configOption(system,"HUB Debug", 0,	PREF_HUB_DEBUG_OUTPUT);
-	new configOption(system,"RPI Debug", 0,	PREF_RPI_DEBUG_OUTPUT);
+	new configOption(system,"Follow Device",OPTION_TYPE_STREAM_CHANGED,	PREF_FOLLOW_DEVICE);
+	new configOption(system,"TE3 Debug",  	OPTION_TYPE_STREAM_CHANGED,	PREF_TE3_DEBUG_STREAM);
+	new configOption(system,"HUB Debug",   	OPTION_TYPE_STREAM_CHANGED,	PREF_HUB_DEBUG_OUTPUT);
+	new configOption(system,"RPI Debug",   	OPTION_TYPE_STREAM_CHANGED,	PREF_RPI_DEBUG_OUTPUT);
 
-
-
-	new configOption(system,"File Sys Port",	OPTION_TYPE_NEEDS_REBOOT,	PREF_FILE_SYSTEM_PORT);
 	new configOption(system,"Calibrate Touch");
 
+	// remember that a long press on button 3 in config mode reboots
+	
 	new configOption(rootOption,"Factory Reset",OPTION_TYPE_FACTORY_RESET);
 }
 
@@ -358,6 +358,9 @@ void configSystem::onButtonEvent(int row, int col, int event)
 			checkDirty();
 
 			// re-init things that might have changed
+
+			initDebugStreams();
+
             // setLEDBrightness(optBrightness.orig_value);
 			// value on config options is superflous ?!?
 
@@ -408,6 +411,8 @@ void configSystem::onButtonEvent(int row, int col, int event)
 			else if (cur_option->hasValue())
 			{
 				cur_option->incValue(1);
+				if (cur_option->type & OPTION_TYPE_STREAM_CHANGED)
+					initDebugStreams();
 				checkDirty();
 			}
 			else if (cur_option->m_setter_fxn)

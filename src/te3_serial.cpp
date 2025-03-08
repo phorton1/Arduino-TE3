@@ -66,6 +66,7 @@
 #include <sgtl5000midi.h>
 #include "commonDefines.h"
 #include "expSystem.h"
+#include "prefs.h"
 
 
 #define dbg_cmd  0
@@ -251,19 +252,17 @@ static void handleCommand(const String &left, const String &right)
 // At a minimum we need to know what port is in play and whether
 // we are in a kernel upload or file_server mode for TE3 and the rPi.
 
-#define SERIAL_PORT_NUM_USB     0
+#define SERIAL_PORT_NUM_TE3     0
 #define SERIAL_PORT_NUM_HUB     1
 #define SERIAL_PORT_NUM_RPI     2
-#define SERIAL_PORT_NUM_DBG     3
 
 static const char *serialPortName(int serial_port_num)
 {
     switch (serial_port_num)
     {
-        case SERIAL_PORT_NUM_USB : return "USB";
+        case SERIAL_PORT_NUM_TE3 : return "TE3";
         case SERIAL_PORT_NUM_HUB : return "HUB";
         case SERIAL_PORT_NUM_RPI : return "RPI";
-        case SERIAL_PORT_NUM_DBG : return "DBG";
     }
     return "";
 }
@@ -282,15 +281,14 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
         uint8_t byte = stream->read();
         // display(0,"stream got(%c)=0x%2x",(c>=' '?c:' '),c);
 
-        if ((serial_port_num == SERIAL_PORT_NUM_USB ||
-             serial_port_num == SERIAL_PORT_NUM_DBG))
+        if (serial_port_num == SERIAL_PORT_NUM_TE3)
         {
             if (byte == 0x02)      // ctrl-B
             {
                 rebootPi();
                 return 0;
             }
-            if (byte == 0x05)   // ctrl-E
+            if (byte == 0x05)       // ctrl-E
             {
                 display(0,"starting in_upload_binary mode",0);
                 in_upload_binary = 1;
@@ -382,12 +380,16 @@ static void processCommandLine(const char *line)
 
 void handleSerial()
 {
+    // extern Stream *TE3_DEBUG_STREAM;
+    // extern Stream *HUB_DEBUG_OUTPUT;
+    // extern Stream *RPI_DEBUG_OUTPUT;
+
     if (in_upload_binary)
     {
         static uint32_t ctrl_E_time = 0;
-        while (USB_SERIAL_PORT.available())
+        while (TE3_DEBUG_STREAM->available())
         {
-            uint8_t c = USB_SERIAL_PORT.read();
+            uint8_t c = TE3_DEBUG_STREAM->read();
             if (c == 5)
                 ctrl_E_time = millis();
             else
@@ -397,7 +399,7 @@ void handleSerial()
         while (RPI_SERIAL_PORT.available())
         {
             uint8_t c = RPI_SERIAL_PORT.read();
-            USB_SERIAL_PORT.write(c);
+            TE3_DEBUG_STREAM->write(c);
         }
         if (ctrl_E_time && millis() - ctrl_E_time > 200)
         {
@@ -419,7 +421,7 @@ void handleSerial()
         &rpi_serial_len);
     if (rpi_line)
     {
-        USB_SERIAL_PORT.println(rpi_line);
+        RPI_DEBUG_OUTPUT->println(rpi_line);
     }
 
     // process HUB_SERIAL_PORT
@@ -433,17 +435,16 @@ void handleSerial()
         &hub_serial_len);
     if (hub_line)
     {
-        USB_SERIAL_PORT.println(hub_line);
+        HUB_DEBUG_OUTPUT->println(hub_line);
     }
 
-    // process USB_SERIAL_PORT
-    // duplicate this code for SERIAL_PORT_NUM_DBG
+    // process the main TE3 DEBUG_SERIAL_PORT
 
     static int usb_serial_len = 0;
     static char usb_serial_buf[MAX_STRING+1];
     char *usb_line = bufferLine(
-        SERIAL_PORT_NUM_USB,
-        &USB_SERIAL_PORT,
+        SERIAL_PORT_NUM_TE3,
+        TE3_DEBUG_STREAM,
         usb_serial_buf,
         &usb_serial_len);
     if (usb_line)

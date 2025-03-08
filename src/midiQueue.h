@@ -127,8 +127,12 @@ extern bool showPerformanceCCs;
 
 
 extern void enqueueProcess(uint32_t msg);
-    // called by myMidiHost::rx_data for messages from host and
-    // expSystem::critical_timer_handler() for messages from device
+    // Put a message into the "process queue" that can later
+    // be dealt with by dequeueProcess().  Original comments
+    // said that it was "called by myMidiHost::rx_data for messages
+    // from host and expSystem::critical_timer_handler() for messages
+    // from device" but in reality it was also called by mySendMidiMessage()
+    // which is called for any outgoing program_change or CC messages.
 
 extern void dequeueProcess();
     // called by expSystem::timer_handler() or updateUI()
@@ -136,8 +140,11 @@ extern void dequeueProcess();
     // and the return value is ignored, there are
     // no messages eneuqued for display
 
-extern void mySendFtpSysex(int length, uint8_t *buf);
-extern void mySendMidiMessage(uint8_t msg_type, uint8_t channel, uint8_t p1, uint8_t p2);
+// extern void mySendFtpSysex(int length, uint8_t *buf);
+//      was never called; may be vestigial to polymode stuff
+// extern void mySendMidiMessage(uint8_t msg_type, uint8_t channel, uint8_t p1, uint8_t p2);
+//      now a static method
+
 extern void mySendDeviceProgramChange(uint8_t prog_num, uint8_t channel);
 extern void mySendDeviceControlChange(uint8_t cc_num, uint8_t value, uint8_t channel);
 

@@ -68,6 +68,39 @@ void clearTE3Busy()
 }
 
 
+//---------------------------------------------
+// Stream setup
+//---------------------------------------------
+
+Stream *TE3_DEBUG_STREAM;
+Stream *HUB_DEBUG_OUTPUT;
+Stream *RPI_DEBUG_OUTPUT;
+Stream *MONITOR_OUTPUT;
+
+static void setOneStream(uint8_t how_follow, int pref, Stream **stream)
+{
+	uint8_t how = getPref8(pref);
+	if (how == SERIAL_DEVICE_FOLLOW)
+		how = how_follow;
+	*stream =
+		how == SERIAL_DEVICE_DBG ? (Stream *) &DBG_SERIAL_PORT :
+		how == SERIAL_DEVICE_USB ? (Stream *) &USB_SERIAL_PORT : 0;
+}
+
+
+
+void initDebugStreams()
+	// called after prefs inited and streams are started
+	// and when stream preferences change
+{
+	uint8_t how_follow = getPref8(PREF_FOLLOW_DEVICE);
+	setOneStream(how_follow, PREF_TE3_DEBUG_STREAM, &TE3_DEBUG_STREAM);
+	setOneStream(how_follow, PREF_HUB_DEBUG_OUTPUT, &HUB_DEBUG_OUTPUT);
+	setOneStream(how_follow, PREF_RPI_DEBUG_OUTPUT, &RPI_DEBUG_OUTPUT);
+	setOneStream(how_follow, PREF_MONITOR_OUTPUT, &MONITOR_OUTPUT);
+	dbgSerial = TE3_DEBUG_STREAM;
+}
+
 
 //---------------------------------------------
 // setup
@@ -96,8 +129,8 @@ void setup()
 
     bool prefs_reset = init_global_prefs();
 	uint8_t how_follow = getPref8(PREF_FOLLOW_DEVICE);
-	uint8_t how_debug_te3 = getPref8(PREF_TE3_DEBUG_OUTPUT);
-	if (how_debug_te3 == OUTPUT_DEVICE_FOLLOW)
+	uint8_t how_debug_te3 = getPref8(PREF_TE3_DEBUG_STREAM);
+	if (how_debug_te3 == SERIAL_DEVICE_FOLLOW)
 		how_debug_te3 = how_follow;
 
 	//-----------------------------------
@@ -106,8 +139,9 @@ void setup()
 	// and assign it to myDebug based on pref
 
 	DBG_SERIAL_PORT.begin(115200);
+	delay(200);
 	DBG_SERIAL_PORT.println("TE3 DBG_SERIAL_PORT");
-	if (how_debug_te3 == OUTPUT_DEVICE_SERIAL)
+	if (how_debug_te3 == SERIAL_DEVICE_DBG)
 		dbgSerial = (Stream *) &DBG_SERIAL_PORT;
 
 	// start ourself as a USB device
@@ -118,17 +152,21 @@ void setup()
 		// calls setUSBSerialNum() in _usbNames.c
 		// before staring USB device
 	USB_SERIAL_PORT.begin(115200);
-	if (how_debug_te3 == OUTPUT_DEVICE_USB)
+	if (how_debug_te3 == SERIAL_DEVICE_USB)
 		dbgSerial = (Stream *) &USB_SERIAL_PORT;
 
+	// start the other streams and
 	// show the version with myDebug
 
 	delay(500);
+	HUB_SERIAL_PORT.begin(115200);
+	RPI_SERIAL_PORT.begin(115200);		// 460800);	// 115200);
+
 	const char *version_msg = "teensyExpression " TEENSY_EXPRESSION_VERSION " setup() started ... ";
 	display(0,version_msg,0);
 
-
 	digitalWrite(PIN_LED_T3_BUSY,1);
+	initDebugStreams();
 
 
 	//-----------------------------------
@@ -153,10 +191,10 @@ void setup()
     }
 
 	const char *te3_dbg_output_name =
-		how_debug_te3 == OUTPUT_DEVICE_OFF ? "OFF" :
-		how_debug_te3 == OUTPUT_DEVICE_SERIAL ? "SERIAL PORT" :
+		how_debug_te3 == SERIAL_DEVICE_OFF ? "OFF" :
+		how_debug_te3 == SERIAL_DEVICE_DBG ? "SERIAL PORT" :
 		"USB PORT";
-	tft.print("    TE3_DEBUG_OUTPUT IS ");
+	tft.print("    TE3_DEBUG_STREAM IS ");
 	tft.println(te3_dbg_output_name);
 
 	delay(do_delay);
@@ -165,12 +203,9 @@ void setup()
 
 
 	//-------------------------------------------
-	// start other serial ports
+	// flash rPi LEDS
 	//-------------------------------------------
-	// and flash rPi LEDS
-	
-	HUB_SERIAL_PORT.begin(115200);
-	RPI_SERIAL_PORT.begin(115200);		// 460800);	// 115200);
+
 	digitalWrite(PIN_LED_T3_BUSY,0);
 
 	pinMode(PIN_LED_RPI_RUN,OUTPUT);
@@ -217,8 +252,12 @@ void setup()
 	// start the system
 	//--------------------------------------------------
 
-	theSystem.begin();
+	#if WITH_MIDI_HOST
+		midi_host.init();
+	#endif
 
+	theSystem.begin();
+		
 	digitalWrite(PIN_LED_T3_BUSY,0);
 
     display(0,"TE3.ino setup() finished",0);

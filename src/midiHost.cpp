@@ -7,7 +7,7 @@
 
 #include "midiHost.h"
 #include <myDebug.h>
-// #include "midiQueue.h"
+#include "midiQueue.h"
 // #include "theSystem.h"
 
 #if WITH_MIDI_HOST
@@ -37,21 +37,48 @@
                 uint32_t msg32 = rx_buffer[i];
                 if (msg32)
                 {
+                    // ok, so clearly we want to write from the host to the usb port
+                    // as quickly as possible to actually use the FTP when its plugged
+                    // into the host port.
+
                     any = 1;
                     usb_midi_write_packed(msg32);
 
-                    #if DEBUG_MIDI_HOST
-                        // debugging withink the irq DEFINITELY mucks things up
+                    // I chased my tail for a bit on this because I thought I was getting
+                    // spurious device_in_1 messages, however, it turns out that I had
+                    // left midiOx running and apparently it was echoing them back to me.
+
+                    #if 0   // DEBUG_MIDI_HOST
+                        // debugging within the irq DEFINITELY mucks things up
                             display(0,"host:  0x%08x",msg32);
                     #endif
 
-                    // Not implemented yet
+                    // When I started the TE3 port, there was this one vestigial
+                    // line here, commented out:
+                    //
+                    //       enqueueMidi(false, MIDI_PORT_HOST1 | (msg32 & PORT_MASK), msg32);
+                    //
+                    // With the following notes:
+                    //
+                    //      port (b[0] comes in as 0x00 or 0x10
+                    //      we bump it to MIDI_PORT_HOST1 = 0x40 or
+                    //      MIDI_PORT_HOST2 = 0x50;
+                    //
+                    // However, there is no longer any enqueueMidi() method.
 
-                    // port comes in as 0x00 or 0x10
-                    // we bump it to MIDI_PORT_HOST1 = 0x40 or
-                    // MIDI_PORT_HOST2 = 0x50;
+                    #if 1
 
-                    // enqueueMidi(false, MIDI_PORT_HOST1 | (msg32 & MIDI_PORT_NUM_MASK), msg32);
+                        // bump the 0x0n/0x1n to 0x4n/0x5n
+                        // and enqueue it for processing
+                        
+                        msg32 |= (PORT_INDEX_HOST_INPUT0 << 4);
+                        enqueueProcess(msg32);
+
+                        // OK, that got it working, but I still don't like
+                        // the vestigial TE1 message handling
+                        
+
+                    #endif
 
                 }
             }

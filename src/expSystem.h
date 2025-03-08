@@ -16,7 +16,7 @@
 #define WIN_FLAG_OWNER_TITLE        0x00001000
     // window calls theSystem.setTitle() itself
 #define WIN_FLAG_SHOW_PEDALS        0x00002000
-    // window calls theSystem.setTitle() itself
+    // window shows pedals (or not)
 
 
 // globally defined screen regions

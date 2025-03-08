@@ -112,14 +112,14 @@ typedef struct {
 
 #define FOLLOW_DEVICE_OFF		0
 #define FOLLOW_DEVICE_USB		1
-#define FOLLOW_DEVICE_SERIAL	2
+#define FOLLOW_DEVICE_DBG	2
 
 // Enumeration of devices that can follow the FOLLOW_DEVICE
 
-#define OUTPUT_DEVICE_OFF	    0
-#define OUTPUT_DEVICE_USB		1
-#define OUTPUT_DEVICE_SERIAL	2
-#define OUTPUT_DEVICE_FOLLOW	3		// follows the FOLLOW_DEVICE
+#define SERIAL_DEVICE_OFF	    0
+#define SERIAL_DEVICE_USB		1
+#define SERIAL_DEVICE_DBG	2
+#define SERIAL_DEVICE_FOLLOW	3		// follows the FOLLOW_DEVICE
 
 // Enumeration of the serial input device
 
