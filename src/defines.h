@@ -27,10 +27,6 @@ extern Stream *RPI_DEBUG_OUTPUT;
 extern Stream *MONITOR_OUTPUT;
 
 
-#define ACTIVE_FILE_SYS_DEVICE	TE3_DEBUG_STREAM
-	// compatibility layer for fileSystem (TE1/TE2/TE3)
-
-
 extern void initDebugStreams();
 	// in TE3.ino
 
@@ -259,7 +255,15 @@ extern "C" {
 }
 
 
+//----------------------------------------
+// compatibility layer for fileSystem (TE1/TE2/TE3)
+//----------------------------------------
 
+#define ACTIVE_FILE_SYS_DEVICE	TE3_DEBUG_STREAM
+	// used in fileSerial.cpp
+#define SERIAL_DEVICE			(*TE3_DEBUG_STREAM)
+	// overloaded name unfortunately ...
+	// NOT used but needed to compile fileSerial.cpp handleSerialData() method
 
 
 // end of TE3 defines.h

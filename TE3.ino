@@ -268,9 +268,27 @@ void setup()
 //==========================================================================
 // loop()
 //==========================================================================
+// Does much of what used to be done in the system's lower priority
+// "timer_handler" which is now simply handled in loop()
+
 
 void loop()
 {
+	handleSerial();
+		// in te3_serial.cpp
+
+	theButtons.loop();
+	thePedals.loop();
+	te3_rotaries::loop();
+		// these three moved here from expSystem::timer_handler()
+
+	theSystem.updateUI();
+
+
+	//---------------------------------------------
+	// flash the BUSY Led
+	//---------------------------------------------
+
 	uint32_t led_delay = flash_on ? 20 : 1980;
 	uint32_t flash_now = millis();
 	if (flash_now - flash_last > led_delay)
@@ -280,11 +298,6 @@ void loop()
 		digitalWrite(PIN_LED_T3_BUSY,flash_on);
 	}
 
-	theSystem.updateUI();
-
-	#if 1
-		handleSerial();
-	#endif
 
 	//--------------------------------------------
 	// handle rPI state changes (LEDS)

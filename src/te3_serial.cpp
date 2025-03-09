@@ -1,61 +1,97 @@
 //-------------------------------------------
 // te3_serial.cpp
 //-------------------------------------------
-// Handles up to 4 Serial Ports with some capabilities to
-// be turned on/off and/or driven by preferences.
+// There are four teensy Hardware Serial ports in use.
 //
-//      USB_SERIAL_PORT
-//          typically the main debugging serial port to console.pm
-//          - provides display() debug output from TE3 itself
-//          - consolidates debug output from RPI and the HUB
-//          - handles text commands to TE3 itself
-//          - handles commands to HUB by sending serial midi to it
-//          - handles rPI kernel uploads to the RPI_SERIAL port
-//          - handles FileSystem commands for the TE3 SD card
-//          - typically displays Midi monitor output
-//      DBG_SERIAL_PORT
-//          an alternative 3 pin output serial port that can
-//              do all of the things the USB_SERIAL_PORT can do for
-//              debugging the TE3 in-vitro while the usbC hub is hooked
-//              up to an iPad
-//          can also perhaps be used as a way to separate debug output
-//              streams to two different console invocations, i.e. separating
-//              midi-monitoring from debugging output, or focusing on one
-//              device in particular
-//      RPI_SERIAL_PORT
-//          - sends debugging output from the Looper/circle program(s)
-//          - sends serial midi, mostly to TE3 from the Looper program
-//          - accepts serial midi to control the Looper program
-//          - can accept binary file kernel uploads during bootstrap phase
-//      HUB_SERIAL_PORT
-//          - sends debugging oiutput from the TE3_audio device including
-//            "dumps" of the SGTL5000 and TE3_audio device states
-//          - accepts serial midi to constrol the TE3_audio device,
-//            mixers, reboot, etc, and to configure the SGTL5000
+//      USB_SERIAL_PORT - connected to the USBC hub
+//      DBG_SERIAL_PORT - the 1/8th in jack on the back of the box
+//      HUB_SERIAL_PORT - connected to the TE3_audio device (SGTL)
+//      RPI_SERIAL_PORT - connected to the rPi (Looper)
 //
-// This could get exceedingly complicated, esp if we have to, for example,
-// route serial midi messages of specific types between the rPi Looper and
-// the teensy4.0 SGTL audio device.
+// and four streams which are logically mapped by prefs to be off (zero),
+// or set to he USB or DBG serial ports.
 //
-// For now this is prototype code, starting with the ability to reboot the
-//      rPi on ctrl-B.
+//      TE3_DEBUG_STREAM - the main console.pm input/output stream
+//      HUB_DEBUG_OUTPUT - where to send debug output from the TE3_audio device
+//      RPI_DEBUG_OUTPUT - where to send debug output from the rPi Looper
+//      MONITOR_OUTPUT - where to send output from the midi monitor
+//
+// The HUB and RPI Serial ports are read from directly, as they might
+// contain functional serial midi messages, in addition to debugging
+// output text from those two devices. If serial midi messages are
+// found, they are always passed to the the expSystem for processing.
+// Otherwise the output is optionally sent to the logically mapped
+// DEBUB_OUTPUT stream.
+//
+// In a kernel BINARY_UPLOAD, the output from the rPi MUST be sent
+// to the TE3_DEBUG_STREAM, and the setting of the RPI_DEBUG_OUTPUT
+// is ignored.
+//
+// TE3_DEBUG_STREAM - INPUT
+//
+// Input from the USB or DBG Serial port is mapped by a pref
+// into the TE3_DEBUG_STREAM, which can also be zero (turned off)
+// It is synonymous with the stream that will be hooked to the
+// console.pm program and which will initiate/handle kernel
+// BINARY_UPLOADS and FILE_SYSTEM protocols.
+//
+// This stream never contains serial midi messages.
+//
+//      - handles text commands performed by TE3 itself and/or
+//        which are converted to serial midi and sent to the
+//        TE3_audio device (HUB) or Looper (RPI).
+//      - handles ctrl-B to reboot the rPi and ctrl-E bracketed
+//        kernel BINARY_UPLOAD protocol
+//      - handles FILE SYSTEM commands from the console, including
+//        currently IGNORING ctrl-A sent by console.pm, working
+//        with the fileServer.cpp code
+//
+// OUTPUT (Text)
+//
+// Generally speaking the debugging (and midi monitor) text
+// can be turned off, or directed to one of the two output
+// serial ports (USB or DBG) via prefs:
+//
+//      HUB_DEBUG_OUTPUT - where to send debug output from the TE3_audio device
+//      RPI_DEBUG_OUTPUT - where to send debug output from the rPi Looper
+//      MONITOR_OUTPUT - where to send output from the midi monitor
+//
+// However, these mappings are IGNORED when in a BINARY_UPLOAD or
+//      FILE_SYSTEM protocol, and in fact the MONITOR_OUTPUT will be
+//      temporarily turned Off in these protocols.
+//      In the BINARY_UPLOAD protocol, the RPI_SERIAL_PORT will be
+//      used directly.
+//
+// NOTES on CONSOLE.PM and TE3_DEBUG_STREAM
+//
+// ctrl-B reboots the Pi
 // ctrl-A is received from the console to enter "file_server_mode";
 //
 // The previous teensyPiLooper had no concept of handling anything itself,
 //      and just forwarded everything from the USB Serial port to the rPi, so
 //      no special "mode" was needed for kernel uploads .. just reboot and the
 //      rest was handled by console.pm.
-// I'd like to retain the notion that there are serial commands to TE3/TE3_auduio
-//      which means I will have to identify when a serial kernel upload is
+// To retain the notion that there are serial commands to TE3/TE3_auduio
+//      meant that I had to identify when a serial kernel upload is
 //      taking place.
-// We *could* see if the RPI sends my $KERNEL_UPLOAD_RE = 'Press <space> within 3 seconds to upload file';
-//      and check if the USB port responds with a space in that window to "enter" a mode, but then
-//      getting out of the mode would be problematic.
-// Alternatively could add yet another param to console that says "this is Looper3, so send ctrl-E
-//      to bracket rPI uploads.
-// For now I'm gonna TEMPORARILY modify console.pm to bracket binary uploads with a pair of ctrl-E's
-// In either case we have the issue of sending ctrl-A, B, or E within the binary upload itself which
-//      was typically handled by isolating those using a timer.
+// So, console.pm was modified to bracket binary uploads with a pair of ctrl-E's,
+//      with a delay window around the closing one, that can be identified herein
+//      to enter rPi kernel "binary_upload" mode, which takes complete precedence
+//      over the serial port until the closing ctrl-E is received.
+//
+//-------------------------------------------------------
+// COMBINING with fileSerial.cpp
+//-------------------------------------------------------
+//
+// This is complicated by the fact that fileSerial.cpp currently parses
+// character by character to build multi-line CR \n delimited fileServer commands
+// and malloc() buffers, and not necessarily reading a "full line of text"
+// including the closing LF \r.
+//
+// Perhaps we can take advantage of the ctrl-A sent by the console to say
+// "hey, we're definitely in a fileServer mode" and in that case pass
+// every character (with a 16 second timeout as in teensyPiLoooper)
+// to the fileSerial.cpp::handleChar() method.
 
 
 
@@ -67,6 +103,7 @@
 #include "commonDefines.h"
 #include "expSystem.h"
 #include "prefs.h"
+#include "fileSystem.h"
 
 
 #define dbg_cmd  0
@@ -74,8 +111,34 @@
 #define MAX_STRING  255
 
 
+#define SERIAL_PORT_NUM_TE3     0
+#define SERIAL_PORT_NUM_HUB     1
+#define SERIAL_PORT_NUM_RPI     2
+
+#define FILE_COMMAND_TIMEOUT    12000   // maybe could be much shorter
+
+static bool in_file_command = 0;
+static uint32_t file_command_time = 0;
+
+static bool in_upload_binary = 0;
+static Stream *SAVE_MONITOR = 0;
+
+
 static void processCommandLine(const char *line);
     // forward
+
+
+static const char *serialPortName(int serial_port_num)
+{
+    switch (serial_port_num)
+    {
+        case SERIAL_PORT_NUM_TE3 : return "TE3";
+        case SERIAL_PORT_NUM_HUB : return "HUB";
+        case SERIAL_PORT_NUM_RPI : return "RPI";
+    }
+    return "";
+}
+
 
 
 //---------------------------------------------
@@ -252,24 +315,7 @@ static void handleCommand(const String &left, const String &right)
 // At a minimum we need to know what port is in play and whether
 // we are in a kernel upload or file_server mode for TE3 and the rPi.
 
-#define SERIAL_PORT_NUM_TE3     0
-#define SERIAL_PORT_NUM_HUB     1
-#define SERIAL_PORT_NUM_RPI     2
 
-static const char *serialPortName(int serial_port_num)
-{
-    switch (serial_port_num)
-    {
-        case SERIAL_PORT_NUM_TE3 : return "TE3";
-        case SERIAL_PORT_NUM_HUB : return "HUB";
-        case SERIAL_PORT_NUM_RPI : return "RPI";
-    }
-    return "";
-}
-
-
-
-static bool in_upload_binary = 0;
 
 
 
@@ -283,14 +329,32 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
 
         if (serial_port_num == SERIAL_PORT_NUM_TE3)
         {
-            if (byte == 0x02)      // ctrl-B
+            if (byte == 0x01)       // ctrl-A
+            {
+                display(0,"got ctrl-A",0);
+                if (!in_file_command)
+                {
+                    display(0,"starting in_file_command mode",0);
+                    // turn off the midi monitor to make sure it doesn't
+                    // interfere with the binary upload
+                    SAVE_MONITOR = MONITOR_OUTPUT;
+                    MONITOR_OUTPUT = 0;
+                    in_file_command = 1;
+                }
+                file_command_time = millis();
+            }
+            else if (byte == 0x02)       // ctrl-B
             {
                 rebootPi();
                 return 0;
             }
-            if (byte == 0x05)       // ctrl-E
+            else if (byte == 0x05)       // ctrl-E
             {
                 display(0,"starting in_upload_binary mode",0);
+                // turn off the midi monitor to make sure it doesn't
+                // interfere with the binary upload
+                SAVE_MONITOR = MONITOR_OUTPUT;
+                MONITOR_OUTPUT = 0;
                 in_upload_binary = 1;
                 return 0;
             }
@@ -380,9 +444,14 @@ static void processCommandLine(const char *line)
 
 void handleSerial()
 {
-    // extern Stream *TE3_DEBUG_STREAM;
-    // extern Stream *HUB_DEBUG_OUTPUT;
-    // extern Stream *RPI_DEBUG_OUTPUT;
+    freeFileCommands();
+        // has to be called somewhere ...
+        
+    //---------------------------------------------
+    // Serial processing modes
+    //---------------------------------------------
+    // Note that all serial message processing and midi-monitor output
+    // is halted while in_upload_binary or in_file_command
 
     if (in_upload_binary)
     {
@@ -405,11 +474,43 @@ void handleSerial()
         {
             in_upload_binary = 0;
             display(0,"ending in_upload_binary mode",0);
+            // turn the midi monitor back on (or back to whatever
+            // it is set to by prefs)
+            MONITOR_OUTPUT = SAVE_MONITOR;
+            SAVE_MONITOR = 0;
+
+        }
+        return;
+    }
+
+    if (in_file_command)
+    {
+        checkFileCommandTimeout();
+        while (TE3_DEBUG_STREAM->available())
+        {
+            uint8_t c = TE3_DEBUG_STREAM->read();
+            if (c == 0x01)      // ctrl-A
+                display(0,"ignoring ctrl-A already in_file_command mode",0);
+            else
+                handleFileSystemChar(0,(char)c);
+            file_command_time = millis();
+        }
+        if (file_command_time &&
+            millis() - file_command_time > FILE_COMMAND_TIMEOUT)
+        {
+            file_command_time = 0;
+            in_file_command = 0;
+            display(0,"ending in_file_command mode",0);
+            MONITOR_OUTPUT = SAVE_MONITOR;
+            SAVE_MONITOR = 0;
         }
         return;
     }
 
 
+    //---------------------------------------------
+    // normal processing
+    //---------------------------------------------
     // process RPI_SERIAL_PORT
 
     static int rpi_serial_len = 0;

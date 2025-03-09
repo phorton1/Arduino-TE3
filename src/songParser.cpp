@@ -1,14 +1,10 @@
-#define FULL_IMPLEMENTATION  0
 
 #include "songParser.h"
 #include "songMachine.h"
 #include "rigLooper.h"
 #include "myDebug.h"
+#include "fileSystem.h"
 
-
-#if FULL_IMPLEMENTATION
-    #include "fileSystem.h"
-#endif
 
 #define dbg_token 2
 #define dbg_parse 2
@@ -190,7 +186,6 @@ int mystrcmpi(const char *str1, const char *str2)
 
 int songParser::getSongNames()
 {
-#if FULL_IMPLEMENTATION
     num_song_names = 0;
     memset(song_names,0,MAX_SONG_NAMES * sizeof(char *));
     File the_dir = SD.open(SONG_DIR);
@@ -203,8 +198,7 @@ int songParser::getSongNames()
     File entry = the_dir.openNextFile();
     while (entry)
     {
-        char filename[255];
-        entry.getName(filename, sizeof(filename));
+        const char *filename = entry.name();
 
         if (!entry.isDirectory())
         {
@@ -252,10 +246,6 @@ int songParser::getSongNames()
     }
 
     return num_song_names;
-
-#else
-    return 0;
-#endif  // !FULL_IMPLEMENTATION
 
 }
 
@@ -1235,7 +1225,6 @@ bool songParser::parseSongText()
 
 char *songParser::openSongFile(const char *name)
 {
-#if FULL_IMPLEMENTATION
     song_text_len = 0;
     song_code_len = 0;
 
@@ -1275,7 +1264,4 @@ char *songParser::openSongFile(const char *name)
     display(0,"song file(%s) opened",name);
 
     return song_text;
-#else
-    return 0;
-#endif  //!FULL_IMPLEMENTATION
 }

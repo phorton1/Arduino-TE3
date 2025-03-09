@@ -5,8 +5,6 @@
 // and the config_system, on top of which "modal windows"
 // may be opened.
 
-#define FULL_IMPLEMENTATION		0
-
 #include <myDebug.h>
 #include "expSystem.h"
 #include "prefs.h"
@@ -20,9 +18,6 @@
 #include "midiHost.h"
 #include "midiQueue.h"
 
-#if FULL_IMPLEMENTATION
-	#include "fileSystem.h"
-#endif
 
 #include "configSystem.h"
 #include "rigLooper.h"
@@ -411,16 +406,16 @@ void expSystem::timer_handler()
 	// basics
 
     theButtons.poll();
-	theButtons.loop();
-	thePedals.loop();
-	te3_rotaries::loop();
 
+	// now in TE3.ino: loop()
+    //
+	//	theButtons.loop();
+	//	thePedals.loop();
+	//	te3_rotaries::loop();
+	
+	// fileSerial.cpp::handleSerialData() now handled by te3_serial.cpp
 	// check SERIAL_DEVICE for incoming midi or file commands
-
-	#if FULL_IMPLEMENTATION
-		handleSerialData();
-			// in common fileSerial.cpp file
-	#endif
+	// handleSerialData();
 
     // process incoming and outgoing midi events
 

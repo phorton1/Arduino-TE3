@@ -72,7 +72,7 @@ extern bool mkDirTS(const char *path, const char *ts);
 
 	#define dbg_malloc  0
 
-	#define DO_MEM_CHECKS   1
+	#define DO_MEM_CHECKS   0
 
 	extern void print_mem_info(const char *where = 0);
 	extern void print_long_mem_info(const char *where = 0);
@@ -98,13 +98,25 @@ extern bool mkDirTS(const char *path, const char *ts);
 
 extern void freeFileCommands();
 	// in fileUtils.cpp called from loop()
+
 extern void handleSerialData();
-	// in fileSerial.cpp
+	// in fileSerial.cpp - NOT CALLED BY TE3
 	// THIS METHOD MAKES NON-ORTHOGONAL CALLS for Serial Midi.
 	// Each program must implement the below method to handle
 	// the midi data.
+
 extern void handleCommonMidiSerial(uint8_t *midi_buf);
 	// THIS MUST BE IMPLEMENTED ON BOTH SYSTEMS.
+	// and this happens to be caled by TE3
+
+// added for TE3
+
+extern void handleFileSystemChar(bool is_serial, char c);
+	// externed for TE2
+extern void checkFileCommandTimeout();
+	// checks for fileSystem command timeouts and
+	// clears the parser.
+
 
 
 
