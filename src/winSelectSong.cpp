@@ -189,17 +189,43 @@ void winSelectSong::updateUI()	// draw
 		tft.fillIntRect(full_client_rect,TFT_BLACK);
 
 		int i = 0;
-		tft.setFont(0);			// PRH - was setDefaultFont() I believe that is setFont(0) in ILI9488.h
-		tft.setTextSize(2);
 
+		// grumble how do you set the effing default font?
+		// there is a bug in ILI9488_t3
+		// was setDefaultFont(). tried:
+		// 		tft.setFont(0)
+		// 		tft.setFontAdafruit();
+		// 		tft.setFont(NULL);
+		// Turns out that there were a number of bugs in ILI9488_t3
+		// I added PRH_DEBUG and PRH_BUGFIX defines enough to get this working
+		// Also implemented my own setDefaultFont() to avoid confusion.
+		
+		tft.setDefaultFont();
+		tft.setTextSize(2);
 		tft.setTextColor(TFT_WHITE);
 
+		display(0,"showing song text NUM_TEXT_LINES=%d last_top_line=%d num_text_lines=%d",
+			NUM_TEXT_LINES,
+			last_top_line,
+			num_text_lines);
+		
 		while (i<NUM_TEXT_LINES && last_top_line+i < num_text_lines)
 		{
 			char *line = &show_song_text[line_map[last_top_line+i]];
-			tft.drawString(line,0,client_rect.ys + 5 + i * TEXT_LINE_HEIGHT);
+			// display(0,"line(%d) '%s",i,line);
+			
+			#if 0
+				tft.setCursor(0,client_rect.ys + 5 + i * TEXT_LINE_HEIGHT);
+				tft.print(line);
+			#else
+				tft.drawString(line,0,client_rect.ys + 5 + i * TEXT_LINE_HEIGHT);
+			#endif
+
 			i++;
 		}
+
+		display(0,"done showing text",0);
+		
 		return;
 	}
 

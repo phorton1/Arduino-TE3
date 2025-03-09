@@ -5,7 +5,7 @@
 #include "myDebug.h"
 #include "fileSystem.h"
 
-
+#define dbg_open -1
 #define dbg_token 2
 #define dbg_parse 2
 
@@ -1234,7 +1234,7 @@ char *songParser::openSongFile(const char *name)
     strcat(name_buffer,name);
     strcat(name_buffer,".song");
 
-    display(0,"openSongFile(%s)",name);
+    display(dbg_open,"openSongFile(%s)",name);
 
     File the_file = SD.open(name_buffer);
     if (!the_file)
@@ -1243,6 +1243,7 @@ char *songParser::openSongFile(const char *name)
         return 0;
     }
     uint32_t size = the_file.size();
+    display(dbg_open+1,"... song text_size=%d",size);
     if (size > MAX_SONG_TEXT)
     {
         song_error("Song(%s) size(%d) exceeds MAX_SONG_TEXT=%d",name,size,MAX_SONG_TEXT);
@@ -1250,6 +1251,7 @@ char *songParser::openSongFile(const char *name)
         return 0;
     }
 
+    display(dbg_open+1,"... reading song text",0);
     uint32_t got = the_file.read(song_text,size);
     if (got != size)
     {
@@ -1258,10 +1260,11 @@ char *songParser::openSongFile(const char *name)
         return 0;
     }
 
+    display(dbg_open+1,"closing song file",0);
     the_file.close();
     song_text_len = size;
     strcpy(song_name,name);
-    display(0,"song file(%s) opened",name);
+    display(dbg_open,"song file(%s) opened",name);
 
     return song_text;
 }
