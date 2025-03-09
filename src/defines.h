@@ -27,6 +27,10 @@ extern Stream *RPI_DEBUG_OUTPUT;
 extern Stream *MONITOR_OUTPUT;
 
 
+#define ACTIVE_FILE_SYS_DEVICE	TE3_DEBUG_STREAM
+	// compatibility layer for fileSystem (TE1/TE2/TE3)
+
+
 extern void initDebugStreams();
 	// in TE3.ino
 
@@ -230,6 +234,29 @@ public:
     int16_t ye;
 };
 
+
+//----------------------------------------------------------------
+// interface to _usbNames.c
+//----------------------------------------------------------------
+// Used in TE3.ino to setup self USB device, and in fileCommand.cpp
+// to reply with WASSUP and the Teensy serial number.
+//
+// I am still using my copied _usb.c and _usbdesc.c, although
+// I *could* get away with just using the official _usbNames.c
+// approach.  My _usb.c was introduced to allow me to change the
+// device descriptors via preferences, mostly to spoof the FTP,
+// by deferring Paul's static usb_init() call to a runtime call.
+//
+// The only thing it actually does in this incarnation is to
+// copy the actual teensy serial number into my serial number
+// descriptor before initializing the USB devie, so that each
+// device has a unique TE3xxxx serial number.
+
+extern "C" {
+    extern void my_usb_init();          	// in usb.c
+    // extern void setFTPDescriptors();    	// commented out in _usbNames.c
+	extern const char *getUSBSerialNum();	// in _usbNames.c
+}
 
 
 

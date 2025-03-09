@@ -22,25 +22,7 @@
 #include "src/te3_rotaries.h"
 #include "src/expSystem.h"
 #include "src/midiHost.h"
-
-
-
-// I am still using my copied _usb.c and _usbdesc.c, although
-// I *could* get away with just using the official _usbNames.c
-// approach.  My _usb.c was introduced to allow me to change the
-// device descriptors via preferences, mostly to spoof the FTP,
-// by deferring Paul's static usb_init() call to a runtime call.
-//
-// The only thing it actually does in this incarnation is to
-// copy the actual teensy serial number into my serial number
-// descriptor before initializing the USB devie, so that each
-// device has a unique TE3xxxx serial number.
-
-extern "C" {
-    extern void my_usb_init();          	// in usb.c
-    // extern void setFTPDescriptors();    	// commented out in _usbNames.c
-	extern const char *getUSBSerialNum();	// in _usbNames.c
-}
+#include "src/fileSystem.h"
 
 
 
@@ -197,10 +179,7 @@ void setup()
 	tft.print("    TE3_DEBUG_STREAM IS ");
 	tft.println(te3_dbg_output_name);
 
-	delay(do_delay);
-
 	digitalWrite(PIN_LED_T3_BUSY,0);
-
 
 	//-------------------------------------------
 	// flash rPi LEDS
@@ -248,6 +227,26 @@ void setup()
 
 	digitalWrite(PIN_LED_T3_BUSY,1);
 
+
+    //--------------------------------------
+    // start the file system
+    //--------------------------------------
+
+	if (!initFileSystem())
+	{
+        const char *msg = "    COULD NOT START FILE SYSTEM!!";
+        my_error("%s",msg);
+        tft.println(msg);
+        do_delay = 10000;
+	}
+    else
+    {
+        tft.setTextColor(TFT_WHITE);
+        tft.println("File System Started OK");
+    }
+
+	delay(do_delay);
+	
 	//--------------------------------------------------
 	// start the system
 	//--------------------------------------------------

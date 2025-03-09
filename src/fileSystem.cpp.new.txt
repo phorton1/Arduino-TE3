@@ -1,0 +1,203 @@
+//----------------------------------------------------------
+// fileSystem.cpp
+//----------------------------------------------------------
+
+#include "fileSystem.h"
+#include <myDebug.h>
+#include <SD.h>
+
+
+#define SHOW_CARD_INFO		1
+#define LIST_CARD_CONTENTS 	1
+
+
+bool has_file_system;
+
+
+
+const char *getTimeStamp(File entry)
+{
+	const char *ts = "";
+	DateTimeFields tm;
+	if (entry.getModifyTime(tm))
+	{
+		static char buf[80];
+		sprintf(buf,"%04d-%02d-%02d  %02d:%02d:%02d",
+			tm.year + 1900,
+			tm.mon + 1,
+			tm.mday,
+			tm.hour,
+			tm.min,
+			tm.sec);
+		ts = buf;
+	}
+	return ts;
+}
+
+
+#if LIST_CARD_CONTENTS
+
+	void showDirectory(const char *dir_name, File dir)
+	{
+		display(0,"/%s",dir_name);
+		proc_entry();
+
+		while(true)
+		{
+			File entry = dir.openNextFile();
+			if (!entry)
+				break;
+			const char *name = entry.name();
+
+			if (entry.isDirectory())
+			{
+				showDirectory(name,entry);
+			}
+			else
+			{
+				uint32_t size = entry.size();
+				const char *ts = getTimeStamp(entry);
+				display(0,"%-30s %-10d  ts=%s",name,size,ts);
+			}
+			entry.close();
+		}
+		proc_leave();
+	}
+
+#endif
+
+
+
+#if SHOW_CARD_INFO
+
+	const char *cardType(Sd2Card &card)
+	{
+		switch(card.type()) {
+			case SD_CARD_TYPE_SD1: return "SD1";
+			case SD_CARD_TYPE_SD2: return "SD2";
+			case SD_CARD_TYPE_SDHC: return "SDHC";
+		}
+		return "Unknown";
+	}
+
+#endif
+
+
+
+
+bool initFileSystem()
+{
+	display(0,"initFileSystem() started",0);
+	Sd2Card card;
+	proc_entry();
+
+	// The SD-sdFat teensy API is so messed up.
+	// Here are three different ways to initialize the SDCard,
+	// and they try to sell it as a featrure, sheesh.
+
+	has_file_system = SD.begin(BUILTIN_SDCARD);
+		// has_file_system = card.init(SPI_HALF_SPEED, BUILTIN_SDCARD);
+			// this call will also initialize global SD object
+		// has_file_system = SD.sdfs.begin(SdioConfig(DMA_SDIO));
+
+	if (has_file_system)
+	{
+		#if SHOW_CARD_INFO
+			// The unitialized "card" variable somehow magically works here
+			display(0,"CARD TYPE: %s",cardType(card));
+			proc_entry();
+
+			// Here are two non-orthogonal "volumes" that are available at the
+			// same time with different API's
+
+			#define USE_FS_VOLUME	1
+
+			#if USE_FS_VOLUME
+				FsVolume *fs_volume = SD.sdfs.vol();
+				if (fs_volume)
+				{
+					display(0,"FAT%d",fs_volume->fatType());
+			#else
+				SdVolume volume;
+				bool has_volume;
+				has_volume = volume.init(card);
+				if (has_volume)
+				{
+					display(0,"FAT%d",volume.fatType());
+			#endif
+
+				// SD card blocks are "always 512 bytes"
+				// so to convert to megs we dived by 2 * 1024 = 2048
+				// bug - in all cases for some reason total and free are coming out the same
+
+				#if USE_FS_VOLUME
+					uint32_t bytes_per_cluster = fs_volume->bytesPerCluster();
+					uint32_t blocks_per_cluster = bytes_per_cluster / 512;
+					uint32_t total_clusters = fs_volume->clusterCount();
+				#else
+					uint32_t blocks_per_cluster = volume.blocksPerCluster();
+					uint32_t total_clusters = volume.clusterCount();
+				#endif
+
+				uint32_t free_clusters = SD.sdfs.freeClusterCount();
+					// the only "freeClusterCount()" I couild find was on the Sd.sdfs sub-object
+
+				uint32_t total_megs = (total_clusters * blocks_per_cluster) / 2048;
+				uint32_t free_megs = (free_clusters * blocks_per_cluster) / 2048;
+
+				display(0,"Total: %d MB",total_megs);
+				display(0,"Free:  %d MB",free_megs);
+
+				// I have more important things to do with my time that to try to
+				// sort out API's to 50 year old file systems.  I will use the
+				// simplest "SD" and "File" API until it hurts.
+			}
+			else
+				my_error("Could not initialize/get SDCard volume",0);
+
+			proc_leave();
+		#endif
+
+		#if LIST_CARD_CONTENTS
+			display(0,"LISTING SD CARD",0);
+			proc_entry();
+			File root = SD.open("/");
+			showDirectory("ROOT",root);
+			proc_leave();
+		#endif
+	}
+	else
+		my_error("Could not initialize SD card",0);
+
+	proc_leave();
+	display(0,"initFileSystem() returning %d",has_file_system);
+	return has_file_system;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// end of fileSystem.cpp
