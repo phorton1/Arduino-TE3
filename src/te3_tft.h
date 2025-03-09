@@ -91,6 +91,14 @@ class TE3_TFT : public ILI9488_t3
             bool use_bc,
             const char *text);
 
+
+        void setDefaultFont()
+            // to avoid confusion
+        {
+            setFont(0);
+        }
+        
+
 };  // TE3_TFT
 
 

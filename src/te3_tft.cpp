@@ -37,6 +37,18 @@ void TE3_TFT::init()
     tft.begin();
     tft.setRotation(1);
     tft.fillScreen(TFT_BLACK);
+
+    #if 0   // bug demonstration
+        delay(5000);
+        display(0,"calling drawString() fails with no font",0);
+        // but if I include the following line it survives
+        // tft.setFont(Arial_10);
+        tft.setDefaultFont();
+        tft.setTextSize(2);
+        tft.setTextColor(TFT_WHITE,TFT_BLACK);
+        tft.drawString("THIS FAILS UNLESS I SET A FONT",0,150);
+        delay(10000);
+    #endif
 }
 
 
