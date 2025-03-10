@@ -715,7 +715,7 @@ Text GLabel 9100 4350 1    50   Input ~ 0
 LINE_IN_L
 Text GLabel 9500 4350 1    50   Input ~ 0
 LINE_OUT_L
-Text GLabel 9400 4350 1    50   Input ~ 0
+Text GLabel 9300 4350 1    50   Input ~ 0
 LINE_OUT_R
 $Comp
 L power:GND #PWR030
@@ -773,7 +773,7 @@ Text GLabel 8100 4000 1    50   Input ~ 0
 I2S_BCLK
 Text GLabel 8200 4000 1    50   Input ~ 0
 I2S_FCLK
-Text GLabel 8200 5450 3    50   Input ~ 0
+Text GLabel 8300 5450 3    50   Input ~ 0
 I2S_RXB
 Text GLabel 9650 5300 2    50   Input ~ 0
 I2S_TXB
@@ -973,30 +973,6 @@ F 3 "~" H 11350 2000 50  0001 C CNN
 	1    11350 2000
 	0    1    -1   0   
 $EndComp
-Text GLabel 9300 4350 1    50   Input ~ 0
-LINE_IN_R
-$Comp
-L 0_my_teensy:teensyAudioRevD_WithAudio U1
-U 1 1 67B4E93C
-P 8150 4700
-F 0 "U1" H 7550 4700 60  0000 L CNN
-F 1 "teensyAudioRevD_WithAudio" H 7750 4700 60  0000 L CNN
-F 2 "0_my_teensy:audioShieldRevD_audioPinsStack" V 9100 4650 60  0001 C CNN
-F 3 "" V 9100 4650 60  0000 C CNN
-	1    8150 4700
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:GND #PWR020
-U 1 1 67B9218D
-P 9200 4350
-F 0 "#PWR020" H 9200 4100 50  0001 C CNN
-F 1 "GND" V 9200 4050 50  0000 L CNN
-F 2 "" H 9200 4350 50  0001 C CNN
-F 3 "" H 9200 4350 50  0001 C CNN
-	1    9200 4350
-	-1   0    0    1   
-$EndComp
 Connection ~ 12400 8750
 Wire Wire Line
 	12400 8750 12400 8700
@@ -1074,4 +1050,32 @@ Text GLabel 13400 5200 3    50   Input ~ 0
 RPI_5V
 Text GLabel 13500 5200 3    50   Input ~ 0
 RPI_5V
+Text Notes 8200 6350 0    50   ~ 0
+Built card had I2S_RXB hooked up wrong to gpio5 \nBuilt card, schematic and PCB design modified to\ncorrect pin, gpio6\n
+Text Notes 9650 4100 0    50   ~ 0
+Carnival of errors.  Built card had incorrect\nsymbol, with the audio pins showing:\n29 - LINE_IN_L\n30 - GND\n31 - LINE_IN_R\n32 - LINE_OUT_R\n33 - LINE_OUT_L\nThe footprint, built board, schematic\nand PCB design have been fixed as\nshown here.\n\n  
+Text GLabel 9200 4350 1    50   Input ~ 0
+LINE_IN_R
+$Comp
+L power:GND #PWR020
+U 1 1 67B9218D
+P 9400 4350
+F 0 "#PWR020" H 9400 4100 50  0001 C CNN
+F 1 "GND" V 9400 4050 50  0000 L CNN
+F 2 "" H 9400 4350 50  0001 C CNN
+F 3 "" H 9400 4350 50  0001 C CNN
+	1    9400 4350
+	-1   0    0    1   
+$EndComp
+$Comp
+L 0_my_teensy:teensyAudioRevD_WithAudio U1
+U 1 1 67B4E93C
+P 8150 4700
+F 0 "U1" H 7550 4700 60  0000 L CNN
+F 1 "teensyAudioRevD_WithAudio" H 7750 4700 60  0000 L CNN
+F 2 "0_my_teensy:audioShieldRevD_audioPinsStack" V 9100 4650 60  0001 C CNN
+F 3 "" V 9100 4650 60  0000 C CNN
+	1    8150 4700
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
