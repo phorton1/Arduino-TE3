@@ -116,6 +116,7 @@
 #define SERIAL_PORT_NUM_RPI     2
 
 #define FILE_COMMAND_TIMEOUT    12000   // maybe could be much shorter
+#define CTRL_E_WINDOW           1000    // must be larger, accordingly, in console.pm
 
 static bool in_file_command = 0;
 static uint32_t file_command_time = 0;
@@ -472,7 +473,7 @@ void handleSerial()
             uint8_t c = RPI_SERIAL_PORT.read();
             TE3_DEBUG_STREAM->write(c);
         }
-        if (ctrl_E_time && millis() - ctrl_E_time > 200)
+        if (ctrl_E_time && millis() - ctrl_E_time > CTRL_E_WINDOW)
         {
             in_upload_binary = 0;
             display(0,"ending in_upload_binary mode",0);
@@ -522,7 +523,7 @@ void handleSerial()
         &RPI_SERIAL_PORT,
         rpi_serial_buf,
         &rpi_serial_len);
-    if (rpi_line)
+    if (rpi_line && RPI_DEBUG_OUTPUT)
     {
         RPI_DEBUG_OUTPUT->println(rpi_line);
     }
@@ -536,7 +537,7 @@ void handleSerial()
         &HUB_SERIAL_PORT,
         hub_serial_buf,
         &hub_serial_len);
-    if (hub_line)
+    if (hub_line && HUB_DEBUG_OUTPUT)
     {
         HUB_DEBUG_OUTPUT->println(hub_line);
     }
