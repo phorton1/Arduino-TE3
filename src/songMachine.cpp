@@ -10,6 +10,14 @@
 
 #define dbg_machine   	0			// 0 dumps program, -1 for meaningful debugging
 #define dbg_vols   		1
+#define dbg_op			0
+#define dbg_do			0			// currently unused
+
+const char *dbg_op_color =  "\033[96m";	// bright_cyan
+const char *dbg_do_color =  "\033[95m";	// bright magenta - currently unused
+
+
+
 
 #define MIN_TIME_TWEEN_VOL_CMD_MILLIS    40         // at least 3 buffers on the looper
 
@@ -356,7 +364,7 @@ void songMachine::updateUI()
 {
     bool redraw = m_redraw;
     m_redraw = false;
-
+	
     // run the machine
 
     if (m_state && !(m_state & (SONG_STATE_FINISHED | SONG_STATE_ERROR)))
@@ -421,7 +429,7 @@ void songMachine::updateUI()
 
     // don't update the UI if in quick mode
 
-    if (rig_looper.songUIAvailable())
+    if (!rig_looper.songUIAvailable())
         return;
 
     // invariant flasher
@@ -582,7 +590,7 @@ void songMachine::runMachine()
 
 
 
-int songMachine::tokenToLEDColor(int ttype)
+uint32_t songMachine::tokenToLEDColor(int ttype)
 {
     if (ttype == TOKEN_RED    ) return LED_RED;
     if (ttype == TOKEN_GREEN  ) return LED_GREEN;
@@ -602,7 +610,7 @@ int songMachine::tokenToLEDColor(int ttype)
     return 0;
 }
 
-int songMachine::tokenToTFTColor(int ttype)
+uint16_t songMachine::tokenToTFTColor(int ttype)
 {
     if (ttype == TOKEN_RED    ) return TFT_RED;
     if (ttype == TOKEN_GREEN  ) return TFT_GREEN;
@@ -625,11 +633,10 @@ int songMachine::tokenToTFTColor(int ttype)
 
 
 
-
-
 void songMachine::doSongOp(int op)
 {
-	display(dbg_machine+1,"-%5d doSongOp(%s) ",m_code_ptr-1,songParser::tokenToString(op));
+	display_color(dbg_op_color,dbg_op+1,"-%5d doSongOp(%s) ",m_code_ptr-1,songParser::tokenToString(op));
+	proc_entry();
     switch (op)
     {
         case TOKEN_DISPLAY:
@@ -638,8 +645,9 @@ void songMachine::doSongOp(int op)
             m_show_msg[display_num-1] = songParser::getCodeString(m_code_ptr);
             while (songParser::getCode(m_code_ptr)) m_code_ptr++;   // skip to zero
             m_code_ptr++;   // skip the zero
-            int color = songParser::getCode(m_code_ptr++);
-            if (color == 0)
+            int color_byte = songParser::getCode(m_code_ptr++);
+			uint16_t color = 0;
+            if (color_byte == 0)
             {
                 if (display_num == 1)
                     color = TFT_GREEN;
@@ -648,9 +656,10 @@ void songMachine::doSongOp(int op)
             }
             else
             {
-                color = tokenToTFTColor(color);
+                color = tokenToTFTColor(color_byte);
             }
             m_show_color[display_num-1] = color;
+			display_color(dbg_op_color,dbg_op,"TOKEN_DISPLAY(%d) color(%d=0x%04x) '%s'",display_num,color_byte,color,m_show_msg[display_num-1]);
             break;
         }
 
@@ -659,16 +668,19 @@ void songMachine::doSongOp(int op)
             int button_num = songParser::getCode(m_code_ptr++) - 1;
             m_button_color[button_num] = tokenToLEDColor(songParser::getCode(m_code_ptr++));
             m_button_flash[button_num] = songParser::getCode(m_code_ptr++);
+			display_color(dbg_op_color,dbg_op,"TOKEN_BUTTON_COLOR(%d) color(0x%06x) flash(%d)",button_num,m_button_color[button_num], m_button_flash[button_num]);
             break;
         }
 
         case TOKEN_DELAY:
             m_delay = songParser::getCode(m_code_ptr++);
             m_delay_time = 0;
+			display_color(dbg_op_color,dbg_op,"TOKEN_DELAY(%d)",m_delay);
             break;
 
         case TOKEN_GOTO:
             m_code_ptr = songParser::getCodeInteger(m_code_ptr);
+			display_color(dbg_op_color,dbg_op,"TOKEN_GOTO(%d)",m_code_ptr);
             break;
         case TOKEN_CALL:
             if (m_num_calls >= MAX_CALL_STACK)
@@ -682,7 +694,7 @@ void songMachine::doSongOp(int op)
                 m_code_ptr += 2;
 
                 m_call_stack[m_num_calls++] = m_code_ptr;
-                display(dbg_machine+1,"call(%d) from %d to %d",m_num_calls,m_code_ptr,to_ptr);
+				display_color(dbg_op_color,dbg_op,"TOKEN_CALL(%d) num_calls=%d",to_ptr,m_num_calls);
                 m_code_ptr = to_ptr;
             }
             break;
@@ -691,7 +703,7 @@ void songMachine::doSongOp(int op)
         {
             // skip inline methods in execution
 
-            display(dbg_machine+1,"skipping method at offset %d",m_code_ptr);
+            // display(dbg_machine+1,"skipping method at offset %d",m_code_ptr);
             int start_offset = m_code_ptr;
             int len = songParser::codeLen();
             while (m_code_ptr<len && op != TOKEN_END_METHOD)
@@ -702,7 +714,7 @@ void songMachine::doSongOp(int op)
             }
             else
             {
-                display(dbg_machine+1,"    resuming at offset %d",m_code_ptr);
+				display_color(dbg_op_color,dbg_op,"skipping TOKEN_METHOD from(%d) to(%d)",start_offset,m_code_ptr);
             }
             break;
         }
@@ -715,7 +727,7 @@ void songMachine::doSongOp(int op)
             else
             {
                 int ret_loc = m_call_stack[m_num_calls-1];
-                display(dbg_machine+1,"end_method(%d) returning to location %d",m_num_calls,ret_loc);
+				display_color(dbg_op_color,dbg_op,"TOKEN_END_METHOD num_calls(%d) ret_loc(%d)",m_num_calls,ret_loc);
                 m_code_ptr = ret_loc;
                 m_num_calls--;
             }
@@ -731,6 +743,9 @@ void songMachine::doSongOp(int op)
                 PEDAL_GUITAR;
             int value = songParser::getCode(m_code_ptr++);
             int delay_tenths = songParser::getCode(m_code_ptr++);
+
+			const char *tname = songParser::tokenToString(op);
+			display_color(dbg_op_color,dbg_op,"%s(%d) delay_tenths(%d)",tname,value,delay_tenths);
 
             // issue first increment command
 
@@ -762,6 +777,7 @@ void songMachine::doSongOp(int op)
         }
 
         case TOKEN_GUITAR_EFFECT_NONE:
+			display_color(dbg_op_color,dbg_op,"TOKEN_GUITAR_EFFECT_NONE",0);
             rig_looper.clearGuitarEffects(false);
             break;
 
@@ -770,6 +786,9 @@ void songMachine::doSongOp(int op)
         case TOKEN_GUITAR_EFFECT_CHORUS:
         case TOKEN_GUITAR_EFFECT_ECHO:
         {
+			const char *tname = songParser::tokenToString(op);
+			display_color(dbg_op_color,dbg_op,"%s",tname);
+
             int effect_num = op - TOKEN_GUITAR_EFFECT_DISTORT;
             int value = songParser::getCode(m_code_ptr++);
             rig_looper.setGuitarEffect(effect_num, value);
@@ -777,32 +796,43 @@ void songMachine::doSongOp(int op)
         }
 
         case TOKEN_SYNTH_PATCH:
-            rig_looper.setPatchNumber(songParser::getCode(m_code_ptr++));
+		{
+			int patch_num = songParser::getCode(m_code_ptr++);
+			display_color(dbg_op_color,dbg_op,"TOKEN_SYNTH_PATCH(%d)",patch_num);
+            rig_looper.setPatchNumber(patch_num);
             break;
+		}
 
         case TOKEN_CLEAR_LOOPER:
+			display_color(dbg_op_color,dbg_op,"TOKEN_CLEAR_LOOPER",0);
             rig_looper.clearLooper(false);
             break;
 
         case TOKEN_LOOPER_STOP:
+			display_color(dbg_op_color,dbg_op,"TOKEN_LOOPER_STOP",0);
             rig_looper.stopLooper();
             break;
         case TOKEN_LOOPER_STOP_IMMEDIATE:
+			display_color(dbg_op_color,dbg_op,"TOKEN_LOOPER_STOP_IMMEDIATE",0);
             rig_looper.stopLooperImmediate();
             break;
         case TOKEN_LOOP_IMMEDIATE:
+			display_color(dbg_op_color,dbg_op,"TOKEN_LOOP_IMMEDIATE",0);
             rig_looper.loopImmediate();
             break;
         case TOKEN_DUB_MODE:
+			display_color(dbg_op_color,dbg_op,"TOKEN_DUB_MODE",0);
             rig_looper.toggleDubMode();
             break;
         case TOKEN_LOOPER_SET_START_MARK:
+			display_color(dbg_op_color,dbg_op,"TOKEN_LOOPER_SET_START_MARK",0);
             rig_looper.setStartMark();
             break;
 
         case TOKEN_LOOPER_TRACK:
         {
 			int track_num = songParser::getCode(m_code_ptr++)-1;
+			display_color(dbg_op_color,dbg_op,"TOKEN_LOOPER_TRACK(%d)",track_num);
             rig_looper.selectTrack(track_num);
             break;
         }
@@ -810,6 +840,7 @@ void songMachine::doSongOp(int op)
         {
             int layer_num = songParser::getCode(m_code_ptr++)-1;
             int mute_value = songParser::getCode(m_code_ptr++);
+			display_color(dbg_op_color,dbg_op,"TOKEN_LOOPER_TRACK(%d) mute(%d)",layer_num,mute_value);
             rig_looper.setClipMute(layer_num,mute_value);
             break;
         }
@@ -818,4 +849,6 @@ void songMachine::doSongOp(int op)
         default:
             song_error("UNEXPECTED OPCODE: %d: 0x%02x-%s",m_code_ptr,op,songParser::tokenToString(op));
     }
+
+	proc_leave();
 }

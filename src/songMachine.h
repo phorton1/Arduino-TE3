@@ -122,8 +122,8 @@ class songMachine
 
         const char *m_show_msg[2];
         const char *m_last_show_msg[2];
-        int m_show_color[2];
-        int m_last_show_color[2];
+        uint16_t m_show_color[2];
+        uint16_t m_last_show_color[2];
 
         // machine variables and methods
 
@@ -139,8 +139,8 @@ class songMachine
 
         void runMachine();
         void doSongOp(int op);
-        int tokenToLEDColor(int ttype);
-        int tokenToTFTColor(int ttype);
+        uint32_t tokenToLEDColor(int ttype);
+        uint16_t tokenToTFTColor(int ttype);
         int advance(int ptr);
 
         // debugging
