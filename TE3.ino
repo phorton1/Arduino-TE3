@@ -163,7 +163,7 @@ void setup()
     tft.println(version_msg);
 
     tft.setTextColor(TFT_YELLOW,TFT_BLACK);
-    int do_delay = 5000;
+    int do_delay = 2000;
     if (prefs_reset)
     {
         const char *msg = "    PREFS WERE AUTOMATICALLY RESET!!";
