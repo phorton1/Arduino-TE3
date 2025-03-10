@@ -329,6 +329,8 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
 
         if (serial_port_num == SERIAL_PORT_NUM_TE3)
         {
+            // Serial.printf("byte(%d) '%c'\n",byte,byte>32?byte:' ');
+            
             if (byte == 0x01)       // ctrl-A
             {
                 display(0,"got ctrl-A",0);
@@ -541,16 +543,19 @@ void handleSerial()
 
     // process the main TE3 DEBUG_SERIAL_PORT
 
-    static int usb_serial_len = 0;
-    static char usb_serial_buf[MAX_STRING+1];
-    char *usb_line = bufferLine(
-        SERIAL_PORT_NUM_TE3,
-        TE3_DEBUG_STREAM,
-        usb_serial_buf,
-        &usb_serial_len);
-    if (usb_line)
+    if (TE3_DEBUG_STREAM)
     {
-        processCommandLine(usb_line);
+        static int usb_serial_len = 0;
+        static char usb_serial_buf[MAX_STRING+1];
+        char *usb_line = bufferLine(
+            SERIAL_PORT_NUM_TE3,
+            TE3_DEBUG_STREAM,
+            usb_serial_buf,
+            &usb_serial_len);
+        if (usb_line)
+        {
+            processCommandLine(usb_line);
+        }
     }
     clearTE3Busy();
 }
