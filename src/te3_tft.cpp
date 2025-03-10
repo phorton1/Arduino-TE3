@@ -6,9 +6,8 @@
 #include <myDebug.h>
 
 
-#define dbg_la		1
-
-#define DEBUG_DRAW_FONT_CHAR   0
+#define DEBUG_PRINT_JUST   0
+    // 0 header, 1 some detail, 2 shows every char
 
 #define MAX_PRINT_LEN  1023
 	// 1k buffer on the stack!!
@@ -133,7 +132,9 @@ void TE3_TFT::printJustified(
 		// we can break the passed in string into lines at \n's
 		// for calling drawString ...
 
-	display(dbg_la,"printJustified(%d,%d,%d,%d,  %d, 0x%04x, 0x%04x, %d, \"%s\")", x, start_y, width, height, just, fc, bc, use_bc, text);
+    #if DEBUG_PRINT_JUST
+        display(0,"printJustified(%d,%d,%d,%d,  %d, 0x%04x, 0x%04x, %d, \"%s\")", x, start_y, width, height, just, fc, bc, use_bc, text);
+    #endif
 
 	tft.setTextColor(fc);
 	if (use_bc)
@@ -167,6 +168,9 @@ void TE3_TFT::printJustified(
 		while (*text && len < MAX_PRINT_LEN)
 		{
 			char c = *text;
+            #if DEBUG_PRINT_JUST > 1
+                display(0,"--- chr(%d) '%c'", c, c>32?c:' ');
+            #endif
 
             // int pix = 16;   // undefined: tft.getTextSizeX();   // getCharWidth(c);
             // have to call this exceedingly complicated uncommented method with ILI9488_t3.h when
@@ -176,9 +180,12 @@ void TE3_TFT::printJustified(
             int16_t unused_y, unused_minx, unused_miny, unused_maxx, ununsed_maxy;
             charBounds(c, &pix, &unused_y, &unused_minx, &unused_miny, &unused_maxx, &ununsed_maxy);
             
-			if (c == '\n')
+			if (c == 13)    // \n
 			{
-				text++;
+                #if DEBUG_PRINT_JUST > 0
+                    display(0,"-- drawString CR at len(%d)",len);
+				#endif
+                text++;
 				break;
 			}
 			else if (pixel_len + pix > width)
@@ -224,8 +231,15 @@ void TE3_TFT::printJustified(
 			use_x += xoffset;
 		}
 
-		tft.drawString(cut_buf,use_x,y);
+        #if DEBUG_PRINT_JUST > 0
+            display(0,"drawString(%d,%d,'%s')",use_x,y,cut_buf);
+        #endif
+        tft.drawString(cut_buf,use_x,y);
 		y += yoffset;
+
+        #if DEBUG_PRINT_JUST > 0
+            display(0,"    back from drawString()",0);
+        #endif
 
 	}	// outer while *text
 }
