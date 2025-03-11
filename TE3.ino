@@ -13,17 +13,23 @@
 // USB Audio Device running on a teensy 4.0 with a revD SGTL5000 sound
 // card, which replaces the iRigHD2 from the previous Looper2 box.
 
+
+#define WITH_ROTARIES	1
+
+
 #include <myDebug.h>
 #include "src/prefs.h"
 #include "src/te3_tft.h"
 #include "src/te3_leds.h"
 #include "src/buttons.h"
 #include "src/pedals.h"
-#include "src/te3_rotaries.h"
 #include "src/expSystem.h"
 #include "src/midiHost.h"
 #include "src/fileSystem.h"
 
+#if WITH_ROTARIES
+	#include "src/te3_rotaries.h"
+#endif
 
 
 //-------------------------------------------------
@@ -210,8 +216,10 @@ void setup()
     LEDFancyStart();
 	theButtons.init();
 	thePedals.init();
-	te3_rotaries::init();
-
+	#if WITH_ROTARIES
+		te3_rotaries::init();
+	#endif
+	
 	digitalWrite(PIN_LED_T3_BUSY,0);
 
 	//--------------------------------------------
@@ -277,10 +285,14 @@ void loop()
 	handleSerial();
 		// in te3_serial.cpp
 
+	// these three moved here from expSystem::timer_handler()
+
 	theButtons.loop();
 	thePedals.loop();
-	te3_rotaries::loop();
-		// these three moved here from expSystem::timer_handler()
+	#if WITH_ROTARIES
+		te3_rotaries::loop();
+	#endif
+
 
 	theSystem.updateUI();
 

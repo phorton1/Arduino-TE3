@@ -6,7 +6,7 @@
 
 #include "defines.h"
 
-#define TEENSY_EXPRESSION3_PREF_VERSION   31
+#define TEENSY_EXPRESSION3_PREF_VERSION   30
 
 #define PREF_NONE               -1
 
