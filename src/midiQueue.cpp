@@ -115,7 +115,7 @@ static void mySendMidiMessage(uint8_t msg_type, uint8_t channel, uint8_t p1, uin
         p1,
         p2);
 
-    usb_midi_write_packed(msg.i);
+    usb_midi_write_packed(msg.i);                   // IMMEDIATE!!
     usb_midi_flush_output();
     theSystem.midiActivity(INDEX_MASK_OUTPUT);
     enqueueProcess(msg.i | PORT_MASK_OUTPUT);
@@ -169,7 +169,7 @@ void sendSerialControlChange(uint8_t cc_num, uint8_t value, const char *debug_ms
     midi_buf[3] = value;			// the value
 
     // PRH PRH PRH assume RPI_SERIAL_PORT is where to send it
-    RPI_SERIAL_PORT.write(midi_buf,4);
+    RPI_SERIAL_PORT.write(midi_buf,4);      // IMMEDIATE!!
 }
 
 
@@ -353,7 +353,8 @@ void sendPendingCommand()
             uint32_t cmd = (pending_command >> 24) & 0xFF;
             uint32_t val = (pending_command_value >> 24) & 0xFF;
             display(0,"SENDING cmd=%02x  val=%02x  TO TEENSYDUINO",cmd,val);
-            usbMIDI.sendControlChange(
+
+            usbMIDI.sendControlChange(      // IMMEDIATE!!
                 0x1F,
                 cmd,
                 8,

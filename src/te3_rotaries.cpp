@@ -22,7 +22,7 @@
 
 #define dbg_rots    0
 
-#define DUMP_MPC_REGISTERS     0
+#define DUMP_MPC_REGISTERS     1
 
 
 // The rotaries I have are 40 incs per rev.

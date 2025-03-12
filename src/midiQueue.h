@@ -6,6 +6,97 @@
 
 #include "defines.h"
 
+//--------------------------------------------------------------
+// PRH - in TE2 I completely reworked the MIDI_PORT semantics
+//--------------------------------------------------------------
+// from TE2 prefs.h
+//
+//	    uint8_t			MONITOR_INPUT[NUM_MIDI_PORTS];
+//	    uint8_t			MONITOR_OUTPUT[NUM_MIDI_PORTS];
+//
+// I was still able to shoehorn my port information into the uin32_t
+// by adding an output bit in the high bit of the 3rd nibble (msg.b[2]).
+// from TE2 defines.h:
+//
+//	    #define MIDI_PORT_USB1      0x00
+//	    #define MIDI_PORT_USB2      0x10
+//	    #define MIDI_PORT_USB3      0x20
+//	    #define MIDI_PORT_USB4      0x30
+//	    #define MIDI_PORT_HOST1     0x40
+//	    #define MIDI_PORT_HOST2     0x50
+//	    #define MIDI_PORT_SERIAL    0x60
+//
+//	    #define NUM_MIDI_PORTS      7
+//	    #define MAX_MIDI_PORT		(NUM_MIDI_PORTS-1)
+//
+//	    #define MIDI_PORT_NUM_MASK    0xf0
+//
+//	    #define MIDI_ENUM_TO_PORT(i)  (i) << 4
+//	    #define MIDI_PORT_TO_ENUM(p)  (p) >> 4
+//
+// At this time the guts of TE2 (expSystem, midiQueue, rigLooper, etc)
+// don't know that there is a TE3_audio serial port in addition the rPi,
+// so, at this time, MIDI_PORT_SERIAL means "RPI_SERIAL_PORT".
+//
+// The above, and in addition, the following were placed in defines.h in TE2:
+//
+//      // one based definitions of MIDI_CHANNELS
+//
+//      #define MIDI_MAX_CHANNEL		16
+//      #define MIDI_MIN_CHANNEL		1
+//      #define MIDI_OMNI_CHANNEL		0
+//      	// Midi messages MUST be sent on a valid midi channel 1-16, which
+//      	// 		will be 0..15 or'd into the sent message.
+//      	// The special value of 0 is only available for Listens, which means
+//      	// to listen on any channel.
+//
+//      // Activity indicators
+//
+//      #define NUM_ACTIVITY_INDICATORS		6
+//      	// these are paira for any USB, any HOST, and the SERIAL port.
+//
+//      #define ACTIVITY_INDICATOR_SERIAL_IN    0
+//      #define ACTIVITY_INDICATOR_SERIAL_OUT   1
+//      #define ACTIVITY_INDICATOR_HOST_IN		2
+//      #define ACTIVITY_INDICATOR_HOST_OUT		3
+//      #define ACTIVITY_INDICATOR_USB_IN		4
+//      #define ACTIVITY_INDICATOR_USB_OUT		5
+//
+//      // Midi Message Type
+//
+//      #define MIDI_TYPE_NOTE_OFF		0x08
+//      #define MIDI_TYPE_NOTE_ON		0x09
+//      #define MIDI_TYPE_CC			0x0B
+//      #define MIDI_TYPE_PGM_CHG		0x0C
+//
+//      // FTP
+//
+//      #define NUM_FTP_STRINGS   6
+//
+//
+// This brings up the issue of sending things immediately, general
+// monitoring, and expecting replies, of the FTP, and monitoring
+// in general, much less the notion of configurable routing, and
+// to what degree, in TE3, I try to generalize the overal device.
+//
+// For example, the pedals are currently hardwired to Synth, Loop, Wah, and Guitar,
+// and, continuing, the LoopMachine knows which pedal is which.  Yet the rotaries
+// go through an even handler in the current rigLooper, as if they can be multi-function.
+//
+// Most outgoing messages are sent immediately, and enqueued for possible monitoring,
+// with the exception being the RTP command-replies, which have a mechanism to retry
+// working in conjunction with the FTP port ala the prefs.
+
+
+
+
+
+
+
+
+//----------------------------------------------------
+// OLD COMMENTS
+//----------------------------------------------------
 // ORIGINAL MESSAGES
 //
 // The "cable" number is communicated in the high order
@@ -46,6 +137,8 @@
 //      0 1 0 0      host bit
 //      0 0 1 0      output bit
 //      0 0 0 1      original cable bit
+
+
 
 
 #define PORT_MASK           0xF0
