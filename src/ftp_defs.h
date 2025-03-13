@@ -565,7 +565,7 @@ const uint8_t FTP_CODE_PATCH_NAME  = 0x43;  // a 25 byte informative packet with
 //      available based on USB Setting in Arduino IDE
 //      I get it's messages based on calls to low calls to
 //         low levl usb_midi_read_message() 'C' function
-//         in the critical_timer_handler() implementation
+//         in the critical timer handler() implementation
 //      which is where they get written TO the hosted device (FTP)
 //         via the exposed USBHost_t36 MIDIDevice myMidiHost
 //         midi_host.write_packed(msg) method
@@ -579,7 +579,7 @@ const uint8_t FTP_CODE_PATCH_NAME  = 0x43;  // a 25 byte informative packet with
 //
 // The IRQ is enqueing the 32bit messages (and I also modified USBHost_t36.h
 // to increase the midi rx buffer size from 80 to 2048), which are currently,
-// and messily, then dequeud in the "critical_timer_handler()" method, then
+// and messily, then dequeud in the "critical timer handler()" method, then
 // printed to buffered text, and finally displayed in the updateUI() method
 // called from loop().   That whole thing could be cleaned up to work with
 // a single queue of 32 bit words, and to decode and show the queued messages

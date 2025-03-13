@@ -8,31 +8,114 @@
 
 #define TEENSY_EXPRESSION_VERSION  "3.0"
 
+#define DEBUG_RAW_MIDI      0
+	// POTENTIALLY DANGEROUS - calling serial IO from interrupt routinies
+	//
+	// show raw msgs received in interrupt routines for
+	// USB (expSystem.cpp critical_timer_handler()) and
+	// MIDI_HOST (midi_host.cpp)
+	//
+	// Used to crash before I reworked myDebug.cpp to use 5
+	// circular buffers for display routines and it doesnt
+	// seem to crash now.
 
+
+// Basics
 
 #define NUM_BUTTON_ROWS		5
 #define NUM_BUTTON_COLS		5
 #define NUM_BUTTONS			(NUM_BUTTON_ROWS * NUM_BUTTON_COLS)
+
+#define NUM_ROTARIES        4
+#define NUM_PEDALS          4
+#define MAX_PEDAL_NAME		7		// also used for rotaries
+
+// FTP
+
+#define NUM_FTP_STRINGS   		6
+#define FTP_CONTROL_CHANNEL		8
+	// ftp commands must be sent to channel 8
+	// the other channels are for performance stuff
+
+// Serial Ports
 
 #define USB_SERIAL_PORT     Serial
 #define RPI_SERIAL_PORT     Serial1		// pins 0,1
 #define DBG_SERIAL_PORT		Serial7		// pins 28,29
 #define HUB_SERIAL_PORT     Serial8		// pins 34,35
 
-// Serial port accessors (for speed)
-
 extern Stream *TE3_DEBUG_STREAM;
 extern Stream *HUB_DEBUG_OUTPUT;
 extern Stream *RPI_DEBUG_OUTPUT;
 extern Stream *MONITOR_OUTPUT;
-
+	// mapped accessors
 
 extern void initDebugStreams();
 	// in TE3.ino
-
-
 extern void handleSerial();
 	// in serial.cpp
+
+
+//-----------------------------------------------
+// MIDI port definitions ported from TE2
+//-----------------------------------------------
+
+#define MIDI_MAX_VALUE		127
+
+// midi ports
+
+#define MIDI_PORT_USB1      0x00
+#define MIDI_PORT_USB2      0x10
+#define MIDI_PORT_USB3      0x20
+#define MIDI_PORT_USB4      0x30
+#define MIDI_PORT_HOST1     0x40
+#define MIDI_PORT_HOST2     0x50
+#define MIDI_PORT_RPI    	0x60
+#define MIDI_PORT_HUB    	0x70
+
+#define NUM_MIDI_PORTS      8
+#define MAX_MIDI_PORT		(NUM_MIDI_PORTS-1)
+
+#define MIDI_PORT_NUM_MASK    0xf0
+
+#define MIDI_ENUM_TO_PORT(i)  (i) << 4
+#define MIDI_PORT_TO_ENUM(p)  (p) >> 4
+
+// one based definitions of MIDI_CHANNELS
+
+#define MIDI_MAX_CHANNEL		16
+#define MIDI_MIN_CHANNEL		1
+#define MIDI_OMNI_CHANNEL		0
+	// Midi messages MUST be sent on a valid midi channel 1-16, which
+	// 		will be 0..15 or'd into the sent message.
+	// The special value of 0 is only available for Listens, which means
+	// to listen on any channel.
+
+
+// Midi Message Type
+
+#define MIDI_TYPE_NOTE_OFF		0x08
+#define MIDI_TYPE_NOTE_ON		0x09
+#define MIDI_TYPE_CC			0x0B
+#define MIDI_TYPE_PGM_CHG		0x0C
+
+// Activity indicators
+
+#define NUM_ACTIVITY_INDICATORS			8
+	// these are paira for any USB, any HOST, and the two serial ports
+
+#define ACTIVITY_INDICATOR_USB_IN		0
+#define ACTIVITY_INDICATOR_USB_OUT		1
+#define ACTIVITY_INDICATOR_HOST_IN		2
+#define ACTIVITY_INDICATOR_HOST_OUT		3
+#define ACTIVITY_INDICATOR_RPI_IN    	4
+#define ACTIVITY_INDICATOR_RPI_OUT   	5
+#define ACTIVITY_INDICATOR_HUB_IN    	6
+#define ACTIVITY_INDICATOR_HUB_OUT   	7
+
+
+
+
 
 //-------------------------------------
 // PINS
@@ -115,9 +198,8 @@ void clearTE3Busy();
 //-----------------------------------------------------------
 // TE1 specific defines
 
-#define NUM_PORTS           8       // ports defined in midiQueue.h
-#define NUM_PEDALS          4
-#define NUM_MIDI_PORTS      8
+//	#define NUM_PORTS           8       // ports defined in midiQueue.h
+//	#define NUM_MIDI_PORTS      8
 
 #define THE_SYSTEM_BUTTON   4
 

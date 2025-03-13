@@ -8,6 +8,7 @@
 #include "ftp_defs.h"
 #include "midiHost.h"
 #include "winFtpTuner.h"
+#include "midiQueue.h"
 
 
 #define KEYPAD_UP      7
@@ -40,7 +41,7 @@ winFtpSensitivity::winFtpSensitivity(bool swap_modal)
 void winFtpSensitivity::init()
 {
 	draw_needed = 1;
-	for (int i=0; i<NUM_STRINGS; i++)
+	for (int i=0; i<NUM_FTP_STRINGS; i++)
 	{
 		last_vel[i] = 0;
 		last_velocity[i] = 0;
@@ -163,14 +164,14 @@ void winFtpSensitivity::vel2ToInts(int *vel, int *velocity)
 	// move the vel2 and velocity values from notes to local variable
 	// and only change vel by 1 in the process
 {
-	for (int i=0; i<NUM_STRINGS; i++)
+	for (int i=0; i<NUM_FTP_STRINGS; i++)
 	{
 		vel[i] = 0;		// zero indicator
 		velocity[i] = 0;	// on or off
 	}
 
 	__disable_irq();
-	note_t *note = first_note;
+	note_t *note = ftp_first_note;
 	while (note)
 	{
 		int i = note->string;

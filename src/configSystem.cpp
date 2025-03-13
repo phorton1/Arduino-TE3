@@ -5,10 +5,8 @@
 //
 // Configuration value changes have a one-to-one mapping directly to prefs.
 // For most changes the system can handle them being changed asynchronously.
-// However, certain changes, like changing the FTP port or SPOOF_FTP setting,
-// would best be handled synchronously at the end, when the changes are accepted.
-//
-// As it is, right now, turning on FTP host mode is dangerous and crashes the system.
+// However, certain changes, like changing SPOOF_FTP setting require an
+// immediate reboot.
 
 
 #include <myDebug.h>
@@ -23,6 +21,7 @@
 #include "configOptions.h"
 #include "expDialogs.h"
 #include "rigLooper.h"
+#include "midiQueue.h"
 
 #define dbg_csys  0
 
@@ -72,7 +71,7 @@ void createOptions()
 		setLEDBrightness);
 
 	configOption *optFTP = new configOption(rootOption,"FTP");
-	new configOption (optFTP,"Spoof FTP",	   OPTION_TYPE_NEEDS_REBOOT, PREF_SPOOF_FTP);
+	new configOption (optFTP,"Spoof FTP",	   OPTION_TYPE_SPOOF_FTP_CHANGED, PREF_SPOOF_FTP);
 	new ftpPortOption(optFTP,"FTP Port",	   0,						 PREF_FTP_PORT);
 	new configOption (optFTP,"FTP Tuner",	   0,						 PREF_NONE,		startFtpTuner);
 	new configOption (optFTP,"FTP Sensitivity",0,						 PREF_NONE,		startFtpSensitivity);
@@ -90,15 +89,25 @@ void createOptions()
 	configOption *monitor = new configOption(rootOption,"Midi Monitor", 0,  PREF_MONITOR_OUTPUT);
 	new configOption(monitor,"Midi Monitor", OPTION_TYPE_STREAM_CHANGED, PREF_MONITOR_OUTPUT);
 
-	configOption *mon_ports = new configOption(monitor,"Ports");
-	new configOption(mon_ports,"Duino Input 0",  0, PREF_MONITOR_DUINO_INPUT0);
-	new configOption(mon_ports,"Duino Input 1",  0, PREF_MONITOR_DUINO_INPUT1);
-	new configOption(mon_ports,"Duino Output 0", 0, PREF_MONITOR_DUINO_OUTPUT0);
-	new configOption(mon_ports,"Duino Output 1", 0, PREF_MONITOR_DUINO_OUTPUT1);
-	new configOption(mon_ports,"Host Input 0",   0, PREF_MONITOR_HOST_INPUT0);
-	new configOption(mon_ports,"Host Input 1",   0, PREF_MONITOR_HOST_INPUT1);
-	new configOption(mon_ports,"Host Output 0",  0, PREF_MONITOR_HOST_OUTPUT0);
-	new configOption(mon_ports,"Host Output 1",  0, PREF_MONITOR_HOST_OUTPUT1);
+	configOption *mon_ins = new configOption(monitor,"Input Ports");
+	new configOption(mon_ins,	"USB1_IN",		0,	PREF_MONITOR_USB1_IN 	);
+	new configOption(mon_ins,	"USB2_IN",		0,	PREF_MONITOR_USB2_IN 	);	
+	new configOption(mon_ins,	"USB3_IN",		0,	PREF_MONITOR_USB3_IN 	);
+	new configOption(mon_ins,	"USB4_IN",		0,	PREF_MONITOR_USB4_IN 	);
+	new configOption(mon_ins,	"HOST1_IN",		0,	PREF_MONITOR_HOST1_IN 	);
+	new configOption(mon_ins,	"HOST2_IN",		0,	PREF_MONITOR_HOST2_IN 	);
+	new configOption(mon_ins,	"RPI_IN",		0,	PREF_MONITOR_RPI_IN 	);
+	new configOption(mon_ins,	"HUB_IN",		0,	PREF_MONITOR_HUB_IN 	);
+
+	configOption *mon_outs = new configOption(monitor,"Output Ports");
+	new configOption(mon_outs,	"USB1_OUT",		0,	PREF_MONITOR_USB1_OUT 	);
+	new configOption(mon_outs,	"USB2_OUT",		0,	PREF_MONITOR_USB2_OUT 	);
+	new configOption(mon_outs,	"USB3_OUT",		0,	PREF_MONITOR_USB3_OUT 	);
+	new configOption(mon_outs,	"USB4_OUT",		0,	PREF_MONITOR_USB4_OUT 	);
+	new configOption(mon_outs,	"HOST1_OUT",	0,	PREF_MONITOR_HOST1_OUT 	);
+	new configOption(mon_outs,	"HOST2_OUT",	0,	PREF_MONITOR_HOST2_OUT 	);
+	new configOption(mon_outs,	"RPI_OUT",		0,	PREF_MONITOR_RPI_OUT 	);
+	new configOption(mon_outs,	"HUB_OUT",		0,	PREF_MONITOR_HUB_OUT 	);
 
 	configOption *mon_channels = new configOption(monitor,"Channels");
 	new configOption(mon_channels,"Midi Channel 1",  0, PREF_MONITOR_CHANNEL1 + 0);
@@ -164,7 +173,7 @@ void createOptions()
 
 	// remember that a long press on button 3 in config mode reboots
 	
-	new configOption(rootOption,"Factory Reset",OPTION_TYPE_FACTORY_RESET);
+	new configOption(rootOption,"Factory Reset", 0);
 }
 
 
@@ -228,8 +237,7 @@ void configSystem::begin(bool warm)
     theButtons.setButtonType(BUTTON_BRIGHTNESS_DOWN, BUTTON_EVENT_PRESS | BUTTON_MASK_REPEAT, LED_RED);
     theButtons.setButtonType(BUTTON_BRIGHTNESS_UP,   BUTTON_EVENT_PRESS | BUTTON_MASK_REPEAT, LED_GREEN);
 
-	int done_color = m_dirty ? configOption::reboot_needed() ?
-		LED_RED : LED_PURPLE : LED_CYAN;
+	int done_color = m_dirty ? LED_PURPLE : LED_CYAN;
 
     theButtons.setButtonType(BUTTON_EXIT_DONE,       BUTTON_EVENT_CLICK | BUTTON_EVENT_LONG_CLICK, done_color);
     theButtons.setButtonType(BUTTON_EXIT_CANCEL,     BUTTON_EVENT_CLICK | BUTTON_EVENT_LONG_CLICK, m_dirty?LED_ORANGE:LED_YELLOW);
@@ -279,6 +287,21 @@ void configSystem::onEndModal(expWindow *win, uint32_t param)
 		clear_prefs();
 		reboot(THE_SYSTEM_BUTTON);
 	}
+	if (win->getId() == OPTION_TYPE_SPOOF_FTP_CHANGED)
+	{
+		int spoof = getPref8(PREF_SPOOF_FTP);
+		if (param)
+		{
+			warning(0,"Turning SPOOF_FTP %s!!!",spoof?"ON":"OFF");
+			save_global_prefs();
+			reboot(THE_SYSTEM_BUTTON);
+		}
+		else
+		{
+			warning(0,"Rsetting changed SPOOF_FTP pref to !!!",spoof?"OFF":"ON");
+			restore_pref8(PREF_SPOOF_FTP);
+		}
+	}
 }
 
 
@@ -292,8 +315,7 @@ void configSystem::checkDirty()
 		m_dirty = dirty;
 		display(dbg_csys,"confg_sys.m_dirty changed to %d",dirty);
 
-		int done_color = m_dirty ? configOption::reboot_needed() ?
-			LED_RED : LED_PURPLE : LED_CYAN;
+		int done_color = m_dirty ? LED_PURPLE : LED_CYAN;
 		theButtons.setButtonColor(BUTTON_EXIT_DONE,done_color);
 		theButtons.setButtonColor(BUTTON_EXIT_CANCEL,m_dirty?LED_ORANGE:LED_YELLOW);
 	}
@@ -360,6 +382,7 @@ void configSystem::onButtonEvent(int row, int col, int event)
 			// re-init things that might have changed
 
 			initDebugStreams();
+			setFTPActivePort();
 
             // setLEDBrightness(optBrightness.orig_value);
 			// value on config options is superflous ?!?
@@ -377,15 +400,8 @@ void configSystem::onButtonEvent(int row, int col, int event)
         if (event == BUTTON_EVENT_LONG_CLICK)
         {
 			delay(200);	// delay needed to let pixels finish redrawing
-			bool reboot_needed = configOption::reboot_needed();
-			pref_changed8(PREF_SPOOF_FTP);
 			save_global_prefs();
 			checkDirty();
-
-            if (reboot_needed)
-            {
-                reboot(num);
-            }
         }
 
         theSystem.activateRig(&rig_looper);
@@ -411,9 +427,26 @@ void configSystem::onButtonEvent(int row, int col, int event)
 			else if (cur_option->hasValue())
 			{
 				cur_option->incValue(1);
-				if (cur_option->type & OPTION_TYPE_STREAM_CHANGED)
-					initDebugStreams();
-				checkDirty();
+				if (cur_option->type & OPTION_TYPE_SPOOF_FTP_CHANGED)
+				{
+					const char *msg = getPref8(PREF_SPOOF_FTP) ?
+						"Are you sure you want to turn\nSPOOF_FTP off?" :
+						"Are you sure you want to turn\nSPOOF_FTP on?";
+
+					theSystem.startModal(new yesNoDialog(
+						OPTION_TYPE_SPOOF_FTP_CHANGED,
+						"Confirm SPOOF_FTP Change",
+						msg));
+
+				}
+				else
+				{
+					if (cur_option->type & OPTION_TYPE_STREAM_CHANGED)
+						initDebugStreams();
+					else if (cur_option->getPrefNum() == PREF_FTP_PORT)
+						setFTPActivePort();
+					checkDirty();
+				}
 			}
 			else if (cur_option->m_setter_fxn)
 			{

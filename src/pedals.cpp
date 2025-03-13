@@ -45,10 +45,10 @@ pedalManager thePedals;
 
 void pedalManager::init()
 {
-    m_pedals[PEDAL_SYNTH ].init(PEDAL_SYNTH,  PIN_PEDAL_0, "Synth",  SYNTH_VOLUME_CHANNEL,   SYNTH_VOLUME_CC);
-    m_pedals[PEDAL_LOOP  ].init(PEDAL_LOOP,   PIN_PEDAL_1, "Loop",   1, LOOP_CONTROL_BASE_CC + LOOPER_CONTROL_LOOP_VOLUME);
-    m_pedals[PEDAL_WAH   ].init(PEDAL_WAH,    PIN_PEDAL_2, "Wah",    GUITAR_EFFECTS_CHANNEL, GUITAR_WAH_CONTROL_CC);
-    m_pedals[PEDAL_GUITAR].init(PEDAL_GUITAR, PIN_PEDAL_3, "Guitar", GUITAR_VOLUME_CHANNEL,  GUITAR_VOLUME_CC);
+    m_pedals[PEDAL_SYNTH ].init(PEDAL_SYNTH,  PIN_PEDAL_0, "Synth",  MIDI_PORT_USB1,	SYNTH_VOLUME_CHANNEL,   SYNTH_VOLUME_CC);
+    m_pedals[PEDAL_LOOP  ].init(PEDAL_LOOP,   PIN_PEDAL_1, "Loop",   MIDI_PORT_RPI,		1, LOOP_CONTROL_BASE_CC + LOOPER_CONTROL_LOOP_VOLUME);
+    m_pedals[PEDAL_WAH   ].init(PEDAL_WAH,    PIN_PEDAL_2, "Wah",    MIDI_PORT_USB1,	GUITAR_EFFECTS_CHANNEL, GUITAR_WAH_CONTROL_CC);
+    m_pedals[PEDAL_GUITAR].init(PEDAL_GUITAR, PIN_PEDAL_3, "Guitar", MIDI_PORT_USB1,	GUITAR_VOLUME_CHANNEL,  GUITAR_VOLUME_CC);
 
     // note that we don't use INPUT_PULLDOWN because there are
     // explicit 10K pulldowns on the PCB
@@ -79,14 +79,16 @@ void expressionPedal::init(
     int num,
     int pin,
     const char *name,
-    int cc_channel,
-    int cc_num)
+	int port,
+    int channel,
+    int cc)
 {
     m_num = num;
     m_pin = pin;
-    m_cc_num = cc_num;
-    m_cc_channel = cc_channel;
     m_name = name;
+	m_port = port;
+    m_channel = channel;
+    m_cc = cc;
 
     m_raw_value = -1;         // 0..1023
     m_direction = -1;
@@ -279,39 +281,52 @@ int expressionPedal::getRawValueScaled()
 
 void pedalManager::pedalEvent(int num, int value)
 {
-	expressionPedal *pedal = getPedal(num);
-    int mode = getPrefPedalMode(num);
+	 sendMidiControlChange(
+        m_pedals[num].m_port,
+        m_pedals[num].m_channel + 1,
+        m_pedals[num].m_cc,
+        value);
+}
 
-    #if DEBUG_PEDALS
-        display(0,"pedalEvent(%d,%d) mode=%d cc=0x%02x",
-            num,value,mode,pedal->getCCNum());
-    #endif
-    
-    // if it is then SYNTH pedal in ftp MONO mode, we send the
-    // control messages out to channels 1-6
 
-	if (num == PEDAL_SYNTH && !ftp_poly_mode)
+#if 0	// OLD
+
+	void pedalManager::pedalEvent(int num, int value)
 	{
-		for (int i=0; i<6; i++)
+		expressionPedal *pedal = getPedal(num);
+		int mode = getPrefPedalMode(num);
+
+		#if DEBUG_PEDALS
+			display(0,"pedalEvent(%d,%d) mode=%d cc=0x%02x",
+				num,value,mode,pedal->getCCNum());
+		#endif
+
+		// if it is then SYNTH pedal in ftp MONO mode, we send the
+		// control messages out to channels 1-6
+
+		if (num == PEDAL_SYNTH && !ftp_poly_mode)
+		{
+			for (int i=0; i<6; i++)
+			{
+				mySendDeviceControlChange(
+					pedal->getCCNum(),
+					value,
+					i+1);
+			}
+		}
+		else if (mode == PEDAL_MODE_SERIAL)
+		{
+			sendSerialControlChange(
+				pedal->getCCNum(),
+				value,
+				"pedals.cpp");
+		}
+		else
 		{
 			mySendDeviceControlChange(
 				pedal->getCCNum(),
 				value,
-				i+1);
+				pedal->getCCChannel());
 		}
 	}
-	else if (mode == PEDAL_MODE_SERIAL)
-	{
-		sendSerialControlChange(
-			pedal->getCCNum(),
-			value,
-			"pedals.cpp");
-	}
-	else
-	{
-		mySendDeviceControlChange(
-			pedal->getCCNum(),
-			value,
-			pedal->getCCChannel());
-	}
-}
+#endif 	// 0 == OLD

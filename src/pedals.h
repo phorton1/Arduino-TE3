@@ -21,12 +21,15 @@ class expressionPedal
 {
     public:
 
-        int getNum()                    { return m_num; }
         const char *getName()           { return m_name; }
 
-        int getCCChannel()              { return m_cc_channel; }
-        int getCCNum()                  { return m_cc_num; }
-
+        /*
+        int getNum()                    { return m_num; }
+        int getPort()                   { return m_port; }
+        int getChannel()                { return m_channel; }
+        int getCC()                     { return m_cc; }
+        */
+        
         int getValue()                  { return m_value; }
         int getRawValue()               { return m_raw_value; }
             // the actual values
@@ -53,6 +56,7 @@ class expressionPedal
             int num,
             int pin,
             const char *name,
+            int port,
             int cc_channel,
             int cc_num);
 
@@ -60,15 +64,14 @@ class expressionPedal
 
     private:
 
-        // construction paramaters
+        // init() paramaters
 
         int     m_num;
         int     m_pin;          // defined in pedals.cpp
-        int     m_pedal_num;    // they know this too ...
-        int     m_cc_channel;
-        int     m_cc_num;
-
         const char *m_name;
+        uint8_t m_port;
+        int     m_channel;
+        int     m_cc;
 
         // runtime working variables
 

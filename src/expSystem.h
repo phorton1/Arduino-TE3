@@ -75,7 +75,6 @@ class expWindow
 
 
         virtual void updateUI() {}
-        virtual void timer_handler()  {}
 
         virtual void onEndModal(expWindow *win, uint32_t param) {}
             // called by expSystem after modal windows close themselves
@@ -137,8 +136,8 @@ class expSystem
         const char *m_title;
         int last_battery_level;
 
-        unsigned midi_activity[NUM_PORTS];
-        bool last_midi_activity[NUM_PORTS];
+        unsigned midi_activity[NUM_ACTIVITY_INDICATORS];
+        bool last_midi_activity[NUM_ACTIVITY_INDICATORS];
 };
 
 

@@ -409,16 +409,17 @@ void rigLooper::setPatchNumber(int patch_number)
 	if (m_cur_patch_num != -1)
 	{
 		int prog_num = MULTI_OFFSET + synth_patch[m_cur_patch_num].prog_num;
-		mySendDeviceProgramChange(prog_num, SYNTH_PROGRAM_CHANNEL);
+		sendMidiProgramChange(MIDI_PORT_USB1, SYNTH_PROGRAM_CHANNEL, prog_num);
+			// mySendDeviceProgramChange(prog_num, SYNTH_PROGRAM_CHANNEL);
 
 		// send the mono/poly ftp mode command if needed
-
-		bool use_poly_mode = !synth_patch[m_cur_patch_num].mono_mode;
-		if (((bool)m_last_set_poly_mode) != use_poly_mode)
-		{
-			m_last_set_poly_mode = use_poly_mode;
-			sendFTPCommandAndValue(FTP_CMD_POLY_MODE,m_last_set_poly_mode);
-		}
+		// prh POLY MODE NEEDS TO BE REVISITED
+		//	bool use_poly_mode = !synth_patch[m_cur_patch_num].mono_mode;
+		//	if (((bool)m_last_set_poly_mode) != use_poly_mode)
+		//	{
+		//		m_last_set_poly_mode = use_poly_mode;
+		//		sendFTPCommandAndValue(FTP_CMD_POLY_MODE,m_last_set_poly_mode);
+		//	}
 	}
 }
 
@@ -430,10 +431,12 @@ void rigLooper::setGuitarEffect(int effect_num, bool on)
 	m_last_guitar_state[effect_num] = -1;
 
 	int value = on ? 0x7f : 0;
-	mySendDeviceControlChange(
+
+	sendMidiControlChange(
+		MIDI_PORT_USB1,
+		GUITAR_EFFECTS_CHANNEL,
 		guitar_effect_ccs[effect_num],
-		value,
-		GUITAR_EFFECTS_CHANNEL);
+		value);
 }
 
 
@@ -446,10 +449,11 @@ void rigLooper::clearGuitarEffects(bool display_only /* = false */)
 		m_last_guitar_state[i] = -1;
 		if (!display_only)
 		{
-            mySendDeviceControlChange(
-                guitar_effect_ccs[i],
-                0x00,
-                GUITAR_EFFECTS_CHANNEL);
+			sendMidiControlChange(
+				MIDI_PORT_USB1,
+				GUITAR_EFFECTS_CHANNEL,
+				guitar_effect_ccs[i],
+				0);
 		}
 	}
 }
@@ -486,7 +490,11 @@ void rigLooper::clearLooper(bool display_only)
 
 	if (!display_only)
 	{
-		sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_CLEAR_ALL,"LOOP BUTTON long click");
+		sendMidiControlChange(
+			MIDI_PORT_RPI,
+			1,	// default serial channel
+			LOOP_COMMAND_CC,
+			LOOP_COMMAND_CLEAR_ALL);
 	}
 }
 
@@ -497,7 +505,12 @@ void rigLooper::selectTrack(int num)
 	display(dbg_song_machine,"rigLooper::selectTrack(%d)",num);
 	m_selected_track_num = num;
 	int value = m_selected_track_num + LOOP_COMMAND_TRACK_BASE;
-	sendSerialControlChange(LOOP_COMMAND_CC,value,"rigLooper::selectTrack()");
+
+	sendMidiControlChange(
+		MIDI_PORT_RPI,
+		1,	// default serial channel
+		LOOP_COMMAND_CC,
+		value);
 
 	for (int i=0; i<LOOPER_NUM_TRACKS_TIMES_LAYERS; i++)
 	{
@@ -509,25 +522,41 @@ void rigLooper::selectTrack(int num)
 
 void rigLooper::stopLooper()
 {
-	sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_STOP,"rigLooper::stopLooper()");
+	sendMidiControlChange(
+		MIDI_PORT_RPI,
+		1,	// default serial channel
+		LOOP_COMMAND_CC,
+		LOOP_COMMAND_STOP);
 }
 
 
 void rigLooper::stopLooperImmediate()
 {
-	sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_STOP_IMMEDIATE,"rigLooper::stopLooperImmediate()");
+	sendMidiControlChange(
+		MIDI_PORT_RPI,
+		1,	// default serial channel
+		LOOP_COMMAND_CC,
+		LOOP_COMMAND_STOP_IMMEDIATE);
 }
 
 
 void rigLooper::loopImmediate()
 {
-	sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_LOOP_IMMEDIATE,"rigLooper::loopImmediate()");
+	sendMidiControlChange(
+		MIDI_PORT_RPI,
+		1,	// default serial channel
+		LOOP_COMMAND_CC,
+		LOOP_COMMAND_LOOP_IMMEDIATE);
 }
 
 
 void rigLooper::toggleDubMode()
 {
-	sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_DUB_MODE,"rigLooper::toggleDubMode()");
+	sendMidiControlChange(
+		MIDI_PORT_RPI,
+		1,	// default serial channel
+		LOOP_COMMAND_CC,
+		LOOP_COMMAND_DUB_MODE);
 	setLED(LOOP_DUB_BUTTON,0);
 	showLEDs();
 }
@@ -536,7 +565,11 @@ void rigLooper::toggleDubMode()
 
 void rigLooper::setStartMark()
 {
-	sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_SET_LOOP_START,"temp song machine button");
+	sendMidiControlChange(
+		MIDI_PORT_RPI,
+		1,	// default serial channel
+		LOOP_COMMAND_CC,
+		LOOP_COMMAND_SET_LOOP_START);
 }
 
 
@@ -548,7 +581,11 @@ void rigLooper::setClipMute(int layer_num, bool mute_on)
 	if (m_selected_track_num >= 0)
 	{
 		int clip_num = m_selected_track_num * LOOPER_NUM_LAYERS + layer_num;
-		sendSerialControlChange(CLIP_MUTE_BASE_CC+clip_num,mute_on,"rigLooper::setClipMute()");
+		sendMidiControlChange(
+			MIDI_PORT_RPI,
+			1,	// default serial channel
+			CLIP_MUTE_BASE_CC+clip_num,
+			mute_on);
 		m_clip_mute[clip_num] = mute_on;
 	}
 	else
@@ -566,7 +603,11 @@ void rigLooper::setClipVolume(int layer_num, int val)
 	if (m_selected_track_num >= 0)
 	{
 		int clip_num = m_selected_track_num * LOOPER_NUM_LAYERS + layer_num;
-		sendSerialControlChange(CLIP_VOL_BASE_CC+clip_num,val,"rigLooper::setClipVolume()");
+		sendMidiControlChange(
+			MIDI_PORT_RPI,
+			1,	// default serial channel
+			CLIP_VOL_BASE_CC+clip_num,
+			val);
 		m_clip_vol[clip_num] = val;
 	}
 	else
@@ -592,7 +633,12 @@ bool rigLooper::onRotaryEvent(int num, int val)
 		num == 1 ? LOOPER_CONTROL_OUTPUT_GAIN :
 		num == 2 ? LOOPER_CONTROL_THRU_VOLUME :
 		LOOPER_CONTROL_MIX_VOLUME;
-	sendSerialControlChange(control_num + LOOP_CONTROL_BASE_CC, val,"rigLooper Rotary Control");
+
+	sendMidiControlChange(
+		MIDI_PORT_RPI,
+		1,	// default serial channel
+		control_num + LOOP_CONTROL_BASE_CC,
+		val);
 	return true;
 }
 
@@ -673,11 +719,19 @@ void rigLooper::onButtonEvent(int row, int col, int event)
 			display(dbg_rig,"rigLooper ERASE TRACK(%d)",col);
 			if (event == BUTTON_EVENT_LONG_CLICK)
 			{
-				sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_ERASE_TRACK_BASE+col,"ERASE_TRACK button click");
+				sendMidiControlChange(
+					MIDI_PORT_RPI,
+					1,	// default channel
+					LOOP_COMMAND_CC,
+					LOOP_COMMAND_ERASE_TRACK_BASE+col);
 			}
 			else if (m_track_state[col] & TRACK_STATE_RECORDING)
 			{
-				sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_ABORT_RECORDING,"ABORT_RECORDING button click");
+				sendMidiControlChange(
+					MIDI_PORT_RPI,
+					1,	// default channel
+					LOOP_COMMAND_CC,
+					LOOP_COMMAND_ABORT_RECORDING);
 			}
 			m_last_erase_state[col] = -1;
 				// because we are uer_drawn ... in case it's a short click on non-reording track
@@ -813,7 +867,11 @@ void rigLooper::onButtonEvent(int row, int col, int event)
 
 			if (!song_state)
 			{
-				sendSerialControlChange(LOOP_COMMAND_CC,LOOP_COMMAND_SET_LOOP_START,"temp song machine button");
+				sendMidiControlChange(
+					MIDI_PORT_RPI,
+					1,	// default serial channel
+					LOOP_COMMAND_CC,
+					LOOP_COMMAND_SET_LOOP_START);
 			}
 
 			// otherwise, it toggles song state if it's running

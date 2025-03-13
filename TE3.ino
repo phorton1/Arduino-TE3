@@ -26,6 +26,8 @@
 #include "src/expSystem.h"
 #include "src/midiHost.h"
 #include "src/fileSystem.h"
+#include "src/midiQueue.h"
+
 
 #if WITH_ROTARIES
 	#include "src/te3_rotaries.h"
@@ -265,6 +267,8 @@ void setup()
 
 	theSystem.begin();
 		
+	setFTPActivePort();	
+
 	digitalWrite(PIN_LED_T3_BUSY,0);
 
     display(0,"TE3.ino setup() finished",0);
@@ -279,6 +283,10 @@ void setup()
 // Does much of what used to be done in the system's lower priority
 // "timer_handler" which is now simply handled in loop()
 
+// crashing when I turn a rotary during initQueryFTP() from expSystem,
+// even though all of these should be on the same thread.   We're not
+// getting anything from the USB or MIDI Hosts, so the "timer_handlers"
+// should not be coming into play.
 
 void loop()
 {

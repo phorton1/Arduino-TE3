@@ -2,9 +2,6 @@
 #include "configOptions.h"
 #include "prefs.h"
 
-static bool s_reboot_needed = 0;
-
-
 //--------------------------------------------
 // configOption
 //--------------------------------------------
@@ -53,13 +50,6 @@ void configOption::init_cold(configOption *parent, const char *tit, int typ, int
 }
 
 
-// static
-bool configOption::reboot_needed()
-{
-    return s_reboot_needed;
-}
-
-
 void configOption::init()
 {
     selected         = 0;
@@ -89,8 +79,6 @@ void  configOption::setValue(int i)
             setPref8(m_pref_num,i);
         if (m_setter_fxn)
             m_setter_fxn(i);
-        if (type & OPTION_TYPE_NEEDS_REBOOT)
-            s_reboot_needed = 1;
     }
 }
 

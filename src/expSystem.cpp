@@ -34,10 +34,6 @@
 //-------------------------------------
 // critical timer loop
 //-------------------------------------
-// The critical_timer_handler() is ONLY used to dequeue DEVICE
-// (teensyDuino) usb midi events and send them as rapidly as
-// possible to the Hosted device and enqueue them for further
-// processing in the normal processing loop.
 
 #define EXP_CRITICAL_TIMER_INTERVAL 1000
 #define EXP_CRITICAL_TIMER_PRIORITY  192
@@ -45,26 +41,9 @@
     // Cortex-M4: 0,16,32,48,64,80,96,112,128,144,160,176,192,208,224,240
     // Cortex-M0: 0,64,128,192
 
-
 //----------------------------------
 // normal timer loop
 //----------------------------------
-// The "normal" timer loop does the bulk of the work in the system.
-// It is used to
-//
-//      (a) check the BUTTONS, PEDALS, and ROTARY states and
-//          generate events based on their changes.
-//      (b) process incoming or outgoing MIDI as necessary
-//          to generate program related events based on them.
-//      (c) re-enqueue the incoming and outgoing (processed) MIDI
-//          messags for display.
-//      (d) used variously by other objects to implement key
-//          repeats, etc.
-// I have more or less determined that the timers don't start again
-//    until the handler has returned.
-// At some point the timers use so much resources that the rest of
-//    the system can become non functional.  The following values
-//    work.
 
 #define EXP_TIMER_INTERVAL 5000
     // 5000 us = 5 ms == 200 times per second
@@ -179,7 +158,7 @@ void expSystem::begin()
 		client_rect.xe,
 		client_rect.ye);
 
-	for (int i=0; i<NUM_PORTS; i++)
+	for (int i=0; i<NUM_ACTIVITY_INDICATORS; i++)
 	{
 		midi_activity[i] = millis();
 		last_midi_activity[i] = 0;
@@ -355,78 +334,44 @@ void expSystem::buttonEvent(int row, int col, int event)
 //-----------------------------------------
 // timer handlers
 //-----------------------------------------
-// The critical timer handler appears to read from
-// the USB port, and if spoofing, send it to the host port,
-// which is all fine and dandy, but who reads from the
-// midi_host port?  And why am I getting device_in_1
-// monitor display after sending something to the midi_host?
+
+// static
+void expSystem::timer_handler()
+{
+    theButtons.poll();
+	#if 1
+		dequeueFTPIn();
+	#endif
+	processOutgoingFTPCommands();
+}
 
 
 // static
 void expSystem::critical_timer_handler()
 {
-    uint32_t msg = usb_midi_read_message();  // read from device
-    if (msg)
-    {
-		int pindex = (msg >> 4) & PORT_INDEX_MASK;
-		theSystem.midiActivity(pindex);
-			// the message comes in on port index 0 or 1
-			// PORT_INDEX_DUINO_INPUT0 or PORT_INDEX_DUINO_INPUT1
+	uint32_t msg32 = usb_midi_read_message();  // read from device
+	if (msg32)
+	{
+		#if	DEBUG_RAW_MIDI
+			display_level(0,0,"usb:    0x%08x",msg32);
+		#endif
 
-		// we only write through to the midi host if we are spoofing
+		theSystem.midiActivity(ACTIVITY_INDICATOR_USB_IN);
+		int port = msg32 & MIDI_PORT_NUM_MASK;
 
-	#if WITH_MIDI_HOST
-	    bool is_spoof = getPref8(PREF_SPOOF_FTP);
-		if (is_spoof)
+		if (port == FTP_ACTIVE_PORT)
+			enqueueFTPIn(port,msg32);
+
+		// We only write through to the midi host if spoof FTP
+		// and it is from USB1 or USB2, in which case we also
+		// manually diddle the indicator and enqueue it as outgoing
+
+		if (getPref8(PREF_SPOOF_FTP) && port <= MIDI_PORT_USB2)
 		{
-	        midi_host.write_packed(msg);
-			theSystem.midiActivity(pindex | INDEX_MASK_HOST | INDEX_MASK_OUTPUT);
-				// add the host and output bits to map it to port 6 or 7
-				// PORT_INDEX_HOST_OUTPUT0 or  PORT_INDEX_HOST_OUTPUT1
+			midi_host.write_packed(msg32);
+			theSystem.midiActivity(ACTIVITY_INDICATOR_HOST_OUT);
 		}
-	#endif
-	
-        // enqueue it for processing (display from device)
-		// if we are monitoring the input port, or it is the remote FTP;
-		// I remember that I entirely reworked this stuff in TE2
-
-		if (getPref8(PREF_MONITOR_PORT0 + pindex) || (  		// if monitoring the port, OR
-			(getPref8(PREF_FTP_PORT) == FTP_PORT_REMOTE) &&     // if this is the PREF_FTP_PORT==2==Remote, AND
-			INDEX_CABLE(pindex)))                       		// cable=1
-		{
-	        enqueueProcess(msg);
-		}
-    }
-}
-
-
-// static
-void expSystem::timer_handler()
-{
-	// basics
-
-    theButtons.poll();
-
-	// now in TE3.ino: loop()
-    //
-	//	theButtons.loop();
-	//	thePedals.loop();
-	//	te3_rotaries::loop();
-	
-	// fileSerial.cpp::handleSerialData() now handled by te3_serial.cpp
-	// check SERIAL_DEVICE for incoming midi or file commands
-	// handleSerialData();
-
-    // process incoming and outgoing midi events
-
-    dequeueProcess();
-
-	// call window handler
-
-	if (theSystem.m_num_modals)
-		theSystem.getTopModalWindow()->timer_handler();
-	else
-	    theSystem.m_cur_rig->timer_handler();
+	}
 }
 
 
@@ -436,6 +381,8 @@ void handleCommonMidiSerial(uint8_t *midi_buf)
 	warning(0,"handleCommonMidiSerial(%02x,%02x)",midi_buf[2],midi_buf[3]);
 	theSystem.m_cur_rig->onSerialMidiEvent(midi_buf[2],midi_buf[3]);
 }
+
+
 
 
 //------------------------------
@@ -575,7 +522,7 @@ void expSystem::updateUI()
 
 		// midi indicator frames
 
-		for (int i=0; i<NUM_PORTS; i++)
+		for (int i=0; i<NUM_ACTIVITY_INDICATORS; i++)
 		{
 			tft.fillCircle(
 				INDICATOR_X + (i/2)*INDICATOR_PAIR_SPACING + (i&1)*INDICATOR_SPACING,
@@ -651,33 +598,25 @@ void expSystem::updateUI()
 	// to by cable-output:         Di0,Do0, Di1,Do1,  Hi0,Ho0, Hi1,Ho1
 
 	unsigned now = millis();
-	for (int cable_pair=0; cable_pair<NUM_PORTS/2; cable_pair++)
+	for (int indicator=0; indicator<NUM_ACTIVITY_INDICATORS; indicator++)
 	{
-		for (int out=0; out<2; out++)
+		int cable_div = indicator / 2;
+		int cable_mod  = indicator % 2;
+
+		bool midi_on =
+			now > midi_activity[indicator] &&
+			now < midi_activity[indicator] + MIDI_ACTIVITY_TIMEOUT;
+
+		if (draw_title_frame ||  midi_on != last_midi_activity[indicator])
 		{
-			#define INDEX_MASK_HOST     0x04
-			#define INDEX_MASK_OUTPUT   0x02
-			#define INDEX_MASK_CABLE    0x01
+			last_midi_activity[indicator] = midi_on;
+			int color = midi_on ? cable_mod ? TFT_RED : TFT_GREEN : 0;
 
-			int i = ((cable_pair<<1)&INDEX_MASK_HOST) + (out*INDEX_MASK_OUTPUT) + (cable_pair&1);
-
-			bool midi_on =
-				now > midi_activity[i] &&
-				now < midi_activity[i] + MIDI_ACTIVITY_TIMEOUT;
-
-			if (draw_title_frame ||  midi_on != last_midi_activity[i])
-			{
-				last_midi_activity[i] = midi_on;
-				int color = midi_on ?
-					out ? TFT_RED : TFT_GREEN :
-					0;
-
-				tft.fillCircle(
-					INDICATOR_X + cable_pair*INDICATOR_PAIR_SPACING + out*INDICATOR_SPACING,
-					INDICATOR_Y,
-					INDICATOR_RADIUS,
-					color);
-			}
+			tft.fillCircle(
+				INDICATOR_X + cable_div*INDICATOR_PAIR_SPACING + cable_mod*INDICATOR_SPACING,
+				INDICATOR_Y,
+				INDICATOR_RADIUS,
+				color);
 		}
 	}
 

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define NUM_ROTARIES        4
+#include "defines.h"
 
 class te3_rotaries
 	// mcp23017 based board that handles four rotary

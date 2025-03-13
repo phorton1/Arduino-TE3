@@ -341,64 +341,80 @@ bool showFtpPatch(
 //-------------------------------------------------
 // method called frequently from expSystem.cpp::updateUI()
 // performs FTP initialization and initial readbacks
-// Note that sendFTPCommandAndValue() is fire-and-forget
-// with it's own retry/timeout scheme and that we only
-// try once to initialize the FTP ...
 
-#define INIT_BATTERY_CHECK_TIME         10000        // try every 5 seconds
+#define INIT_BATTERY_CHECK_TIME         5000        // try every 5 seconds
 #define NUM_INITIAL_BATTERY_CHECKS      6           // for the first 30 seconds
-#define SLOW_INIT_BATTERY_CHECK_TIME    20000       // then try every 15 seconds, forever, until an FTP is found, or not
+#define SLOW_INIT_BATTERY_CHECK_TIME    15000       // then try every 15 seconds, forever, until an FTP is found, or not
 #define NORMAL_BATTERY_CHECK_TIME       60000       // once found, update the battery level once per minute
+
+#define NUM_INIT_STATES					10
+#define INIT_STATE_DELAY				10			// millis
+
 
 // we do NOT monitor if the FTP goes offline
 
-static uint32_t battery_time;
-static int      num_checks;
-static int      ftp_init_state;
+static elapsedMillis s_battery_time = 0;
+static int           s_num_battery_checks = 0;             // number of unitialized tries
+static elapsedMillis s_init_time = 0;
+static int           s_ftp_init_state = 0;
 
-
+// extern
 void initQueryFTP()
 {
-	if (!FTP_PORT_IS_ACTIVE)
+	if (!getPref8(PREF_FTP_PORT))
 		return;
 
-	uint32_t now = millis();
-    uint32_t check_time =
-		ftp_battery_level == -1 ?
-		    num_checks < NUM_INITIAL_BATTERY_CHECKS ?
-		        INIT_BATTERY_CHECK_TIME :
-		        SLOW_INIT_BATTERY_CHECK_TIME :
-			ftp_init_state ?
-				NORMAL_BATTERY_CHECK_TIME : 0;
-
-    if (now - battery_time < check_time)
-		return;
-	battery_time = now;
-
-	display(dbg_init,"initQueryFTP(port=0x%02x) battery=%d init=%d",FTP_ACTIVE_PORT,ftp_battery_level,ftp_init_state);
-
-	num_checks++;
-	sendFTPCommandAndValue(FTP_CMD_BATTERY_LEVEL, 0);
-
-	// one time fire-and-forget FTP initialization
-
-	if (ftp_battery_level != -1 && !ftp_init_state)
+	if (pendingFTPCount())
 	{
-		ftp_init_state = 1;
-        display(dbg_init,"INITIALIZING FTP",0);
+		s_init_time = 0;
+		s_battery_time = 0;
+		return;
+	}
 
-        for (int i=0; i<NUM_FTP_STRINGS; i++)
-        {
-            sendFTPCommandAndValue(FTP_CMD_GET_SENSITIVITY, i);
-        }
+	uint32_t use_check_time = ftp_battery_level == -1 ?
+		s_num_battery_checks < NUM_INITIAL_BATTERY_CHECKS ?
+			INIT_BATTERY_CHECK_TIME :
+			SLOW_INIT_BATTERY_CHECK_TIME :
+			NORMAL_BATTERY_CHECK_TIME;
 
-        #define DEFAULT_DYNAMIC_RANGE   20
-        #define DEFAULT_DYNAMIC_OFFSET  10
-        #define DEFAULT_TOUCH_SENSITIVITY  4
+	if (s_battery_time >= use_check_time)
+	{
+		s_num_battery_checks++;
+		sendFTPCommandAndValue(FTP_CMD_BATTERY_LEVEL, 0);
+		s_battery_time = 0;
+	}
 
-        // sendFTPCommandAndValue(FTP_CMD_SPLIT_NUMBER,0x01);
-        sendFTPCommandAndValue(FTP_CMD_DYNAMICS_SENSITIVITY,DEFAULT_DYNAMIC_RANGE);
-        sendFTPCommandAndValue(FTP_CMD_DYNAMICS_OFFSET,DEFAULT_DYNAMIC_OFFSET);
-        sendFTPCommandAndValue(FTP_CMD_TOUCH_SENSITIVITY,DEFAULT_TOUCH_SENSITIVITY);
-    }
+	// one time initialization if FTP is found
+
+	if (ftp_battery_level != -1 &&
+		s_ftp_init_state < NUM_INIT_STATES &&
+		s_init_time > INIT_STATE_DELAY)            // not initialized yet
+	{
+		display_level(0,1,"INITIALIZING FTP(%d)",s_ftp_init_state);
+
+		#define DEFAULT_DYNAMIC_RANGE   	20
+		#define DEFAULT_DYNAMIC_OFFSET  	10
+		#define DEFAULT_TOUCH_SENSITIVITY  	4
+
+		switch (s_ftp_init_state)
+		{
+			case 0 : sendFTPCommandAndValue(FTP_CMD_GET_SENSITIVITY, 0);  break;
+			case 1 : sendFTPCommandAndValue(FTP_CMD_GET_SENSITIVITY, 1);  break;
+			case 2 : sendFTPCommandAndValue(FTP_CMD_GET_SENSITIVITY, 2);  break;
+			case 3 : sendFTPCommandAndValue(FTP_CMD_GET_SENSITIVITY, 3);  break;
+			case 4 : sendFTPCommandAndValue(FTP_CMD_GET_SENSITIVITY, 4);  break;
+			case 5 : sendFTPCommandAndValue(FTP_CMD_GET_SENSITIVITY, 5);  break;
+			case 6 : sendFTPCommandAndValue(FTP_CMD_SPLIT_NUMBER,0x01);                          	break;
+			case 7 : sendFTPCommandAndValue(FTP_CMD_DYNAMICS_SENSITIVITY,DEFAULT_DYNAMIC_RANGE); 	break;
+			case 8 : sendFTPCommandAndValue(FTP_CMD_DYNAMICS_OFFSET,DEFAULT_DYNAMIC_OFFSET);     	break;
+			case 9 : sendFTPCommandAndValue(FTP_CMD_TOUCH_SENSITIVITY,DEFAULT_TOUCH_SENSITIVITY);
+				display_level(0,1,"FTP INITIALIZATION COMPLETE",0);
+				break;
+		}
+
+		s_ftp_init_state++;
+		s_init_time = 0;
+	}
 }
+
+

@@ -110,7 +110,7 @@
 #define PREF_RPI_DEBUG_OUTPUT	5			// off, USB, SERIAL, FOLLOW - default(FOLLOW)
 
 #define PREF_SPOOF_FTP          6           // off, on - default(off)
-#define PREF_FTP_PORT           7           // off, Host, Remote, default(Host)
+#define PREF_FTP_PORT           7           // off, Host, Remote, default(Off)
 
 #define FTP_OUTPUT_PORT    (getPref8(PREF_SPOOF_FTP) ? 1 : getPref8(PREF_FTP_PORT))
 
@@ -176,23 +176,26 @@
 
 #define PREF_MONITOR_OUTPUT    		PREF_PEDAL(NUM_PEDALS + 1)   // off, USB, SERIAL, FOLLOW, default(off)
 
-#define PREF_MONITOR_PORT0          (PREF_MONITOR_OUTPUT+1)      // 0=DUINO_INPUT0    default(off)
+#define PREF_MONITOR_USB1_IN		(PREF_MONITOR_OUTPUT + 1)	// eight bytes for monitoring input ports
+#define PREF_MONITOR_USB2_IN		(PREF_MONITOR_USB1_IN + 1)
+#define PREF_MONITOR_USB3_IN		(PREF_MONITOR_USB1_IN + 2)
+#define PREF_MONITOR_USB4_IN		(PREF_MONITOR_USB1_IN + 3)
+#define PREF_MONITOR_HOST1_IN		(PREF_MONITOR_USB1_IN + 4)
+#define PREF_MONITOR_HOST2_IN		(PREF_MONITOR_USB1_IN + 5)
+#define PREF_MONITOR_RPI_IN			(PREF_MONITOR_USB1_IN + 6)
+#define PREF_MONITOR_HUB_IN			(PREF_MONITOR_USB1_IN + 7)
 
-#define PREF_MONITOR_DUINO_INPUT0   (PREF_MONITOR_PORT0+0)     // 0=DUINO_INPUT0    default(off)
-#define PREF_MONITOR_DUINO_INPUT1   (PREF_MONITOR_PORT0+1)     // 1=DUINO_INPUT1    default(on)
-#define PREF_MONITOR_DUINO_OUTPUT0  (PREF_MONITOR_PORT0+2)     // 2=DUINO_OUTPUT0   default(on)
-#define PREF_MONITOR_DUINO_OUTPUT1  (PREF_MONITOR_PORT0+3)     // 3=DUINO_OUTPUT1   default(on)
-#define PREF_MONITOR_HOST_INPUT0    (PREF_MONITOR_PORT0+4)     // 4=HOST_INPUT0     default(off)
-#define PREF_MONITOR_HOST_INPUT1    (PREF_MONITOR_PORT0+5)     // 5=HOST_INPUT1     default(on)
-#define PREF_MONITOR_HOST_OUTPUT0   (PREF_MONITOR_PORT0+6)     // 6=HOST_OUTPUT0    default(off)
-#define PREF_MONITOR_HOST_OUTPUT1   (PREF_MONITOR_PORT0+7)     // 7=HOST_OUTPUT1    default(on)
-    // The above prefs determine whether or not messages will be enqueued for
-    // ports besides the FTP Controller port.  So it must be rechecked in the
-    // monitor display method as well in case we don't want to SEE the FTP
-    // controller messages.
+#define PREF_MONITOR_USB1_OUT		(PREF_MONITOR_HUB_IN + 1)	// eight bytes for monitoring input ports
+#define PREF_MONITOR_USB2_OUT		(PREF_MONITOR_USB1_OUT + 1)
+#define PREF_MONITOR_USB3_OUT		(PREF_MONITOR_USB1_OUT + 2)
+#define PREF_MONITOR_USB4_OUT		(PREF_MONITOR_USB1_OUT + 3)
+#define PREF_MONITOR_HOST1_OUT		(PREF_MONITOR_USB1_OUT + 4)
+#define PREF_MONITOR_HOST2_OUT		(PREF_MONITOR_USB1_OUT + 5)
+#define PREF_MONITOR_RPI_OUT		(PREF_MONITOR_USB1_OUT + 6)
+#define PREF_MONITOR_HUB_OUT		(PREF_MONITOR_USB1_OUT + 7)
 
-#define PREF_MONITOR_CHANNEL1       (PREF_MONITOR_PORT0+8)      // monitor specific midi channels
-    // default:  all channels are monitored
+#define PREF_MONITOR_CHANNEL1       (PREF_MONITOR_HUB_OUT + 1) 		// 16 bytes to monitor specific midi channels
+
 
 #define PREF_MONITOR_SYSEX              (PREF_MONITOR_CHANNEL1+16)     // off, on, Detail         default(2=Detail)
 #define PREF_MONITOR_ACTIVESENSE        (PREF_MONITOR_SYSEX+1)         // off, on                 default(0==off)

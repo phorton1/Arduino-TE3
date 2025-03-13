@@ -141,14 +141,23 @@ void setDefaultPrefs()
 
     _setDefaultPref8(PREF_MONITOR_OUTPUT,         0,3,  0,  off_usb_serial_follow);     // off, USB, Serial, Follow - default(off)
 
-    _setDefaultPref8(PREF_MONITOR_DUINO_INPUT0,   0,1,  0, off_on);    // default(off)
-    _setDefaultPref8(PREF_MONITOR_DUINO_INPUT1,   0,1,  1, off_on);    // default(on)
-    _setDefaultPref8(PREF_MONITOR_DUINO_OUTPUT0,  0,1,  1, off_on);    // default(on)
-    _setDefaultPref8(PREF_MONITOR_DUINO_OUTPUT1,  0,1,  1, off_on);    // default(on)
-    _setDefaultPref8(PREF_MONITOR_HOST_INPUT0,    0,1,  0, off_on);    // default(off)
-    _setDefaultPref8(PREF_MONITOR_HOST_INPUT1,    0,1,  1, off_on);    // default(on)
-    _setDefaultPref8(PREF_MONITOR_HOST_OUTPUT0,   0,1,  0, off_on);    // default(off)
-    _setDefaultPref8(PREF_MONITOR_HOST_OUTPUT1,   0,1,  1, off_on);    // default(on)
+    _setDefaultPref8(PREF_MONITOR_USB1_IN,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_USB2_IN,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_USB3_IN,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_USB4_IN,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_HOST1_IN,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_HOST2_IN,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_RPI_IN,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_HUB_IN,	    0,1,  1, off_on);
+
+    _setDefaultPref8(PREF_MONITOR_USB1_OUT,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_USB2_OUT,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_USB3_OUT,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_USB4_OUT,	    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_HOST1_OUT,    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_HOST2_OUT,    0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_RPI_OUT,      0,1,  1, off_on);
+    _setDefaultPref8(PREF_MONITOR_HUB_OUT,      0,1,  1, off_on);
 
     for (int i=0; i<16; i++)
         _setDefaultPref8(PREF_MONITOR_CHANNEL1+i, 0,1,  1,off_on);

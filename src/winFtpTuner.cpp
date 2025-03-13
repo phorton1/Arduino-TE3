@@ -7,6 +7,7 @@
 #include "ftp.h"
 #include "ftp_defs.h"
 #include "winFtpSensitivity.h"
+#include "midiQueue.h"
 
 #define TUNER_LED_BASE 11
 #define BUTTON_END_MODAL_WINDOW 24
@@ -29,7 +30,7 @@ void winFtpTuner::init()
 	draw_needed = 1;
 	last_tuner_note = -1;
 	last_tuner_value = 0;
-	for (int i=0; i<NUM_STRINGS; i++)
+	for (int i=0; i<NUM_FTP_STRINGS; i++)
 		last_string_pressed[i] = -1;
 }
 
@@ -94,7 +95,7 @@ void winFtpTuner::onButtonEvent(int row, int col, int event)
 
 #define NUM_INTERVALS       14
 #define INTERVAL_WIDTH      ((FRETBOARD_WIDTH - 2*BRIDGE_WIDTH) / NUM_INTERVALS)
-#define STRING_SPACING      (FRETBOARD_HEIGHT / NUM_STRINGS)
+#define STRING_SPACING      (FRETBOARD_HEIGHT / NUM_FTP_STRINGS)
 
 // tuner
 
@@ -118,13 +119,13 @@ void winFtpTuner::onButtonEvent(int row, int col, int event)
 
 void winFtpTuner::fretsToInts(int *ints)
 {
-	for (int i=0; i<NUM_STRINGS; i++)
+	for (int i=0; i<NUM_FTP_STRINGS; i++)
 	{
 		ints[i] = -1;
 	}
 
 	__disable_irq();
-	note_t *note = first_note;
+	note_t *note = ftp_first_note;
 	while (note)
 	{
 		if (note->string != -1 && note->fret != -1)
@@ -269,7 +270,7 @@ void winFtpTuner::updateUI()	// draw
 		// strings
 
 		int y = FRETBOARD_Y + (STRING_SPACING/2);
-		for (int i=0; i<NUM_STRINGS; i++)
+		for (int i=0; i<NUM_FTP_STRINGS; i++)
 		{
 			tft.fillRect(
 				FRETBOARD_X,
@@ -322,7 +323,7 @@ void winFtpTuner::updateUI()	// draw
 
 	int pressed[6];
 	fretsToInts(pressed);
-	for (int i=0; i<NUM_STRINGS; i++)
+	for (int i=0; i<NUM_FTP_STRINGS; i++)
 	{
 		if (full_draw || pressed[i] != last_string_pressed[i])
 		{
@@ -340,8 +341,8 @@ void winFtpTuner::updateUI()	// draw
 	//------------------------------
 	// note
 
-	int t_note = tuning_note ? tuning_note->val : -1;
-	int t_value = tuning_note ? tuning_note->tuning : 0;
+	int t_note = ftp_tuning_note ? ftp_tuning_note->val : -1;
+	int t_value = ftp_tuning_note ? ftp_tuning_note->tuning : 0;
 	int l_note = last_tuner_note;
 
 	if (full_draw || t_note != last_tuner_note)
@@ -372,7 +373,7 @@ void winFtpTuner::updateUI()	// draw
 		last_tuner_value = t_value;
 
 		drawTunerPointer(last_tuner_value_x,0);
-		int color = tuning_note ? (abs(t_value)<=2) ? TFT_GREEN : TFT_WHITE : TUNER_DISABLED_COLOR;
+		int color = ftp_tuning_note ? (abs(t_value)<=2) ? TFT_GREEN : TFT_WHITE : TUNER_DISABLED_COLOR;
 		drawTunerPointer(tuner_value_x,color);
 		last_tuner_value_x = tuner_value_x;
 
@@ -383,7 +384,7 @@ void winFtpTuner::updateUI()	// draw
 
 		pct = (1-((float)-t_value)/32.0);	// pct good
 		setLED(TUNER_LED_BASE + 0,
-			tuning_note ?
+			ftp_tuning_note ?
 				(t_value <= -2 && t_value >= -32) ?
 					LED_RGB(BRIGHT_PCT(1-pct),BRIGHT_PCT(pct),0) :
 				(t_value < -32) ?
@@ -393,14 +394,14 @@ void winFtpTuner::updateUI()	// draw
 
 		// pct = ((float)abs(t_value))/4.0;
 		setLED(TUNER_LED_BASE + 1,
-			tuning_note ? (t_value >= -4 && t_value <= 2) ?
+			ftp_tuning_note ? (t_value >= -4 && t_value <= 2) ?
 			LED_RGB(0,0xff,0) : // BRIGHT_PCT(1.0-pct),0) :
 			LED_RGB(0,0,0xff) :
 			LED_RGB(0,0,0xff));
 
 		pct = (1-((float)t_value)/32.0);	// pct good
 		setLED(TUNER_LED_BASE + 2,
-			tuning_note ?
+			ftp_tuning_note ?
 				(t_value >= 2 && t_value <= 32) ?
 					LED_RGB(BRIGHT_PCT(1-pct),BRIGHT_PCT(pct),0) :
 				(t_value > 32) ?

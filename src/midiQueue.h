@@ -6,17 +6,6 @@
 #include "defines.h"
 #include "prefs.h"
 
-// Because MIDI_PORT_USB1 is 0x00, we need two separate
-// macros.  One to check if the port IS active, and another
-// to return the value.
-
-#define FTP_PORT_IS_ACTIVE ( \
-	prefs.SPOOF_FTP || prefs.FTP_PORT )
-
-#define FTP_ACTIVE_PORT (   \
-    prefs.SPOOF_FTP ? MIDI_PORT_HOST1 : \
-    (prefs.FTP_PORT == 1) ? MIDI_PORT_USB1 : \
-    (prefs.FTP_PORT == 2) ? MIDI_PORT_HOST1 : 0 )
 
 #define MIDI_OUTPUT_B2_FLAG  0x80
     // set into the high order bit of the B2 byte
@@ -25,7 +14,7 @@ class msgUnion
     // USB raw input ports map to mine, but HOST0,1
     // are 4,5 in my scheme and SERIAL0 is 6,  The OUTPUT
     // state is weirdly stored in the high order bit
-    // of the 3rd byte (the first parameter).
+    // of the 3rd byte, b[2], param1.
 {
     public:
 
@@ -54,7 +43,10 @@ class msgUnion
         inline uint8_t port()		const { return i & MIDI_PORT_NUM_MASK; }
 		inline bool    isUSB()		const { return port() <= MIDI_PORT_USB4; }
         inline bool    isHost()		const { return port() >= MIDI_PORT_HOST1 && port() <= MIDI_PORT_HOST2; }
-        inline bool    isSerial()	const { return port() == MIDI_PORT_SERIAL; }
+        inline bool    isSerial()	const { return port() >= MIDI_PORT_RPI && port() <= MIDI_PORT_HUB; }
+        inline bool    isRPI()		const { return port() == MIDI_PORT_RPI; }
+        inline bool    isHUB()		const { return port() == MIDI_PORT_HUB; }
+
         inline bool    isOutput()	const { return b[2] & MIDI_OUTPUT_B2_FLAG; }
 
         inline uint8_t portEnum()	const { return (i & MIDI_PORT_NUM_MASK) >> 4; }
@@ -70,7 +62,30 @@ class msgUnion
 		{
 			int p = port();
 			bool o = isOutput();
-			return p <= MIDI_PORT_USB3 ?
+            if (p <= MIDI_PORT_USB3)
+            {
+				return o ? ACTIVITY_INDICATOR_USB_OUT :
+						   ACTIVITY_INDICATOR_USB_IN;
+            }
+            else if (p <= MIDI_PORT_HOST2)
+            {
+                return o ? ACTIVITY_INDICATOR_HOST_OUT :
+						   ACTIVITY_INDICATOR_HOST_IN;
+            }
+            else if (p == MIDI_PORT_RPI)
+            {
+				return o ? ACTIVITY_INDICATOR_RPI_OUT :
+						   ACTIVITY_INDICATOR_RPI_IN;
+            }
+            else // p == MIDI_PORT_HUB
+            {
+                return o ? ACTIVITY_INDICATOR_HUB_OUT :
+						   ACTIVITY_INDICATOR_HUB_IN;
+            }
+
+
+			#if 0	// OLD
+				return p <= MIDI_PORT_USB3 ?
 					o ? ACTIVITY_INDICATOR_USB_OUT :
 						ACTIVITY_INDICATOR_USB_IN :
 				p <= MIDI_PORT_HOST2 ?
@@ -78,6 +93,7 @@ class msgUnion
 						ACTIVITY_INDICATOR_HOST_IN :
 				o ? ACTIVITY_INDICATOR_SERIAL_OUT :
 					ACTIVITY_INDICATOR_SERIAL_IN;
+			#endif
 		}
 
 	// data
@@ -89,27 +105,51 @@ class msgUnion
 };
 
 
-extern void enqueueMidi(msgUnion &msg);
-extern void enqueueMidi(bool output, uint8_t port, uint32_t msg32);
-extern void enqueueMidi(bool output, uint8_t port, const uint8_t *bytes);
-	// QUICKLY enqueue Messages.  If FTP is enabled, certain messags will always
-	// be enqueued, even if they are not monitored.  Otherwise, only messages
-	// on ports and channels being monitored will be enqueued. This is
-	// intended to be called from time-critical code.
+//-------------------------------------
+// generic sendMidi() methods
+//-------------------------------------
 
-extern void dequeueMidi();
-    // dequeue Messages on different thread. if FTP is enabled, certain messagss
-	// will be checked for functional reasons and then possibly re-filtered
-	// for port/channel before monitoring.  Then any messages left will be
-	// filtered according to monitoring preferences for display, building
-	// sysex buffers, etc.
-
-
-extern void sendMidiSysex(uint8_t port, int length, const uint8_t *buf);
+// extern void sendMidiSysex(uint8_t port, int length, const uint8_t *buf);
 extern void sendMidiProgramChange(uint8_t port, uint8_t channel, uint8_t prog_num);
 extern void sendMidiControlChange(uint8_t port, uint8_t channel, uint8_t cc_num, uint8_t value);
 
-extern void sendFTPCommandAndValue(uint8_t cmd, uint8_t val);
 
+
+//=====================================
+// The rest is currently FTP only
+//=====================================
+
+extern int FTP_ACTIVE_PORT;
+    // Port to which FTP commands will be sent, and which will be monitored
+    // for FTP information. Based on PREF_FTP_PORT and PREF_SPOOF_FTP.
+    //
+    //      Off => -1
+    //      Host | PREF_SPOOF_FTP => MIDI_PORT_HOST1
+    //      Remote => MIDI_PORT_USB1
+
+extern void setFTPActivePort();
+    // Called after prefs loaded in TE3.ino, or when value of PREF_FTP_PORT
+    // changes in configSystem.  Note that it is not called when SPOOF_FTP
+    // changes, as this causes a system reboot.
+
+
+extern void enqueueFTPIn(int port, uint32_t msg32);
+    // enqueue incoming messages from USB (critical_timer_handler())
+    // or MIDI_HOST (interrupt) for processing from timer_handler()
+extern void dequeueFTPIn();
+    // dequeue FTP messages from slower timer_handler() and process
+    // them for information and/or pending commands.
+
+extern void sendFTPCommandAndValue(uint8_t cmd, uint8_t val);
+    // enqueue an outgoing FTP CommandAndValue for
+    // reply processing and retries
+extern bool pendingFTPCount();
+    // used to serialize multiple successive FTP commands
+    // withouit overlaps
+extern void processOutgoingFTPCommands();
+    // handle the outgoing FTP command queue by either
+    // sending a new command, waiting for a reply
+    // or doing a retry
+    
 
 // end of midiQueue.h

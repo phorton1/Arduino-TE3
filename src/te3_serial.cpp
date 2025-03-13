@@ -397,7 +397,12 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
 
             if (serial_port_num == SERIAL_PORT_NUM_RPI)
             {
+                theSystem.midiActivity(ACTIVITY_INDICATOR_RPI_IN);
                 handleCommonMidiSerial(midi_msg);
+            }
+            else    // never happens yet
+            {
+                theSystem.midiActivity(ACTIVITY_INDICATOR_HUB_IN);
             }
         }
 
