@@ -76,7 +76,6 @@ extern void handleSerial();
 #define NUM_MIDI_PORTS      8
 #define MAX_MIDI_PORT		(NUM_MIDI_PORTS-1)
 
-#define MIDI_PORT_NUM_MASK    0xf0
 
 #define MIDI_ENUM_TO_PORT(i)  (i) << 4
 #define MIDI_PORT_TO_ENUM(p)  (p) >> 4

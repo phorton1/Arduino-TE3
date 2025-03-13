@@ -17,10 +17,10 @@
 
 #define DEBUG_MIDI_SEND     1       // show sent midi messages
 
-#define DEBUG_FTP_QUEUE     1       // show incoming ftp enqueue & dequeue
-#define DEBUG_FTP_PROC      2       // show ftp dequeue processing; 2 shows header
-#define DEBUG_FTP_NOTES     1       // separate define for ftp note details
-#define DEBUG_FTP_COMMANDS  1       // show FTP command processing
+#define DEBUG_FTP_QUEUE     0       // show incoming ftp enqueue & dequeue
+#define DEBUG_FTP_PROC      0       // 0..2 show ftp dequeue processing; 2 shows header
+#define DEBUG_FTP_NOTES     0       // separate define for ftp note details
+#define DEBUG_FTP_COMMANDS  0       // show FTP command processing
 
 
 #define MAX_FTP_IN_QUEUE    1024     // plenty big enough in testing
@@ -124,13 +124,9 @@ static void sendMidiMessage(const char *what, uint8_t port, uint8_t type, uint8_
         return;
     }
 
-	// We would then then we set our port into the msg, and pass it to
-	// enqueueMidiMonitor as output for monitoring display
-
-	// msg.setOutput();
-	// msg.setPort(port);
-	// enqueueMidi(msg);
+    enqueuMonitor(port,true,msg.i);
 }
+
 
 
 void sendMidiProgramChange(uint8_t port, uint8_t channel, uint8_t prog_num)
@@ -157,7 +153,14 @@ extern void setFTPActivePort()
     int ftp_pref = getPref8(PREF_FTP_PORT);
     int use_port = 0;
     if (getPref8(PREF_SPOOF_FTP) || ftp_pref == FTP_PORT_HOST)
-        use_port = MIDI_PORT_HOST1;
+        // HOST1 and HOST2 are interchangeable?  except that
+        // only HOST2 sends out active_sense, which I like to
+        // see, even if I don't forward it as it indicates the
+        // ftp is is alive on the host port
+
+        // use_port = MIDI_PORT_HOST1;
+        use_port = MIDI_PORT_HOST2;
+
     else if (ftp_pref == FTP_PORT_REMOTE)
         use_port = MIDI_PORT_USB1;
 

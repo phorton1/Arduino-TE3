@@ -173,8 +173,8 @@ void setDefaultPrefs()
     //----------------------
 
     _setDefaultPref8(PREF_PERF_FILTER,          0,1,  1, off_on);    // default(on)
-    _setDefaultPref8(PREF_PERF_FILTER_BENDS,    0,1,  0, off_on);    // default(off)
-    _setDefaultPref8(PREF_MONITOR_PERFORMANCE,  0,1,  1, off_on);    // default(on)
+    _setDefaultPref8(PREF_PERF_FILTER_BENDS,    0,1,  1, off_on);    // default(on)
+    _setDefaultPref8(PREF_MONITOR_PERFORMANCE,  0,1,  1, off_on);    // default(on) - UNUSED AT THIS TIME
 }
 
 

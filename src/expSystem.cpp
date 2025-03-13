@@ -419,6 +419,8 @@ void expSystem::updateUI()
 	if (win == &rig_looper)
 		initQueryFTP();
 
+	dequeueMonitor();
+
 
 	//----------------------------------
 	// PEDALS

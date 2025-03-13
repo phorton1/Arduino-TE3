@@ -97,13 +97,13 @@
 
 #include "defines.h"
 #include <myDebug.h>
-#include <teMIDI.h>
 #include <teCommon.h>
 #include <sgtl5000midi.h>
 #include "commonDefines.h"
 #include "expSystem.h"
 #include "prefs.h"
 #include "fileSystem.h"
+#include "midiQueue.h"
 
 
 #define dbg_cmd  0
@@ -247,7 +247,6 @@ static void handleCommand(const String &left, const String &right)
     {
         uint8_t val = 0;
         uint8_t found_cc = 0;
-        uint8_t cable = SGTL5000_CABLE;
         uint8_t channel = SGTL5000_CHANNEL;
         uint8_t max = 255;
 
@@ -263,7 +262,6 @@ static void handleCommand(const String &left, const String &right)
 
         if (!found_cc)
         {
-            cable = AUDIO_CABLE;
             channel = AUDIO_CHANNEL;
             for (uint8_t cc=AUDIO_CC_BASE; cc<=AUDIO_CC_MAX; cc++)
             {
@@ -285,9 +283,10 @@ static void handleCommand(const String &left, const String &right)
             else if (max == 255 || validInt(&val,left,right,max))
             {
                 // Send the Midi Message
-
+                // TE3 Audio (my serial midi in general) always uses PORT0
+                
                 msgUnion msg(
-                    cable,
+                    0,
                     MIDI_TYPE_CC,
                     channel,
                     found_cc,
@@ -388,21 +387,27 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
             if (i==999)
                 my_error("timeout getting midi message",0);
 
-            display(0,"--> %s MIDI: %02x %02x %02x %02x",
+            uint32_t *msg32 = (uint32_t *) midi_msg;
+
+            display(0,"--> %s MIDI: %02x %02x %02x %02x  msg32(0x%08x)",
                 serialPortName(serial_port_num),
                 midi_msg[0],
                 midi_msg[1],
                 midi_msg[2],
-                midi_msg[3]);
+                midi_msg[3],
+                *msg32);
 
             if (serial_port_num == SERIAL_PORT_NUM_RPI)
             {
                 theSystem.midiActivity(ACTIVITY_INDICATOR_RPI_IN);
                 handleCommonMidiSerial(midi_msg);
+                enqueuMonitor(MIDI_PORT_RPI,false,*msg32);
+
             }
-            else    // never happens yet
+            else    // never happens (yet)
             {
                 theSystem.midiActivity(ACTIVITY_INDICATOR_HUB_IN);
+                enqueuMonitor(MIDI_PORT_HUB,false,*msg32);
             }
         }
 

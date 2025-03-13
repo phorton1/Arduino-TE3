@@ -235,8 +235,8 @@
 //-----------------------
 
 #define PREF_PERF_FILTER                (PREF_MONITOR_EVERYTHING_ELSE + 1)
-#define PREF_PERF_FILTER_BENDS          (PREF_PERF_FILTER + 1)
-#define PREF_MONITOR_PERFORMANCE        (PREF_PERF_FILTER + 2)
+#define PREF_PERF_FILTER_BENDS          (PREF_PERF_FILTER + 1)		
+#define PREF_MONITOR_PERFORMANCE        (PREF_PERF_FILTER + 2)		// unused at this time
 
 
 //-----------------------
