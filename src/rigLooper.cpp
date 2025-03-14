@@ -31,10 +31,11 @@
 #include "songParser.h"
 #include "winSelectSong.h"
 #include "winFTPTuner.h"
+#include "te3_rotaries.h"
 
 
 #define dbg_patch_buttons    	1
-#define dbg_serial_midi         -1
+#define dbg_serial_midi         0
 #define dbg_rig					0
 #define dbg_song_machine		1
 
@@ -647,33 +648,62 @@ bool rigLooper::onRotaryEvent(int num, int val)
 
 
 void rigLooper::onSerialMidiEvent(int cc_num, int value)
+	// NOTE that although we respond to clip mute events from the Looper
+	// we DONT respond to clip volume events.  Looper should probably be
+	// changed to not echo those, or mutes (later)
 {
-	display(dbg_serial_midi+1,"rigLooper::SerialMidiEvent(0x%02x,0x%02x)",cc_num,value);
+	display(dbg_serial_midi,"rigLooper::SerialMidiEvent(0x%02x,0x%02x)",cc_num,value);
 
 	// track state messages
 	if (cc_num >= TRACK_STATE_BASE_CC && cc_num < TRACK_STATE_BASE_CC+4)
 	{
 		int track_num = cc_num - TRACK_STATE_BASE_CC;
-		display(dbg_serial_midi,"rigLooper serial_midi track_state[%d] = 0x%02x",track_num,value);
+		display(dbg_serial_midi+1,"rigLooper serial_midi track_state[%d] = 0x%02x",track_num,value);
 		m_track_state[track_num] = value;
 	}
 	else if (cc_num == LOOP_DUB_STATE_CC)
 	{
 		m_dub_mode = value;
+		display(dbg_serial_midi+1,"rigLooper serial_midi dub_mode=%d",m_dub_mode);
 	}
 	else if (cc_num == LOOP_STOP_CMD_STATE_CC)
 	{
 		m_stop_button_cmd = value;
+		display(dbg_serial_midi+1,"rigLooper serial_midi stop_button_cmd=0x%02x",m_stop_button_cmd);
 	}
 	else if (cc_num >= CLIP_MUTE_BASE_CC &&
-			 cc_num < CLIP_MUTE_BASE_CC + 16)		// 2023-08-05 - 12 was definitely wrong here; it should be 16
+			 cc_num < CLIP_MUTE_BASE_CC + 16)
 	{
 		int num = cc_num - CLIP_MUTE_BASE_CC;
 		m_clip_mute[num] = value;
+		display(dbg_serial_midi+1,"rigLooper serial_midi clip_mute[%d]=%d",num,m_clip_mute[num]);
 	}
 	else if (cc_num == NOTIFY_LOOP)
 	{
+		display(dbg_serial_midi+1,"rigLooper serial_midi NOTIFY_LOOP",0);
 		song_machine.notifyLoop();
+	}
+
+	// Set the four rotaries to the four volumes they control
+	// as those messages are received during initialization.
+	// Thereafter, they are sent, but not echoed, by the Looper.
+
+	else if (cc_num >= LOOP_CONTROL_BASE_CC &&
+		     cc_num < LOOP_CONTROL_BASE_CC + LOOPER_NUM_CONTROLS)
+	{
+		int control_num = cc_num - LOOP_CONTROL_BASE_CC;
+		int rotary_num =
+			control_num == LOOPER_CONTROL_INPUT_GAIN ? 0 :
+			control_num == LOOPER_CONTROL_OUTPUT_GAIN ? 1 :
+			control_num == LOOPER_CONTROL_THRU_VOLUME ? 2 :
+			control_num == LOOPER_CONTROL_MIX_VOLUME ? 3 : -1;
+
+		if (rotary_num != -1)
+		{
+			display(dbg_serial_midi+1,"rigLooper serial_midi VOL[%d] rotary(%d) value=%d",control_num,rotary_num,value);;
+			te3_rotaries::setValue(rotary_num, value, true);
+				// true = prevent_event by also setting roatary's last_value to value
+		}
 	}
 }
 

@@ -13,10 +13,7 @@
 #include "midiQueue.h"
 #include "ftp.h"
 #include "ftp_defs.h"
-
-
-// #define display_color(c,l,f,....)
-// #define display_level(d,l,f,...)
+#include "commonDefines.h"
 
 
 #define DEBUG_MONITOR_QUEUE     0
@@ -141,7 +138,7 @@ static const char *portName(const msgUnion &msg)
 
 
 
-const char *getStandardCCName(int i)
+static const char *getStandardCCName(int i)
    // from http://www.nortonmusic.com/midi_cc.html
 {
     if (i==0  ) return "Bank Select (MSB)";
@@ -218,6 +215,118 @@ const char *getStandardCCName(int i)
 
 
 
+static const char *LOOPER_CTRL_NAMES[LOOPER_NUM_CONTROLS] = {
+    "INPUT_GAIN",
+    "THRU_VOLUME",
+    "LOOP_VOLUME",
+    "MIX_VOLUME",
+    "OUTPUT_GAIN"};
+
+static const char *trackStateString(uint8_t p2)
+{
+    static char buf[64];
+    buf[0] = 0;
+
+    if (p2 == TRACK_STATE_EMPTY)
+        strcpy(buf,"EMPTY");
+    else if (p2 == TRACK_STATE_STOPPED)
+        strcpy(buf,"STOPPED");
+    else
+    {
+        if (p2 & TRACK_STATE_RECORDING)           // 0x0001
+            strcat(buf,"RECORD ");
+        if (p2 & TRACK_STATE_PLAYING)             // 0x0002
+            strcat(buf,"PLAY ");
+        if (p2 & TRACK_STATE_PENDING_RECORD)      // 0x0008
+            strcat(buf,"PEND_RECORD ");
+        if (p2 & TRACK_STATE_PENDING_PLAY)        // 0x0010
+            strcat(buf,"PEND_PLAY ");
+        if (p2 & TRACK_STATE_PENDING_STOP)        // 0x0020
+            strcat(buf,"PEND_STOP ");
+    }
+    return buf;
+}
+
+
+
+
+static void getLooperCommandDescrip(char *buf,uint8_t p1,uint8_t p2)
+{
+    #define TRACKS_X_LAYERS (LOOPER_NUM_TRACKS * LOOPER_NUM_LAYERS)
+
+    sprintf(buf,"unknown Looper CC");
+
+    if (p1 == LOOP_COMMAND_CC)                  // 0x01		// send     recv        the value is the LOOP command
+    {
+        strcpy(buf,"LOOP_COMMAND: ");
+
+        if (p2 == LOOP_COMMAND_CLEAR_ALL)                   // 0x01
+            strcat(buf,"CLEAR_ALL");
+        else if (p2 == LOOP_COMMAND_STOP_IMMEDIATE)         // 0x02      // stop the looper immediately
+            strcat(buf,"STOP_IMMEDIATE");
+        else if (p2 == LOOP_COMMAND_STOP)                   // 0x03      // stop at next cycle point
+            strcat(buf,"STOP");
+        else if (p2 == LOOP_COMMAND_DUB_MODE)               // 0x04      // the dub mode is handled by rPi and modeled here
+            strcat(buf,"DUB");
+        else if (p2 == LOOP_COMMAND_ABORT_RECORDING)        // 0x06      // abort the current recording if any
+            strcat(buf,"ABORT_RECORDING");
+        else if (p2 == LOOP_COMMAND_LOOP_IMMEDIATE)         // 0x08      // immediatly loop back to all clip starts ...
+            strcat(buf,"LOOP_IMMEDIATE");
+        else if (p2 == LOOP_COMMAND_SET_LOOP_START)         // 0x09      // immediatly set the "restart point" for the clips in the track
+            strcat(buf,"SET_LOOP_START");
+        else if (p2 == LOOP_COMMAND_CLEAR_LOOP_START)       // 0x0A      // immediatly set the "restart point" for the clips in the track
+            strcat(buf,"CLEAR_LOOP_START)");
+        else if (p2 >= LOOP_COMMAND_TRACK_BASE &&           // 0x10      // there are 16 possible "track" buttons but CLIP CC's spaces limit it
+                 p2 <  LOOP_COMMAND_TRACK_BASE + 16)
+            sprintf(&buf[strlen(buf)],"TRACK_%d",p2 - LOOP_COMMAND_TRACK_BASE);
+        else if (p2 == LOOP_COMMAND_ERASE_TRACK_BASE)       // 0x20      // erase the given track (stops it if playing)
+            sprintf(&buf[strlen(buf)],"ERASE_TRACK_%d",p2 - LOOP_COMMAND_ERASE_TRACK_BASE);
+        else if (p2 == LOOP_COMMAND_GET_STATE)		        // 0x30	    // NEW the looper will dump all state
+            strcat(buf,"GET_STATE");
+        else
+            strcat(buf,"UNKNOWN");
+    }
+    else if (p1 == LOOP_STOP_CMD_STATE_CC)      // 0x02		// recv     send        the value is 0, LOOP_COMMAND_STOP or STOP_IMMEDIATE
+    {
+         strcpy(buf,"STOP_BUTTON: ");
+         if (p2 == 0)
+            strcat(buf,"Off");
+         else if (p2 == LOOP_COMMAND_STOP)
+            strcat(buf,"STOP");
+         else if (p2 == LOOP_COMMAND_STOP_IMMEDIATE)
+            strcat(buf,"STOP_IMMEDIATE");
+         else
+            strcat(buf,"UNKNOWN");
+    }
+    else if (p1 == LOOP_DUB_STATE_CC)           // 0x03		// recv     send        value is currently only the DUB state
+        sprintf(buf,"DUB_STATE: %s",p2?"ON":"off");
+    else if (p1 == NOTIFY_LOOP)                 // 0x05     // recv     send        value=number of pending loop notifies
+        sprintf(buf,"NOTIFY_LOOP: pending(%d)",p2);
+    else if (p1 >= LOOP_CONTROL_BASE_CC &&      // 0x08     // send     recv        RANGED for 0..LOOPER_NUM_CONTROLS the value is the volume control (Looper pedal == 0x67)
+             p1 <  LOOP_CONTROL_BASE_CC + LOOPER_NUM_CONTROLS)
+        sprintf(buf,"CTRL %s=%d",LOOPER_CTRL_NAMES[p1 - LOOP_CONTROL_BASE_CC],p2);
+    else if (p1 >= TRACK_STATE_BASE_CC &&       // 0x10		// recv     send        RANGED for NUM_TRACKS, upto 16 tracks, value is track state
+             p1 <  TRACK_STATE_BASE_CC + 16)
+        sprintf(buf,"TRACK_STATE[%d] = %s",p1 - TRACK_STATE_BASE_CC,trackStateString(p2));
+    else if (p1 >= CLIP_VOL_BASE_CC &&          // 0x20		// both     both        RANGED for NUM_TRACKS * NUM_LAYERS, upto 32 total - value is the clip volume
+             p1 <  CLIP_VOL_BASE_CC + TRACKS_X_LAYERS)
+    {
+        uint8_t clip = p1 - CLIP_VOL_BASE_CC;
+        uint8_t track = clip / LOOPER_NUM_LAYERS;
+        uint8_t layer = clip % LOOPER_NUM_LAYERS;
+        sprintf(buf,"CLIP(%d,%d) VOL=%d",track,layer,p2);
+    }
+    else if (p1 >= CLIP_MUTE_BASE_CC &&         // 0x40		// both     both        RANGED for NUM_TRACKS * NUM_LAYERS, upto 24 total - value is mute state
+             p1 <  CLIP_MUTE_BASE_CC + TRACKS_X_LAYERS)
+    {
+        uint8_t clip = p1 - CLIP_MUTE_BASE_CC;
+        uint8_t track = clip / LOOPER_NUM_LAYERS;
+        uint8_t layer = clip % LOOPER_NUM_LAYERS;
+        sprintf(buf,"CLIP(%d,%d) MUTE=%d",track,layer,p2);
+    }
+}
+
+
 //-----------------------------------------------
 // the monitor
 //-----------------------------------------------
@@ -278,8 +387,8 @@ static void _monitor(msgUnion &msg)
     int fg_color =
         port <= MIDI_PORT_USB4 ? ansi_color_white :
         port <= MIDI_PORT_HOST2 ? ansi_color_light_cyan :
-        port == MIDI_PORT_RPI ? ansi_color_light_magenta :
-        ansi_color_light_blue;
+        port == MIDI_PORT_RPI ? ansi_color_yellow :
+        ansi_color_black;
 
 
     //--------------------------------
@@ -432,7 +541,7 @@ static void _monitor(msgUnion &msg)
 
     // CONTROL CHANGES
 
-    else if (type == 0x0b)
+    else if (type == MIDI_TYPE_CC)  //  0x0b
     {
         s = "ControlChange";
 
@@ -590,16 +699,23 @@ static void _monitor(msgUnion &msg)
 
             else
             {
-                s = "CC";
-                sprintf(buf2,"%-3d - %s",p1,getStandardCCName(p1));
+                sprintf(buf2,"%s(0x%02x)",getStandardCCName(p1),p2);
             }
         }   // is_ftp
+
         else
         {
             show_it = getPref8(PREF_MONITOR_EVERYTHING_ELSE);
+            if (show_it)
+            {
+                if (port == MIDI_PORT_RPI)
+                    getLooperCommandDescrip(buf2,p1,p2);
+                else
+                    sprintf(buf2,"%s(0x%02x)",getStandardCCName(p1),p2);
+            }
         }
 
-    }   // (type == 0x0b)
+    }   // (type == MIDI_TYPE_CC)  //  0x0b)
 
     if (show_it)
     {
@@ -610,7 +726,7 @@ static void _monitor(msgUnion &msg)
             port_name,
             port_enum,
             msg.channel(),
-            p0,
+            type,
             s,
             p1,
             p2,

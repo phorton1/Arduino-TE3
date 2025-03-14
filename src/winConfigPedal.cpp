@@ -49,7 +49,7 @@
 #define ITEM_CURVE_TYPE   2
 #define NUM_FIXED_ITEMS   3
 
-#define CALIB_SAFETY_MARGIN   10
+#define CALIB_SAFETY_MARGIN   25
 
 // virtual
 const char *winConfigPedal::name()

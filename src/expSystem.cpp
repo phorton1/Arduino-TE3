@@ -378,7 +378,7 @@ void expSystem::critical_timer_handler()
 void handleCommonMidiSerial(uint8_t *midi_buf)
 	// externed in common fileSystem.h
 {
-	warning(0,"handleCommonMidiSerial(%02x,%02x)",midi_buf[2],midi_buf[3]);
+	// warning(0,"handleCommonMidiSerial(%02x,%02x)",midi_buf[2],midi_buf[3]);
 	theSystem.m_cur_rig->onSerialMidiEvent(midi_buf[2],midi_buf[3]);
 }
 

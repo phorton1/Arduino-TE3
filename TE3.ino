@@ -27,6 +27,7 @@
 #include "src/midiHost.h"
 #include "src/fileSystem.h"
 #include "src/midiQueue.h"
+#include "src/commonDefines.h"
 
 
 #if WITH_ROTARIES
@@ -340,6 +341,15 @@ void loop()
 		rpi_ready = r_ready;
 		display(0,"RPI%s READY",rpi_ready?"":" NOT");
 		analogWrite(PIN_LED_RPI_READY,rpi_ready * 128);	// PWM brightness
+
+		// if the Looper goes to the ready state (i.e. at our boot)
+		// issue the getState command to update our picture of it
+		
+		if (rpi_ready)
+		{
+			display(0,"Dispatching LOOP_COMMAND_GET_STATE",0);
+			sendMidiControlChange(MIDI_PORT_RPI, 1, LOOP_COMMAND_CC, LOOP_COMMAND_GET_STATE);
+		}
 	}
 
 }	// loop()

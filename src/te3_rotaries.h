@@ -32,8 +32,12 @@ public:
 	static void init();
 	static void loop();
 
-	static void setValue(uint8_t num, uint8_t val)
-		{ rot_value[num] = val; }
+	static void setValue(uint8_t num, uint8_t val, bool prevent_event = false)
+	{
+		rot_value[num] = val;
+		if (prevent_event)
+			last_value[num] = val;
+	}
 
 	static uint8_t getValue(uint8_t num)
 		{ return rot_value[num]; }

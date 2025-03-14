@@ -75,7 +75,7 @@ void initLEDs()
 {
     display(0,"initLEDs() USE_ADAFRUIT=%d",USE_ADAFRUIT);
     leds.begin();
-    #if 1
+    #if 0
         for (int i=0; i<5; i++)
         {
             setLED(0,i&1?LED_RED:LED_GREEN);

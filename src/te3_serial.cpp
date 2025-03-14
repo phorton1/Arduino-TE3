@@ -123,6 +123,7 @@ static uint32_t file_command_time = 0;
 
 static bool in_upload_binary = 0;
 static Stream *SAVE_MONITOR = 0;
+static Stream *saveDbgSerial = 0;
 
 
 static void processCommandLine(const char *line);
@@ -338,7 +339,7 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
                 {
                     display(0,"starting in_file_command mode",0);
                     // turn off the midi monitor to make sure it doesn't
-                    // interfere with the binary upload
+                    // interfere with the file commands
                     SAVE_MONITOR = MONITOR_OUTPUT;
                     MONITOR_OUTPUT = 0;
                     in_file_command = 1;
@@ -353,10 +354,13 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
             else if (byte == 0x05)       // ctrl-E
             {
                 display(0,"starting in_upload_binary mode",0);
-                // turn off the midi monitor to make sure it doesn't
-                // interfere with the binary upload
+                // turn off the midi monitor and myDebug to make sure
+                // they don't interfere with the binary upload.
+                
                 SAVE_MONITOR = MONITOR_OUTPUT;
+                saveDbgSerial = dbgSerial;
                 MONITOR_OUTPUT = 0;
+                dbgSerial = 0;
                 in_upload_binary = 1;
                 return 0;
             }
@@ -490,8 +494,9 @@ void handleSerial()
             // turn the midi monitor back on (or back to whatever
             // it is set to by prefs)
             MONITOR_OUTPUT = SAVE_MONITOR;
+            dbgSerial = saveDbgSerial;
             SAVE_MONITOR = 0;
-
+            saveDbgSerial = 0;
         }
         return;
     }
