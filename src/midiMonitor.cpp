@@ -732,14 +732,12 @@ static void _monitor(msgUnion &msg)
             p2,
             buf2);
 
-        #if 0
-            // putty fix for colors background colors wrapping
-            MONITOR_OUTPUT->print(buf);
-            MONITOR_OUTPUT->print("\033[37;40m");
-            MONITOR_OUTPUT->println();
-        #else
-            MONITOR_OUTPUT->println(buf);
+        #if 1
+            // fix for colors background colors wrapping
+            strcat(buf,"\033[37;40m");
         #endif
+            MONITOR_OUTPUT->println(buf);
+
 
     }   // show_it
 

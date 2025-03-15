@@ -343,6 +343,7 @@ void expSystem::timer_handler()
 		dequeueFTPIn();
 	#endif
 	processOutgoingFTPCommands();
+	pollStreams();
 }
 
 

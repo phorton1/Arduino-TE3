@@ -291,7 +291,7 @@ void setup()
 
 void loop()
 {
-	handleSerial();
+	processStreams();
 		// in te3_serial.cpp
 
 	// these three moved here from expSystem::timer_handler()

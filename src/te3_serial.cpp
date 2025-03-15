@@ -1,39 +1,79 @@
 //-------------------------------------------
 // te3_serial.cpp
 //-------------------------------------------
-// There are four teensy Hardware Serial ports in use.
+// It is a bit difficult to explain the complexity herein and how
+// that maps to the actual code.
+//
+// There are four bi-directional teensy Hardware Serial ports in use:
 //
 //      USB_SERIAL_PORT - connected to the USBC hub
 //      DBG_SERIAL_PORT - the 1/8th in jack on the back of the box
-//      HUB_SERIAL_PORT - connected to the TE3_audio device (SGTL)
 //      RPI_SERIAL_PORT - connected to the rPi (Looper)
+//      HUB_SERIAL_PORT - connected to the TE3_audio device (SGTL)
 //
-// and four streams which are logically mapped by prefs to be off (zero),
-// or set to he USB or DBG serial ports.
+// and four (mostly output) streams which are logically mapped by prefs
+// to be off (zero), or either the USB_SERIAL_PORT or the DBG_SERIAL_PORT:
 //
 //      TE3_DEBUG_STREAM - the main console.pm input/output stream
-//      HUB_DEBUG_OUTPUT - where to send debug output from the TE3_audio device
 //      RPI_DEBUG_OUTPUT - where to send debug output from the rPi Looper
+//      HUB_DEBUG_OUTPUT - where to send debug output from the TE3_audio device
 //      MONITOR_OUTPUT - where to send output from the midi monitor
 //
-// The HUB and RPI Serial ports are read from directly, as they might
-// contain functional serial midi messages, in addition to debugging
-// output text from those two devices. If serial midi messages are
-// found, they are always passed to the the expSystem for processing.
-// Otherwise the output is optionally sent to the logically mapped
-// DEBUB_OUTPUT stream.
+// These ports and streams are used in a plethora of different functions:
 //
-// In a kernel BINARY_UPLOAD, the output from the rPi MUST be sent
-// to the TE3_DEBUG_STREAM, and the setting of the RPI_DEBUG_OUTPUT
-// is ignored.
+//      - Text Commands from the laptop like REBOOT, REBOOT_PI, REBOOT_AUDIO, etc
+//      - rPi kernel (Looper kernel7.img) BINARY_UPLOADS from the laptop
+//      - Bi-directional FILE_SYSTEM text protocol between the laptop and TE3
+//      - Showing debugging output from this program (TE3)
+//      - Showing debugging output from the TE3_audio (hub) program
+//      - Showing debugging output from the rPi Looper program
+//      - Bi-directional Serial Midi between TE3 and the rPi Looper program
+//      - Bi-directional Serial Midi between TE3 and the TE3_audio program
 //
-// TE3_DEBUG_STREAM - INPUT
+// This code handles ALL INPUT from any of the hardware serial ports for
+// all of the above functions.  OUTPUT to the hardware serial ports is
+// a bit more complicated and this file only performs SOME of the output.
+// For example, Serial midi commands FROM the TE3 to the rPi Looper are
+// handled by direct writes to the RPI_SERIAL_PORT in midiQueue.cpp,
+// whereas Serial midi coming from the rPi TO this TE3 program are
+// processed herein.
 //
-// Input from the USB or DBG Serial port is mapped by a pref
-// into the TE3_DEBUG_STREAM, which can also be zero (turned off)
-// It is synonymous with the stream that will be hooked to the
-// console.pm program and which will initiate/handle kernel
-// BINARY_UPLOADS and FILE_SYSTEM protocols.
+//-------------------------------------------------------------------
+// INPUT
+//-------------------------------------------------------------------
+// Because the TE3_DEBUG_STREAM can be mapped to be either the
+// USB_SERIAL_PORT or the HUB_SERIAL_PORT (or be zero which means "off"),
+// we actually only monitor three hardware serial ports for input.
+//
+//      TE3_DEBUG_STREAM - for input from the laptop (may be zero==Off)
+//      RPI_SERIAL_PORT - for input from the rPi Looper program
+//      HUB_SERIAL_PORT - for input from the TE3_audio program
+//
+// We separate the buffering of serial input from the processing of it
+// to try to ensure that no incoming serial bytes are ever lost.
+// The processing can take various amounts of time, and in practice
+// the hardware serial ports do not, themselves, buffer enough bytes
+// to ensure that we don't lose data while processing serial data.
+//
+// Therefore we use the fast (300 times per second) expSystem timer_handler()
+// to call the pollSerial() method herein which merely reads and buffers
+// the input from the above three streams.
+//
+// Then we allow the slow (20-50 times per second) main loop() function to
+// call processSerial() method herein to process the buffers and/or call
+// other functions in the system that can take varying amounts of time
+// to complete.
+//
+//------------------------------------------------------------
+// TE3_DEBUG_STREAM - INPUT and MODAL processing behavior
+//------------------------------------------------------------
+// The TE3_DEBUG_STREAM is synonymous with the stream that will be
+// hooked to the console.pm program and which will initiate/handle
+// kernel BINARY_UPLOADS and FILE_SYSTEM protocols.
+//
+//      - ctrl-B reboots the Pi
+//      - ctrl-A is received from the console to enter "in_file_command" mode
+//      - ctrl-E is received from the console to enter "in_upload_binary" mode
 //
 // This stream never contains serial midi messages.
 //
@@ -41,58 +81,35 @@
 //        which are converted to serial midi and sent to the
 //        TE3_audio device (HUB) or Looper (RPI).
 //      - handles ctrl-B to reboot the rPi and ctrl-E bracketed
-//        kernel BINARY_UPLOAD protocol
-//      - handles FILE SYSTEM commands from the console, including
-//        currently IGNORING ctrl-A sent by console.pm, working
-//        with the fileServer.cpp code
+//        modal kernel BINARY_UPLOAD protocol
+//      - handles FILE SYSTEM text protocol from the console,
+//        working with the ctrl-A sent by console.pm to stay in
+//        a mode when file system commands are in play.
 //
+// BINARY_UPLOAD and FILE_SYSTEM protocols are supported by modes
+// which supercede normal processing of serial data buffers by
+// setting flags ("in_upload_binary" or "in_file_command") which
+// are cleared, by receiving a closing ctrl-E in the case of
+// binary uploads, or by timeout since the last ctrl-A in the case
+// of the file commands.
+//
+// Entering either of these modes turns off the MIDI_MONITOR
+// and in the case of BINARY_UPLOAD also turns off the myDebug
+// "dbgSerial" stream.  The streams are restaored when the mode
+// is finished.
+//
+//-----------------------------------------------------------
 // OUTPUT (Text)
-//
-// Generally speaking the debugging (and midi monitor) text
-// can be turned off, or directed to one of the two output
-// serial ports (USB or DBG) via prefs:
+//-----------------------------------------------------------
+// Apart from the TE3_DEBUG_STREAM, the debugging text output from the
+// rPi Looper program and TE3_audio (hub) program, as well as the
+// text output from the midiMonitor, can be directed to one of the
+// two output serial ports (USB or DBG), or turned "off" via prefs:
 //
 //      HUB_DEBUG_OUTPUT - where to send debug output from the TE3_audio device
 //      RPI_DEBUG_OUTPUT - where to send debug output from the rPi Looper
 //      MONITOR_OUTPUT - where to send output from the midi monitor
 //
-// However, these mappings are IGNORED when in a BINARY_UPLOAD or
-//      FILE_SYSTEM protocol, and in fact the MONITOR_OUTPUT will be
-//      temporarily turned Off in these protocols.
-//      In the BINARY_UPLOAD protocol, the RPI_SERIAL_PORT will be
-//      used directly.
-//
-// NOTES on CONSOLE.PM and TE3_DEBUG_STREAM
-//
-// ctrl-B reboots the Pi
-// ctrl-A is received from the console to enter "file_server_mode";
-//
-// The previous teensyPiLooper had no concept of handling anything itself,
-//      and just forwarded everything from the USB Serial port to the rPi, so
-//      no special "mode" was needed for kernel uploads .. just reboot and the
-//      rest was handled by console.pm.
-// To retain the notion that there are serial commands to TE3/TE3_auduio
-//      meant that I had to identify when a serial kernel upload is
-//      taking place.
-// So, console.pm was modified to bracket binary uploads with a pair of ctrl-E's,
-//      with a delay window around the closing one, that can be identified herein
-//      to enter rPi kernel "binary_upload" mode, which takes complete precedence
-//      over the serial port until the closing ctrl-E is received.
-//
-//-------------------------------------------------------
-// COMBINING with fileSerial.cpp
-//-------------------------------------------------------
-//
-// This is complicated by the fact that fileSerial.cpp currently parses
-// character by character to build multi-line CR \n delimited fileServer commands
-// and malloc() buffers, and not necessarily reading a "full line of text"
-// including the closing LF \r.
-//
-// Perhaps we can take advantage of the ctrl-A sent by the console to say
-// "hey, we're definitely in a fileServer mode" and in that case pass
-// every character (with a 16 second timeout as in teensyPiLoooper)
-// to the fileSerial.cpp::handleChar() method.
-
 
 
 #include "defines.h"
@@ -108,12 +125,17 @@
 
 #define dbg_cmd  0
 
-#define MAX_STRING  255
+#define DBG_RAW_SERIAL_MIDI_IN  1
 
+
+#define MAX_STRING  255
+#define SERIAL_BUF_SIZE         8192
 
 #define SERIAL_PORT_NUM_TE3     0
 #define SERIAL_PORT_NUM_HUB     1
 #define SERIAL_PORT_NUM_RPI     2
+#define NUM_INPUT_SERIAL_PORTS  3
+
 
 #define FILE_COMMAND_TIMEOUT    12000   // maybe could be much shorter
 #define CTRL_E_WINDOW           1000    // must be larger, accordingly, in console.pm
@@ -131,6 +153,7 @@ static void processCommandLine(const char *line);
 
 
 static const char *serialPortName(int serial_port_num)
+    // debugging utility
 {
     switch (serial_port_num)
     {
@@ -140,6 +163,118 @@ static const char *serialPortName(int serial_port_num)
     }
     return "";
 }
+
+
+
+//----------------------------------
+// circular buffers
+//----------------------------------
+
+typedef struct
+{
+    volatile uint16_t    head;
+    volatile uint16_t    tail;
+    uint8_t     buf[SERIAL_BUF_SIZE];
+}   serialPortBuffer_t;
+
+serialPortBuffer_t serial_buffer[NUM_INPUT_SERIAL_PORTS];
+static volatile bool in_stream_poll;
+
+
+static void pollOne(int port_num)
+    // as rapidly as possible, read and buffer all
+    // available data from a stream into a cicrular buffer
+{
+    Stream *stream =
+        port_num == SERIAL_PORT_NUM_RPI ? &RPI_SERIAL_PORT :
+        port_num == SERIAL_PORT_NUM_HUB ? &HUB_SERIAL_PORT :
+        TE3_DEBUG_STREAM;
+
+    if (!stream)
+        return;
+
+    int avail = stream->available();
+    if (avail)
+    {
+        int first_read = avail;
+        int second_read = 0;
+
+        serialPortBuffer_t *bbb = &serial_buffer[port_num];
+        if (bbb->head + first_read > SERIAL_BUF_SIZE)
+        {
+            first_read = SERIAL_BUF_SIZE - bbb->head;
+            second_read = avail - first_read;
+            if (second_read >= bbb->head)
+            {
+                my_error("SERIAL_BUFFER_OVERFLOW ON STREAM(%d)",port_num);
+                return;
+            }
+        }
+
+        int got = stream->readBytes(&(bbb->buf[bbb->head]),first_read);
+        if (got != first_read)
+        {
+            my_error("READ1(%d) FAILED WITH %d on SERIAL STREAM(%d)",first_read,got,port_num);
+            return;
+        }
+        bbb->head += first_read;
+        if (bbb->head >= SERIAL_BUF_SIZE)
+            bbb->head = 0;
+
+        if (second_read)
+        {
+            got = stream->readBytes(&(bbb->buf[bbb->head]),second_read);
+            if (got != second_read)
+            {
+                my_error("READ2(%d) FAILED WITH %d on SERIAL STREAM(%d)",second_read,got,port_num);
+                return;
+            }
+            bbb->head += second_read;
+        }
+    }
+}
+
+
+void pollStreams()
+    // Called 300 times/second from expSystem::timer_handler()
+{
+    in_stream_poll = 1;
+    for (int i=0; i<NUM_INPUT_SERIAL_PORTS; i++)
+        pollOne(i);
+    in_stream_poll = 0;
+}
+
+
+static int streamAvail(int port_num)
+    // emulates Stream.available() method
+{
+    if (in_stream_poll)
+        return 0;
+    serialPortBuffer_t *bbb = &serial_buffer[port_num];
+    int head = bbb->head;
+    int tail = bbb->tail;
+    if (head == tail)
+        return 0;
+    if (tail < head)
+        return head-tail;
+    return SERIAL_BUF_SIZE - tail + head;
+}
+
+
+static uint8_t streamRead(int port_num)
+    // emulates Stream.read() method
+{
+    serialPortBuffer_t *bbb = &serial_buffer[port_num];
+    int tail = bbb->tail++;
+    uint8_t byte = bbb->buf[tail];
+    if (bbb->tail >= SERIAL_BUF_SIZE)
+        bbb->tail = 0;
+    return byte;
+}
+
+
+
+
 
 
 
@@ -309,37 +444,33 @@ static void handleCommand(const String &left, const String &right)
 
 
 
-//---------------------------------------------
-// handleSerial() Implementation
-//---------------------------------------------
-// I'm not sure a single method fits-all approach is in order here.
-// At a minimum we need to know what port is in play and whether
-// we are in a kernel upload or file_server mode for TE3 and the rPi.
+//=======================================================
+// processSerial() implementation
+//=======================================================
 
-
-
-
-
-static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len)
+static char *bufferLine(int port_num, char *buf, int *len)
 {
-    while (stream->available())
+    while (streamAvail(port_num))
     {
         setTE3Busy();
-        uint8_t byte = stream->read();
-        // display(0,"stream got(%c)=0x%2x",(c>=' '?c:' '),c);
+        uint8_t byte = streamRead(port_num);
 
-        if (serial_port_num == SERIAL_PORT_NUM_TE3)
+        // Input from TE3_DEBUG_STREAM does not contain
+        // midi messages.  Special case ctrl characters
+        // are handled here to enter modes and possibly
+        // short return.
+        //
+        // When a mode is entered we turn off the MIDI_MONITOR
+        // and possibly the myDebug dbgSerial stream.
+
+        if (port_num == SERIAL_PORT_NUM_TE3)
         {
-            // Serial.printf("byte(%d) '%c'\n",byte,byte>32?byte:' ');
-            
             if (byte == 0x01)       // ctrl-A
             {
                 display(0,"got ctrl-A",0);
                 if (!in_file_command)
                 {
                     display(0,"starting in_file_command mode",0);
-                    // turn off the midi monitor to make sure it doesn't
-                    // interfere with the file commands
                     SAVE_MONITOR = MONITOR_OUTPUT;
                     MONITOR_OUTPUT = 0;
                     in_file_command = 1;
@@ -358,65 +489,88 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
                 // they don't interfere with the binary upload.
                 
                 SAVE_MONITOR = MONITOR_OUTPUT;
-                saveDbgSerial = dbgSerial;
                 MONITOR_OUTPUT = 0;
+                saveDbgSerial = dbgSerial;
                 dbgSerial = 0;
                 in_upload_binary = 1;
                 return 0;
             }
         }
+
+        // The other two ports give priority to serial midi
+        // messages which are identified by an opening 0x0b
+        // which never appears in plain text.
+
         else if (byte == 0x0b)     // midi message
         {
             uint8_t midi_msg[4];
-            memset(midi_msg,0,4);
-            midi_msg[0] = byte;
+            uint32_t *msg32 = (uint32_t *) midi_msg;
+            *msg32 = byte;
 
-            uint32_t timeout = micros();
+            // memset(midi_msg,0,4);
+            // midi_msg[0] = byte;
 
             int i=1;
+            uint32_t timeout = micros();
             while (i<4)
             {
                 uint32_t now = micros();
-                if (stream->available())
+                if (streamAvail(port_num))
                 {
-                    midi_msg[i++] = stream->read();
+                    midi_msg[i++] = streamRead(port_num);
                     timeout = now;
                 }
                 else if (now - timeout > 10000) // 10 ms
                 {
-                    i = 999;
+                    i = 999;    // flag for timeout
                 }
             }
-
             if (i==999)
+            {
                 my_error("timeout getting midi message",0);
+                return 0;
+            }
 
-            uint32_t *msg32 = (uint32_t *) midi_msg;
+            #if DBG_RAW_SERIAL_MIDI_IN
+                display(0,"--> %s MIDI: %02x %02x %02x %02x  msg32(0x%08x)",
+                    serialPortName(port_num),
+                    midi_msg[0],
+                    midi_msg[1],
+                    midi_msg[2],
+                    midi_msg[3],
+                    *msg32);
+            #endif
 
-            display(0,"--> %s MIDI: %02x %02x %02x %02x  msg32(0x%08x)",
-                serialPortName(serial_port_num),
-                midi_msg[0],
-                midi_msg[1],
-                midi_msg[2],
-                midi_msg[3],
-                *msg32);
-
-            if (serial_port_num == SERIAL_PORT_NUM_RPI)
+            if (port_num == SERIAL_PORT_NUM_RPI)
             {
                 theSystem.midiActivity(ACTIVITY_INDICATOR_RPI_IN);
                 handleCommonMidiSerial(midi_msg);
                 enqueuMonitor(MIDI_PORT_RPI,false,*msg32);
-
             }
-            else    // never happens (yet)
+
+            // The HUB_SERIAL_PORT does not yet currently
+            // send serial midi messages, so this code is never
+            // used.  It is implemented "for example", and notably
+            // does not call handleCommonMidiSerial()
+
+            else
             {
                 theSystem.midiActivity(ACTIVITY_INDICATOR_HUB_IN);
                 enqueuMonitor(MIDI_PORT_HUB,false,*msg32);
             }
-        }
+
+            // continue processing any buffered available bytes
+
+            continue;
+
+        }   // done with 0x0b four byte midi message
 
 
-        if (byte == 0x08)
+        // Now we are processing regular text into cr/lf
+        // delineated lines.  A backspace would only come
+        // from the console in the TE3_DEBUG_STREAM
+
+        if (byte == 0x08)   // backspace
         {
             if (*len)
                 (*len)--;
@@ -425,6 +579,10 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
         {
             buf[(*len)++] = 0;
             *len = 0;
+
+            // return the next line of text to be processed
+            // to the caller.
+
             return buf;
         }
         else if (byte && byte != 0x0D && *len < MAX_STRING)
@@ -432,14 +590,20 @@ static char *bufferLine(int serial_port_num, Stream *stream, char *buf, int *len
             buf[(*len)++] = byte;
         }
     }
+
+    // no complete line of text is ready so return zero
+
     return 0;
-}
+
+}   // bufferLine
 
 
 
 static void processCommandLine(const char *line)
+    // copy, strip out blanks, split into
+    // left and right parts about equal sign,
+    // and call handleCommand()
 {
-    // copy and strip out blanks
     String command;
     while (*line)
     {
@@ -459,43 +623,48 @@ static void processCommandLine(const char *line)
 
 
 
-void handleSerial()
+void processStreams()
 {
     freeFileCommands();
-        // has to be called somewhere ...
+        // This method has to be called somewhere fairly
+        // often to cycle the two file command buffers
+        // in fileCommand.cpp
         
     //---------------------------------------------
     // Serial processing modes
     //---------------------------------------------
-    // Note that all serial message processing and midi-monitor output
+    // Note that all serial midi processing and midi-monitor output
     // is halted while in_upload_binary or in_file_command
 
     if (in_upload_binary)
     {
+        // forward everything between TE3_DEBUG_STREAM
+        // and the RPI_SERIAL_PORT until a closing ctrl-E
+        // is received.
+
         static uint32_t ctrl_E_time = 0;
-        while (TE3_DEBUG_STREAM->available())
+        while (streamAvail(SERIAL_PORT_NUM_TE3))
         {
-            uint8_t c = TE3_DEBUG_STREAM->read();
+            uint8_t c = streamRead(SERIAL_PORT_NUM_TE3);
             if (c == 5)
                 ctrl_E_time = millis();
             else
                 ctrl_E_time = 0;
             RPI_SERIAL_PORT.write(c);
         }
-        while (RPI_SERIAL_PORT.available())
+        while (streamAvail(SERIAL_PORT_NUM_RPI))
         {
-            uint8_t c = RPI_SERIAL_PORT.read();
-            TE3_DEBUG_STREAM->write(c);
+            uint8_t c = streamRead(SERIAL_PORT_NUM_RPI);
+            if (TE3_DEBUG_STREAM)
+                TE3_DEBUG_STREAM->write(c);
         }
         if (ctrl_E_time && millis() - ctrl_E_time > CTRL_E_WINDOW)
         {
             in_upload_binary = 0;
             display(0,"ending in_upload_binary mode",0);
-            // turn the midi monitor back on (or back to whatever
-            // it is set to by prefs)
             MONITOR_OUTPUT = SAVE_MONITOR;
-            dbgSerial = saveDbgSerial;
             SAVE_MONITOR = 0;
+            dbgSerial = saveDbgSerial;
             saveDbgSerial = 0;
         }
         return;
@@ -503,6 +672,13 @@ void handleSerial()
 
     if (in_file_command)
     {
+        // pass every character from TE3_DEBUG_STREAM to
+        // the handleFileSystemChar() method until the
+        // ctrl-A times out.
+        //
+        // The fileSystem itself will write directly to
+        // the TE3_DEBUG stream as is needed.
+
         checkFileCommandTimeout();
         while (TE3_DEBUG_STREAM->available())
         {
@@ -529,13 +705,12 @@ void handleSerial()
     //---------------------------------------------
     // normal processing
     //---------------------------------------------
-    // process RPI_SERIAL_PORT
+    // process the SERIAL_PORT_NUM_RPI buffer
 
     static int rpi_serial_len = 0;
     static char rpi_serial_buf[MAX_STRING+1];
     char *rpi_line = bufferLine(
         SERIAL_PORT_NUM_RPI,
-        &RPI_SERIAL_PORT,
         rpi_serial_buf,
         &rpi_serial_len);
     if (rpi_line && RPI_DEBUG_OUTPUT)
@@ -543,13 +718,12 @@ void handleSerial()
         RPI_DEBUG_OUTPUT->println(rpi_line);
     }
 
-    // process HUB_SERIAL_PORT
+    // process the SERIAL_PORT_NUM_HUB buffer
 
     static int hub_serial_len = 0;
     static char hub_serial_buf[MAX_STRING+1];
     char *hub_line = bufferLine(
         SERIAL_PORT_NUM_HUB,
-        &HUB_SERIAL_PORT,
         hub_serial_buf,
         &hub_serial_len);
     if (hub_line && HUB_DEBUG_OUTPUT)
@@ -557,7 +731,8 @@ void handleSerial()
         HUB_DEBUG_OUTPUT->println(hub_line);
     }
 
-    // process the main TE3 DEBUG_SERIAL_PORT
+    // process the main TE3 DEBUG_SERIAL_PORT buffer
+    // if the stream is not 0==Off
 
     if (TE3_DEBUG_STREAM)
     {
@@ -565,7 +740,6 @@ void handleSerial()
         static char usb_serial_buf[MAX_STRING+1];
         char *usb_line = bufferLine(
             SERIAL_PORT_NUM_TE3,
-            TE3_DEBUG_STREAM,
             usb_serial_buf,
             &usb_serial_len);
         if (usb_line)
@@ -573,6 +747,9 @@ void handleSerial()
             processCommandLine(usb_line);
         }
     }
+
     clearTE3Busy();
 }
 
+
+// end of te3_serial.cpp
