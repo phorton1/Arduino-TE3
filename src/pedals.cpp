@@ -283,7 +283,7 @@ void pedalManager::pedalEvent(int num, int value)
 {
 	 sendMidiControlChange(
         m_pedals[num].m_port,
-        m_pedals[num].m_channel + 1,
+        m_pedals[num].m_channel,
         m_pedals[num].m_cc,
         value);
 }
