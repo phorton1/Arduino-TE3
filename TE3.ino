@@ -261,15 +261,16 @@ void setup()
 	//--------------------------------------------------
 	// start the system
 	//--------------------------------------------------
+	// final latest initializations and theSystem.begin()
 
 	#if WITH_MIDI_HOST
 		midi_host.init();
 	#endif
 
+	initStreamBuffers();
+	setFTPActivePort();
 	theSystem.begin();
 		
-	setFTPActivePort();	
-
 	digitalWrite(PIN_LED_T3_BUSY,0);
 
     display(0,"TE3.ino setup() finished",0);

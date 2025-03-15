@@ -732,8 +732,9 @@ static void _monitor(msgUnion &msg)
             p2,
             buf2);
 
-        #if 1
-            // fix for colors background colors wrapping
+        #if 0
+            // putty fix for colors background colors wrapping
+            // doesn't work with console.pm
             strcat(buf,"\033[37;40m");
         #endif
             MONITOR_OUTPUT->println(buf);

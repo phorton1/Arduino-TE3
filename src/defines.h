@@ -52,6 +52,7 @@ extern Stream *MONITOR_OUTPUT;
 
 extern void initDebugStreams();
 	// in TE3.ino
+extern void initStreamBuffers();
 extern void pollStreams();
 extern void processStreams();
 	// in serial.cpp

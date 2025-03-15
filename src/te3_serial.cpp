@@ -1,6 +1,26 @@
 //-------------------------------------------
 // te3_serial.cpp
 //-------------------------------------------
+//
+// Debugging/Monitor output is not synchronized.
+//
+// Due to the "multi-threaded" TE3 architecture involving loop(), interrupts,
+// and timer methods, there multiple threads can try to write to the output
+// serial port(s) at the same time.
+//
+// Furthermore, I have never seen a good usage case for dircting the
+// output from the monitor and/or other programs to the "other" serial
+// port.  Most often I want to see them interleaved so that I can get
+// an idea of the interactions and behavior, even if they are not in
+// a string, first-in first-out order.
+//
+// This was also true on ESP32 programs and I have not even tested
+// recent myDebug changes against the many existing ESP32 programs
+// that use myDebug.
+//
+// "Its just debugging output" is one answer. Let it go. Live with it.
+//
+//--------------------------------------------------------------
 // It is a bit difficult to explain the complexity herein and how
 // that maps to the actual code.
 //
@@ -174,11 +194,21 @@ typedef struct
 {
     volatile uint16_t    head;
     volatile uint16_t    tail;
-    uint8_t     buf[SERIAL_BUF_SIZE];
+    uint8_t              *buf;   // padding bytes for debugging (write a zero after each read)
 }   serialPortBuffer_t;
+
 
 serialPortBuffer_t serial_buffer[NUM_INPUT_SERIAL_PORTS];
 static volatile bool in_stream_poll;
+
+
+void initStreamBuffers()
+{
+    display(0,"initStreamBuffers()",0);
+    for (int i=0; i<NUM_INPUT_SERIAL_PORTS; i++)
+        serial_buffer[i].buf = (uint8_t *) malloc(SERIAL_BUF_SIZE);
+}
+
 
 
 static void pollOne(int port_num)
@@ -273,8 +303,28 @@ static uint8_t streamRead(int port_num)
 }
 
 
+#if 0
+    // implemented, never tested
+    static void streamReadBytes(int port_num, uint8_t *out_buf, int len)
+        // emulates Stream.readBytes() method, but with no return value
+    {
+        serialPortBuffer_t *bbb = &serial_buffer[port_num];
+        int tail = bbb->tail;
+        uint8_t *in_buf = bbb->buf;
 
+        int first_read = len;
+        int second_read = 0;
+        if (tail + first_read > SERIAL_BUF_SIZE)
+        {
+            first_read = SERIAL_BUF_SIZE - tail;
+            second_read = len - first_read;
+        }
 
+        memcpy(out_buf,&in_buf[tail],first_read);
+        if (second_read)
+            memcpy(&out_buf[first_read],in_buf,second_read);
+    }
+#endif
 
 
 
@@ -375,7 +425,6 @@ static void handleCommand(const String &left, const String &right)
             LOOP_COMMAND_GET_STATE };
         RPI_SERIAL_PORT.write(midi_message,4);
     }
-
 
     // commands to TE3_audio or it's SGTL5000
 
@@ -680,14 +729,19 @@ void processStreams()
         // the TE3_DEBUG stream as is needed.
 
         checkFileCommandTimeout();
-        while (TE3_DEBUG_STREAM->available())
+        int avail = streamAvail(SERIAL_PORT_NUM_TE3);
+        while (avail)
         {
-            uint8_t c = TE3_DEBUG_STREAM->read();
+            uint8_t c = streamRead(SERIAL_PORT_NUM_TE3);
             if (c == 0x01)      // ctrl-A
                 display(0,"ignoring ctrl-A already in_file_command mode",0);
             else
+            {
+                // display(0,"te3s avail(%d) char(0x%02x)='%c'",avail,c,c>32?c:' ');
                 handleFileSystemChar(0,(char)c);
+            }
             file_command_time = millis();
+            avail--;
         }
         if (file_command_time &&
             millis() - file_command_time > FILE_COMMAND_TIMEOUT)

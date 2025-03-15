@@ -40,7 +40,7 @@
 // file_command|file_message	\t req_num \t size \t data
 
 
-#define SERIAL_TIMEOUT  200
+#define SERIAL_TIMEOUT  5000	// was 200
 
 #define FILE_COMMAND_SIG		"file_command"
 #define FILE_MESSAGE_SIG		"file_message"
