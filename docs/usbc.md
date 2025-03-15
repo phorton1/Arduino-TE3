@@ -899,4 +899,47 @@ may have to solder cables to the board cuz of the non-standard
 pin layouts.
 
 
+## 2025-03-14 TESTING AFTER GROUND TESTS
+
+The configuration I have works with a cheap USBC cable to the iPad,
+but not with the more expensive ones.
+
+When I remove the outgoing jumper from CC1 to CC2 on the breakout
+board, the expensive (and cheap) cables work in one orientation,
+but not the other.
+
+When I plug an unmodified hub into the iPad, it works in either
+orientation.
+
+### Does the original hub cable end have an emarker or resistors?
+
+So, I got the removed original hub cable end, stripped it and
+about to make some measurements.  For a refresher
+
+- GND				black
+- VBUS			    big red
+- CC1 	    		brown
+- D-				white
+- D+				green
+- CC2				pink, unconnected
+- purple			hs twisted pairs ignored
+- orange
+- yellow
+- blue
+
+I'm really only intested in the brown and pink CC wires
+With the '1' down, CC1 is connected directly to brown and
+does not appear to have any relation to VBUS or GND.
+
+CC2 is connected direcly to pink, and does not have any
+relation to VBUS or GND.
+
+
+------------------------------------------
+
+With a 4.7K resistor from CC2 to ground on the breakout
+now the good cables work in either orientation, but the
+cheap cables only charge in one orientation, but provide
+signal in both.
+
 
