@@ -151,21 +151,20 @@ extern void setFTPActivePort()
     // changes, as this causes a system rebooot.
 {
     int ftp_pref = getPref8(PREF_FTP_PORT);
-    int use_port = 0;
+    int use_port = -1;
     if (getPref8(PREF_SPOOF_FTP) || ftp_pref == FTP_PORT_HOST)
         // HOST1 and HOST2 are interchangeable?  except that
         // only HOST2 sends out active_sense, which I like to
         // see, even if I don't forward it as it indicates the
         // ftp is is alive on the host port
 
-        // use_port = MIDI_PORT_HOST1;
         use_port = MIDI_PORT_HOST2;
 
     else if (ftp_pref == FTP_PORT_REMOTE)
-        use_port = MIDI_PORT_USB1;
+        use_port = MIDI_PORT_USB2;
 
     display(0,"setFTPActivePort(0x%02x)",use_port);
-    FTP_ACTIVE_PORT = use_port ? use_port : -1;
+    FTP_ACTIVE_PORT = use_port;
 }
 
 
