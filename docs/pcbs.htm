@@ -1,0 +1,209 @@
+<!-- pcbs.htm -->
+
+<h1 id="top">Making the PCBs (Printed Circuit Boards)</h1>
+
+<p>
+	All of the printed circuit boards for the initial version of TE3
+	were milled using my <a href="https://github.com/phorton1/Arduino-esp32_cnc3018">cnc3018</a>
+	cnc machine.You can find all of the <b>kicad schematics</b> and <b>pcb designs</b>, as well
+	as the <b>flatcam projects</b> and <b>gcode files</b> that I actually used to mill
+	and laser the below pcbs in the <i>/docs/kicad</i> folder of this repo.
+</p>
+
+<p><a href="/images/pcbs-main_circuit_boards_big.jpg"><img src="images/pcbs-main_circuit_boards.jpg"></a></p>
+
+<p>
+	Clockwise from the bottom left are the <b>mother_board</b>, five (5) <b>row_boards</b>,
+	the <b>rotary_board</b>, two (2) <b>lcd_connector</b> boards, and the <b>led_board</b>.
+	Not shown are the three (3) <b>usba_connectors</b> that I made after this photo.
+</p>
+
+<p>
+	Each board typically goes through a fairly lengthy multi-step process:
+</p>
+
+<ul>
+	<li>mount a copper blank pcb on the machine with two sided tape</li>
+	<li>put a pointy engraving bit in the machine</li>
+	<li>establish X and Y zeroes visually and Z zero by <i>probing</i></li>
+	<li>do a <i>mesh levelling</i> run to create a grid of points
+	    at least the size of the pc being created, of the PCB height, to
+		within 0.01mm. This is critical for the isolation routing.
+	<li>mill the isolation routing into the copper blank to a depth of 0.1mm or so</li>
+</ul>
+
+<p><a href="/images/pcbs-milling_big.jpg"><img src="images/pcbs-milling.jpg"></a></p>
+
+<ul>
+	<li>clean with a toothbrush and fine sandpaper</li>
+	<li>inspect the isolation routing, test with continuity meter, and make
+		fixes with an exacto knife, repeating the toothbrush and fine sanding,
+		as needed.</li>
+</ul>
+
+<p>
+	Here is a detailed photo of one of the row boards before sanding, cleaning, and testing.
+	You can see the burrs on the milled edges and see how they might create problems if not cleaned up.
+</p>
+
+<p><a href="/images/pcbs-inspect_big.jpg"><img src="images/pcbs-inspect.jpg"></a></p>
+
+<p>
+	Once certain that the isolation routing is <i>good enough</i> to continue, then:
+</p>
+
+<ul>
+	<li>change the machine head from a spindle to a UV laser and align the laser</li>
+	<li>add masking tape and coat the board evently a with thin coat of green UV expoxy (easier said than done!)</li>
+	<li>expose the UV epoxy with the UV laser on the cnc machine</li>
+</ul>
+
+<p>
+	The laser is setup in <i>flatcam</i> to <b>paint</b> the PCB with the laser using
+	0.5mm spacing and a 0.2mm margin from the pads. It can take as long, or longer, to expose
+	the epoxy as it does to do the isolation routine, as there are many lines that
+	have to be drawn to cover the whole board.  When this step is done,
+	the epoxy that has been exposed will harden, but the epoxy on the pads
+	will still be liquid and can be removed with a paper towel or q-tip.
+</p>
+
+<p><a href="/images/pcbs-laser_big.jpg"><img src="images/pcbs-laser.jpg"></a></p>
+
+<ul>
+	<li>carefully remove the unexposed UV expoxy with little pieces of paper towel
+		to reveal the copper pads,
+		getting the pads as clean as possible without messing up the exposed portions.</li>
+	<li>if lucky, you can use a little alcohol on the pads themselves for the final cleanup</li>
+	<li>then, shine a 15W UV light on the board for a few minutes to
+		further harden the epoxy, before</li>
+	<li>change the machine head from the UV laser back to the spindle
+		and make sure it's re-aligned to X and Y zero correctly</li>
+</ul>
+
+<p><a href="/images/pcbs-cutout_big.jpg"><img src="images/pcbs-cutout.jpg"></a></p>
+
+<p>
+	Then you can do the final steps to finish the PCB on the cnc machine:
+</p>
+
+<ul>
+	<li>swap bits and drill holes with a 0.8mm drill bit</li>
+	<li>swap bits and drill holes with a 0.9mm drill bit</li>
+	<li>swap bits and mill connector holes with a 0.5mm end mill</li>
+	<li>swap bits and mill mounting holes with a 1.9mm end mill</li>
+	<li>cut out the board with the 1.9 end mill bit</li>
+</ul>
+
+<p>
+	After you remove the pcb from the cnc machine, it is a good idea to sand its edges
+	and corners to remove any sharp edges, and then to clean the pcb vigourously with a
+	toothbrush, soap and water.
+</p>
+
+<p>
+	A small PCB can be made in 30-60 minutes.  A large complicated
+	one, like the TE3 <b>mother_board</b> can take 4,6, or more, hours to make.
+</p>
+
+
+<h2 id='mother_board'>Mother Board</h2>
+<p>
+	The <b>motherboard</b> was difficult to produce and is the first PCB I've
+	ever milled where I ran 0.6mm tracks, from the rPi, <b>between pins</b> on a standard
+	2.54mm header.  It took me 2 tries, after I completely <i>re-setup and reconfigured</i>
+	my cnc machine, to get the first one with decent isolation routing.
+</p>
+<p><a href="/images/pcbs-mother_board_back_big.jpg"><img src="images/pcbs-mother_board_back.jpg"></a></p>
+<p>
+	It took several hours of machine time just to <b>mill</b> the <i>isolation tracks</i>, test and fix any milling errors,
+	and several more hours to <i>coat</i> with, and <i>expose</i>, the <b>UV epoxy</b> with the <b>laser</b>.
+</p>
+<p><a href="/images/pcbs-mother_board_front_big.jpg"><img src="images/pcbs-mother_board_front.jpg"></a></p>
+<p>
+	With milling the slotted holes for the audio connectors, drilling two sizes of holes, cutting the mounting holes, and
+	cutting out the board, swapping bits each time and re-homing the Z axis, it took basically a full day to produce one.
+</p>
+<p>
+	Then after I produced the first one, I discovered that the dimensions I was using for the audio connectors was not correct
+	and they didn't fit! So I had to do another pass through the design, re-do the whole flatcam project to produce new gcode files,
+	and then mill and create an entire 2nd board before I got the one shown above that I felt would be good enough to proceed
+	to <b>soldering and actual testing</b>.
+</p>
+
+
+<h2 id='row_boards'>Row Boards</h2>
+<p>
+	The <b>row_boards</b> are some of the first pcbs that I have ever milled to make use of <b>SMT</b>
+	(Surface Mount Technology) components. Even though I am using <b>1206 capacitors</b> (1.2mm x 0.6mm)
+	and a SOP16 with <b>0.5mm pin spacing</b>, which are large by industry standards, they are currently
+	the finest detail pcbs I have ever milled, with <b>0.4mm tracks</b>.
+</p>
+<p>
+	Here is a photo of three of them:
+</p>
+<p><a href="/images/pcbs-row_boards_big.jpg"><img src="images/pcbs-row_boards.jpg"></a></p>
+<p>
+	I made 6 of them because TE3 uses 5 and I wanted to have a spare one.
+</p>
+<p>
+	The pins in the following image are 0.5mm apart with 0.4mm tracks!!
+</p>
+<p><a href="/images/pcbs-row_board_detail_big.jpg"><img src="images/pcbs-row_board_detail.jpg"></a></p>
+<p>
+	Compare the photo above, of a row board, complete with epoxy and drilled holes, with the freshly
+	milled board detail of the same section near the top of this page and you can see how much cleaner the
+	edges of the tracks and the isolation routing are after cleaning and sanding.
+</p>
+<p>
+	You can also see from the above photo that the solder pads are <i>not quite ready</i> for soldering.  Those little
+	smears of epoxy on the pads would cause problems and will need to be cleaned until
+	the pads are all <b>bright and shiny pure copper</b> before we actually solder anything to them.
+</p>
+
+
+<h2 id='rotary_board'>Rotary Board</h2>
+<p>
+	The <b>rotary_board</b> uses standard <b>THD</b> (Thru Hole Devices) technology,
+	and was relatively simple to create.
+</p>
+<p><a href="/images/pcbs-rotary_board_back_big.jpg"><img src="images/pcbs-rotary_board_back.jpg"></a></p>
+<p><a href="/images/pcbs-rotary_board_front_big.jpg"><img src="images/pcbs-rotary_board_front.jpg"></a></p>
+
+
+<h2 id='lcd_connectors'>LCD Connectors</h2>
+<p>
+	I used two <b>lcd_connectors</b> that I had previously created several years ago for the cnc machines.
+	The cnc machines made use of <b>orange</b> LCD touchscreens that use the same connectors as in TE3.
+</p>
+<p><a href="/images/pcbs-lcd_connector_back_big.jpg"><img src="images/pcbs-lcd_connector_back.jpg"></a></p>
+
+
+<h2 id='led_boards'>LED Board</h2>
+<p>
+	The LED board was a fun little board that uses <b>1206 SMT</b> (Surface Mount) LEDs and resistors.
+	The board in the photo below is less than 1x1 inch and holds seven (7) LEDS!
+</p>
+<p><a href="/images/pcbs-led_board_back_big.jpg"><img src="images/pcbs-led_board_back.jpg"></a></p>
+
+
+<h2 id='usba_connectors'>USBA Connectors</h2>
+<p>
+	Due to a space restriction in the box I could not use standard USB connectors with the hub.  Standard
+	USB connectors were too tall and would not fit in the box.  So after some mulling about, I decided to
+	make my own <b>usba_connectors</b>.
+</p>
+<p><a href="/images/pcbs-usba_milling_big.jpg"><img src="images/pcbs-usba_milling.jpg"></a></p>
+<p>
+	These connectors fit in a standard USBA female socket, like one you probably have on your computer or laptop,
+	and are designed so that I can pull the wires off at a right angle to minimize the overall size of the connector.
+</p>
+<p><a href="/images/pcbs-usba_connector_big.jpg"><img src="images/pcbs-usba_connector.jpg"></a></p>
+<p>
+	As the exposed copper will tarnish quite quickly, resulting in bad connections, I was thinking about trying
+	to gold plate them (and I might still in the future), but to start with I coated the contact pins with
+	a thin layer of solder, which <i>should</i> resist tarnishing better than the copper and provide a relatively
+	long lived connector.
+</p>
+
+
+<!-- end of pcbs.htm -->

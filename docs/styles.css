@@ -1,0 +1,138 @@
+/* styles.css */
+
+* {
+    box-sizing: border-box; /* Ensure padding and borders are included in element's total width and height */
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full height of the viewport */
+}
+
+#header {
+    background-color: #4CAF50; /* Header background color */
+    color: white;
+    text-align: center;
+    padding: 5px;
+}
+
+#main {
+    display: flex;
+    flex: 1; /* Take up remaining space */
+}
+
+#sidebar-left, #sidebar-right {
+    width: 160px; Fixed width for sidebars */
+    background-color: #f4f4f4;
+    padding: 12px;
+    padding-left:0px;
+    border-right: 1px solid #ccc;
+}
+
+#sidebar-right {
+    border-left: 1px solid #ccc; /* Add border to the right sidebar */
+}
+
+#content {
+    flex: 1; /* Take up remaining space */
+    padding: 5px;
+    padding-left: 20px;
+}
+
+#footer {
+    background-color: #333; /* Footer background color */
+    color: white;
+    text-align: center;
+    padding: 5px;
+}
+
+
+
+ul {
+    list-style-type: none;
+    padding-left: 15px;
+}
+ul li {
+    position: relative;
+    padding-left: 12px;
+}
+ul li::before {
+    left: 0;
+    content: '-';
+    position: absolute;
+}
+
+
+
+.menu_title
+{
+    padding-left:12px;
+}
+
+
+ul.menu
+{
+    list-style-type: none;
+    padding-left: 15px;
+}
+ul.menu li
+{
+    padding-left: 0;
+}
+ul.menu li::before {
+    left: 0;
+    content: '';
+    position: relative;
+}
+
+
+
+
+.nested {
+    display: none; /* Hide nested lists by default */
+    padding-left: 20px; /* Indent nested lists */
+}
+
+
+.folder {
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+    position: relative; /* Position relative for the triangle */
+}
+
+
+
+.triangle {
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+    position: relative; /* Position relative for the triangle */
+}
+
+.triangle::before {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height    width: 0;
+    height: 0;
+    margin-right: 5px;
+    border-left: 5px solid black; /* Right-pointing triangle */
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    transition: transform 0.2s;
+}
+
+.triangle.expanded::before {
+    transform: rotate(90deg); /* Rotate to point down when expanded */
+}
+
+.sidebar_selected {
+    font-weight: bold;
+    color: red; /* Change color to indicate active page */
+    pointer-events: none; /* Prevent clicking on the active link */
+}
+

@@ -1,0 +1,126 @@
+
+<h1>Soldering (and Crimping) the Electronic Circuits and Cables/Connectors</h1>
+
+<p>
+	As well as having to laser cut <i>solder masks</i> for the SMT row_boards and led_board,
+	and soldering them on a <b>hot plate</b>, there were many through-hole components and
+	wires to <b>hand-solder</b> and quite a few connectors to painstakingly <b>crimp</b>
+	onto cables in this phase.
+</p>
+
+<p>
+	This was <b>several days</b> of hard work, epsecially as I decided to test each board after
+	soldering by plugging it into the <i>prototype breadboard circuits</i> and found
+	<b>problems</b>, some vexing and difficult to diagnose, that had to be corrected on a number
+	of the boards before I could continue to soldering or crimping the next pcb/cable.
+</p>
+
+
+<p>
+	Finally, there was the job of removing the <b>store-bought USBC hub</b> from its case,
+	and retro-fitting it into the TE3 project. In reality that sub-task had been going
+	on for a number of weeks as the USBC hub is <i>instrumental</i> to the device, providing
+	the main <b>USBC interface</b> to the iPad, as well as being the
+	<b>power supply</b> for the entire box.  I spent much time figuring out how this
+	particular USBC hub was wired, before desoldering and removing its original cable, soldering
+	a new cable with a JST connector onto it, adding wires and a JST connector for powering the rPi,
+	and <i>testing it over and over again</i> before even committing myself to do this project.
+</p>
+
+<p><a href="images/solder-all_electronics_big.jpg"><img src="images/solder-all_electronics.jpg"></a></p>
+
+<p>
+	The above photo shows all of the PCBs, cables, and connectors that go into the box.
+</p>
+
+<ul>
+	<li>there are two <b>3.5" IL9488 SPI Touch Screens</b> in the upper right of the photo</li>
+	<li>below them are the two <b>lcd_connectors</b> with their cables and crimped JST8 connectors</li>
+	<li>in the center you can see the <b>rotary_board</b> and its cable with a crimped JST5 connector</li>
+	<li>below that is the <b>row_board cable</b> consisting of 6 wires crimped to two JST6 connectors</li>
+	<li>below that is the <b>rPi zero2W</b> with its header soldered on and a single wire and JST connector soldered to the <i>run pin</i> on the bottom</li>
+	<li>below that, to the left, is the <b>teensy4.0</b>, with its headers soldered on, and a single wire and JST connector soldered to the <i>gpio32</i> pin on the bottom</li>
+	<li>the teensy4.0 is plugged into the <b>audio shield</b> with its headers soldered on</li>
+	<li>next to that is the <b>teensy4.1</b> with its headers soldered on.</li>
+	<li>on the bottom right are six soldered and tested <b>row boards</b>.
+		Four of them have short cables with JST6 connectors crimped on.
+		One doesn't need a cable, and the other one is a spare.</li>
+	<li>on the left side of the photo, starting at the bottom is the <b>led_board</b> with its soldered and crimped 8 wire JST8 connector</li>
+	<li>next to it is the <b>USBC Hub</b> board, with various modifications discussed in detail elsewhere</li>
+	<li>above those are the two orange <b>USBC breakout boards</b> with JST5 and JST6 connectors, respectively, soldered to them</li>
+	<li>above those are two of the <b>usba_connector</b> pcbs, soldered to cables and soldered to <i>micro-usb connectors</i> on the other end</li>
+	<li>in the upper left is one of the <b>usba_connector</b> pcbs soldered to a cable to a <i>usba breakout board</i> for the <i>main usb port</i>
+		and a <b>USBA breakout board</b> soldered to four wires to a crimped JST4 connector for the <i>host usb port</i></li>
+</ul>
+
+<p>
+	Finally, at the bottom is the <b>mother_board</b> with most of its connectors and components soldered on.
+	The <i>five quarter inch jacks</i>, <i>stereo RCA jacks</i>, and <i>1/8" jack</i> have not yet been soldered to it in this photo.
+	I have a limited supply of those connectors, so I tested everything else that I could before I finally soldered
+	them on and proceeded to actual <b>audio testing</b> and testing the <b>debugging serial port</b> on the motherboard.
+</p>
+
+<p>THIS WAS A TON OF WORK!!</p>
+
+
+
+<h2>Mother Board</h2>
+<p><a href="/images/solder-mother_board_front_big.jpg"><img src="images/solder-mother_board_front.jpg"></a></p>
+<p><a href="/images/solder-mother_board_back_big.jpg"><img src="images/solder-mother_board_back.jpg"></a></p>
+
+
+<h2>Row Boards</h2>
+<p><a href="/images/solder-row_board_mask_big.jpg"><img src="images/solder-row_board_mask.jpg"></a></p>
+<p><a href="/images/solder-row_board_front_big.jpg"><img src="images/solder-row_board_front.jpg"></a></p>
+<p><a href="/images/solder-row_board_back_big.jpg"><img src="images/solder-row_board_back.jpg"></a></p>
+
+
+<h2>Rotary Board</h2>
+<p><a href="/images/solder-rotary_board_front_big.jpg"><img src="images/solder-rotary_board_front.jpg"></a></p>
+<p><a href="/images/solder-rotary_board_back_big.jpg"><img src="images/solder-rotary_board_back.jpg"></a></p>
+
+
+<h2>LCD Connectors</h2>
+<p><a href="/images/solder-lcd_connectors_front_big.jpg"><img src="images/solder-lcd_connectors_front.jpg"></a></p>
+
+
+<h2>LED Board</h2>
+<p><a href="/images/solder-led_board_front_big.jpg"><img src="images/solder-led_board_front.jpg"></a></p>
+
+
+<h2>Teensies and rPI</h2>
+<p>
+	Soldering <b>headers</b> and </b>connectors</b> onto the micro-processor boards.
+</p>
+<p><a href="/images/solder-teensy41_front_big.jpg"><img src="images/solder-teensy41_front.jpg"></a></p>
+<p><a href="/images/solder-teensy40_back_big.jpg"><img src="images/solder-teensy40_back.jpg"></a></p>
+<p><a href="/images/solder-audio_shield_front_big.jpg"><img src="images/solder-audio_shield_front.jpg"></a></p>
+<p><a href="/images/solder-audio_shield_back_big.jpg"><img src="images/solder-audio_shield_back.jpg"></a></p>
+<p><a href="/images/solder-rpi_front_big.jpg"><img src="images/solder-rpi_front.jpg"></a></p>
+<p><a href="/images/solder-rpi_back_big.jpg"><img src="images/solder-rpi_back.jpg"></a></p>
+
+
+<h2>USB Stuff</h2>
+<p>
+	There was a decent amount of work to solder up the various USB connectors and cables.
+	and crimp JST connectors on them, starting with removing the resistors and adding JST
+	connectors to the two <b>USBC female breakout boards</b>.
+</p>
+<p><a href="/images/solder-usbc_breakouts_front_big.jpg"><img src="images/solder-usbc_breakouts_front.jpg"></a></p>
+<p>
+	Then there were two of the the home made USBA connectors going to store-bought micro connectors
+	and their tiny soldering points. Cut all the wires, strip em', tin the wires and connectors.
+	Then solder amd weave the wires to the connectors, and hot glue the covers together.
+</p>
+<p><a href="/images/solder-usba_micro_big.jpg"><img src="images/solder-usba_micro.jpg"></a></p>
+<p>
+	Then the USBA breakout boards for the two external USB ports, one to a home made
+	USABA connector, and the other to a crimped JST4 connectors.  The wires are hand-weaved,
+	then later I started using little pieces of heatshrink to keep them neat.
+</p>
+<p><a href="/images/solder-usba_ports_big.jpg"><img src="images/solder-usba_ports.jpg"></a></p>
+
+
+<h2>The USBC Hub</h2>
+<p><a href="/images/solder-usbc_hub_front_big.jpg"><img src="images/solder-usbc_hub_front.jpg"></a></p>
+<p><a href="/images/solder-usbc_hub_back_big.jpg"><img src="images/solder-usbc_hub_back.jpg"></a></p>
