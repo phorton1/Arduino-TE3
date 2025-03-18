@@ -1,6 +1,6 @@
 # TE3 - teensyExpression3
 
-### Please see the [documentation](https://phorton1.github.io/Arduino-TE3/)
+### Please see the new [TE3 documentation](https://phorton1.github.io/Arduino-TE3/) page at
 
 https://phorton1.github.io/Arduino-TE3/
 
