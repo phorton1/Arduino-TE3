@@ -1,7 +1,8 @@
 # TE3 - teensyExpression3
 
 ### Please see the [documentation](https://phorton1.github.io/Arduino-TE3/)
-at (https://phorton1.github.io/Arduino-TE3/)[https://phorton1.github.io/Arduino-TE3/]
+
+https://phorton1.github.io/Arduino-TE3/
 
 
 ### License
