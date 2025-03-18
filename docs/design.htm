@@ -1,0 +1,38 @@
+<!-- design.htm -->
+
+<h1>High Level Design</h1>
+
+
+<p>
+	The <b>software</b> and <i>detailed technical design</i> <b>documentation</b> is split
+	among several separate repositories. <b>This repository</b> contains the TE3.ino program
+	that is the main <b>USB Midi Device</b> and central-coordinator running on a <b>teeensy4.1</b>,
+	along with the most recent technical documents, including:
+</p>
+
+<ul>
+	<li>An <a href="overview.md">overview</a> of the full system architecture and design</li>
+	<li>A history of the specific TE3 <a href="prototypes.md">prototypes</a> I started with</li>
+	<li>Details about the <a href="circuits.md">electronics circuits</a> used in the box</li>
+	<li>A more detailed overview of the design of the <a href="software.md">software</a></li>
+	<li>The initial <a href="implement.md">implementation</a> path for the project</li>
+	<li>Implementation <a href="details.md">details</a></li>
+</ul>
+
+<p>
+	In addition to this repository, the other two main programs are the <b>TE3_audio.ino</b>
+	program and the <b>Loopper</b> program.
+</p>
+
+<ul>
+	<li><a href="https://github.com/phorton1/Arduino-TE3_audio"><b>TE3_audio</b></a> contains the
+		TE3_audio.ino program which is the <b>USB Audio Device</b>
+		running on a <b>teensy4.0</b> with a <b>teensy Audio shield</b>,
+		and its associated technical documentation.</li>
+	<li>The <a href="https://github.com/phorton1/circle-prh-apps-Looper"><b>circle-Looper</b></a>
+		repo contains the source code for the <b>Looper</b> program that runs
+		in <i>bare metal</i> on a Raspberry Pi <b>Zero2W</b>, along with its own
+		associated technical and historical documentation.</li>
+</ul>
+
+<!-- end of design.htm -->

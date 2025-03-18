@@ -7,7 +7,7 @@
 </p>
 
 
-<h3><i>TE3</i></h3>
+<h2><i>teensyExpression3</i></h2>
 <ul>
 	<li><b>is</b> a <i>USB Audio Device</i> that has a standard <b>1/4" guitar jack</b> for input and
 		a pair of <b>RCA audio outputs</b> to connecct to any <i>PA</i> or amplifier.</li>
@@ -24,7 +24,7 @@
 </ul>
 
 <p>
-	<b>ALL</b> of the information needed to build TE3 as a <i>DIY project</i>
+	<b>ALL</b> of the information needed to build teensyExpression3 as a <i>DIY project</i>
 	is available in this and linked <b>github repos</b>.
 </p>
 
@@ -36,17 +36,26 @@
 
 <p>
 	The <b>software</b> and <i>detailed technical design</i> <b>documentation</b> is split
-	among several separate repositories:
+	among several separate repositories. <b>This repository</b> contains the TE3.ino program
+	that is the main <b>USB Midi Device</b> and central-coordinator running on a <b>teeensy4.1</b>,
+	along with the most recent technical documents, including:
 </p>
 
 <ul>
-	<li><b>This repository</b> contains the TE3.ino program that is the main
-		<b>USB Midi Device</b> and central-coordinator running on a <b>teeensy4.1</b>,
-		along with the main technical
-		<a href="overview.md">overview</a>,
-		<a href="design.md">design</a>, and
-		<a href="implement.md">implementation</a>
-		<a href="details.md">details</a> for the project.</li>
+	<li>An <a href="overview.md">overview</a> of the full system architecture and design</li>
+	<li>A history of the specific TE3 <a href="prototypes.md">prototypes</a> I started with</li>
+	<li>Details about the <a href="circuits.md">electronics circuits</a> used in the box</li>
+	<li>A more detailed overview of the design of the <a href="software.md">software</a></li>
+	<li>The initial <a href="implement.md">implementation</a> path for the project</li>
+	<li>Implementation <a href="details.md">details</a></li>
+</ul>
+
+<p>
+	In addition to this repository, the other two main programs are the <b>TE3_audio.ino</b>
+	program and the <b>Loopper</b> program.
+</p>
+
+<ul>
 	<li><a href="https://github.com/phorton1/Arduino-TE3_audio"><b>TE3_audio</b></a> contains the
 		TE3_audio.ino program which is the <b>USB Audio Device</b>
 		running on a <b>teensy4.0</b> with a <b>teensy Audio shield</b>,
@@ -62,7 +71,8 @@
 
 <p>
 	In addition to the above three main software repositories, there are also a
-	number of repositories containing other pieces of code that go into the TE3:
+	number of repositories containing other pieces of code that go into the teensyExpression3
+	system.
 </p>
 
 <ul>
@@ -83,7 +93,7 @@
 	Besides requiring the installation of the <b>teensyDuino</b> board in the
 	<i>Arduino IDE</i> as well as the installation of a number of specific
 	<i>Arduino Libraries</i> that are detailed elsewhere, my github account includes
-	a number of other repos used in TE3 that I decided to <b>fork</b> either for
+	a number of other repos used in teensyExpression3 that I decided to <b>fork</b> either for
 	long term code stability, or because I needed to make minor modifications
 	to the publically available versions:
 </p>
@@ -93,7 +103,7 @@
 		Arduino library to allow me receive incoming midi data directly from the host rx interrupt.</li>
 	<li>I have taken a fork of Paul's <a href="https://github.com/phorton1/Arduino-libraries-ILI9488_t3" target="_blank"><b>ILI9488_t3</b></a>
 		Arduino-library for long term code stability and because I needed to fix some crashing bugs
-		in its usage of the default, fixed width pixel fonts, because I need those in the TE3 program</li>
+		in its usage of the default, fixed width pixel fonts, because I need those in the TE3.ino program</li>
 	<li>Years ago, I took a fork of the Arduino <a href="https://github.com/phorton1/Arduino-libraries-base64" target="_blank"><b>base64</b></a>
 		library for long term code stability and I still use that today.</li>
 </ul>
