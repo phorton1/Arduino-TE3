@@ -30,7 +30,7 @@ U 1 1 67943AF8
 P 12550 4500
 F 0 "J7" H 12200 4500 50  0000 L CNN
 F 1 "rpi_connector" H 12350 4500 50  0000 L CNN
-F 2 "0_my_footprints2:rpi_zero_2w" H 12450 4400 50  0001 C CNN
+F 2 "0_my_footprints2:rpi_zero_2w_for_TE3" H 12450 4400 50  0001 C CNN
 F 3 "" H 12450 4400 50  0001 C CNN
 	1    12550 4500
 	1    0    0    -1  
@@ -576,50 +576,6 @@ F 3 "~" H 3350 7600 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R6
-U 1 1 67ACD401
-P 3750 8100
-F 0 "R6" V 3850 8050 50  0000 L CNN
-F 1 "10K" V 3750 8100 50  0000 C CNN
-F 2 "0_my_footprints:myResistor" V 3680 8100 50  0001 C CNN
-F 3 "~" H 3750 8100 50  0001 C CNN
-	1    3750 8100
-	-1   0    0    1   
-$EndComp
-$Comp
-L Device:R R7
-U 1 1 67ACDF8A
-P 5050 8100
-F 0 "R7" V 5150 8050 50  0000 L CNN
-F 1 "10K" V 5050 8100 50  0000 C CNN
-F 2 "0_my_footprints:myResistor" V 4980 8100 50  0001 C CNN
-F 3 "~" H 5050 8100 50  0001 C CNN
-	1    5050 8100
-	-1   0    0    1   
-$EndComp
-$Comp
-L Device:R R8
-U 1 1 67ACE349
-P 6300 8100
-F 0 "R8" V 6400 8050 50  0000 L CNN
-F 1 "10K" V 6300 8100 50  0000 C CNN
-F 2 "0_my_footprints:myResistor" V 6230 8100 50  0001 C CNN
-F 3 "~" H 6300 8100 50  0001 C CNN
-	1    6300 8100
-	-1   0    0    1   
-$EndComp
-$Comp
-L Device:R R9
-U 1 1 67ACFA4C
-P 7550 8100
-F 0 "R9" V 7650 8050 50  0000 L CNN
-F 1 "10K" V 7550 8100 50  0000 C CNN
-F 2 "0_my_footprints:myResistor" V 7480 8100 50  0001 C CNN
-F 3 "~" H 7550 8100 50  0001 C CNN
-	1    7550 8100
-	-1   0    0    1   
-$EndComp
-$Comp
 L 0_my_symbols:EigthInchJack1 J9
 U 1 1 67AFA9BD
 P 1800 8900
@@ -647,7 +603,7 @@ U 1 1 67B8D37F
 P 10800 8950
 F 0 "J15" V 10500 9250 50  0000 R CNN
 F 1 "LINE_OUT" V 10500 9050 50  0000 R CNN
-F 2 "0_my_footprints2:RCA2_PCB" H 10800 8550 50  0001 C CNN
+F 2 "0_my_footprints2:RCA2_PCB_milled" H 10800 8550 50  0001 C CNN
 F 3 "" H 10800 8550 50  0001 C CNN
 	1    10800 8950
 	0    -1   -1   0   
@@ -815,64 +771,22 @@ F 3 "" H 3000 7800 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 Wire Wire Line
-	7550 7800 7550 7950
-Wire Wire Line
 	3000 7800 3500 7800
 Wire Wire Line
 	7300 7800 7300 8250
-Connection ~ 7300 7800
-Wire Wire Line
-	7300 7800 7550 7800
-Wire Wire Line
-	6300 7950 6300 7800
-Connection ~ 6300 7800
-Wire Wire Line
-	6300 7800 7300 7800
 Wire Wire Line
 	6050 7800 6050 8250
 Connection ~ 6050 7800
 Wire Wire Line
-	6050 7800 6300 7800
-Wire Wire Line
-	5050 7950 5050 7800
-Connection ~ 5050 7800
-Wire Wire Line
-	5050 7800 6050 7800
-Wire Wire Line
 	4800 7800 4800 8250
 Connection ~ 4800 7800
-Wire Wire Line
-	4800 7800 5050 7800
-Wire Wire Line
-	3750 7950 3750 7800
-Connection ~ 3750 7800
-Wire Wire Line
-	3750 7800 4800 7800
 Wire Wire Line
 	3500 7800 3500 8250
 Connection ~ 3500 7800
 Wire Wire Line
-	3500 7800 3750 7800
-$Comp
-L Device:R R10
-U 1 1 67A8E02B
-P 9350 8100
-F 0 "R10" V 9450 8050 50  0000 L CNN
-F 1 "10K" V 9350 8100 50  0000 C CNN
-F 2 "0_my_footprints:myResistor" V 9280 8100 50  0001 C CNN
-F 3 "~" H 9350 8100 50  0001 C CNN
-	1    9350 8100
-	-1   0    0    1   
-$EndComp
-Wire Wire Line
 	9000 7850 9100 7850
 Wire Wire Line
-	9350 7850 9350 7950
-Wire Wire Line
 	9100 8250 9100 7850
-Connection ~ 9100 7850
-Wire Wire Line
-	9100 7850 9350 7850
 Wire Wire Line
 	12400 8800 12400 8750
 $Comp
@@ -1078,4 +992,10 @@ F 3 "" V 9100 4650 60  0000 C CNN
 	1    8150 4700
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	3500 7800 4800 7800
+Wire Wire Line
+	4800 7800 6050 7800
+Wire Wire Line
+	6050 7800 7300 7800
 $EndSCHEMATC
