@@ -2,15 +2,26 @@
 
 <h1>Home</h1>
 
+
+<h2 id"what_is"><i>What is teensyExpression3?</i></h2>
+
 <p>
-	Goto the <a href="#" onclick="loadFileAndExpand('solder.htm')">Solder</a> page.
+	<i>teensyExpression3</i> is intended to be and <i>all-in-one</i>
+	<b>guitar effects and synthesizer foot pedal and looper</b> that gives a live
+	performer a <b>USB MIDI Host and Controller</b>, and a <b>USB Audio Interface</b>,
+	providing <i>sophisticated</i> control of a set of <b>guitar effects</b> and an
+	<b>external synthesizer</b>, typically running on an <b>iPad</b> or other tablet,
+	phone, or laptop, as well as a powerful internal <b>Mutli-Track Looper</b>
+	... while, at the same time, minimizing the number of
+	<i>cables and cords</i> needed to <b>setup or tear-down</b> at live gigs.
 </p>
 
+<p><a href="images/home-T3_main_image_big.jpg"><img src="images/home-T3_main_image.jpg"></a></p>
 
-<h2><i>teensyExpression3</i></h2>
+<h3>teensyExpression3</h3>
 <ul>
 	<li><b>is</b> a <i>USB Audio Device</i> that has a standard <b>1/4" guitar jack</b> for input and
-		a pair of <b>RCA audio outputs</b> to connecct to any <i>PA</i> or amplifier.</li>
+		a pair of <b>RCA audio outputs</b> to connect to any <i>PA</i> or amplifier.</li>
 	<li><b>has</b> an internal <b>USB Hub</b> that <i>sends and receives USB Audio and Midi</i> to/from, and <i>charges</i>,
 		an <b>iPad</b>, or other phone, tablet, or computer, over a <i>single USBC</i> cable.</li>
 	<li><b>is</b> a <i>USB Midi Controller</i> with <b>25 buttons</b>, each with an individual <i>multi-colored LED</i>,
@@ -22,6 +33,13 @@
 	<li><b>is</b> powered by a single <b>USBC connector</b>, using any commonly available external
 	<b>USBC</b> power supply of <i>30 watts</i> or more.</li>
 </ul>
+
+<p><img src="images/home-overview1.jpg"></p>
+
+
+
+
+<h2 id="overview">Documentation Overview</h2>
 
 <p>
 	<b>ALL</b> of the information needed to build teensyExpression3 as a <i>DIY project</i>
@@ -36,38 +54,45 @@
 
 <p>
 	The <b>software</b> and <i>detailed technical design</i> <b>documentation</b> is split
-	among several separate repositories. <b>This repository</b> contains the TE3.ino program
+	among several separate repositories. <b>THIS repository</b> contains the TE3.ino program
 	that is the main <b>USB Midi Device</b> and central-coordinator running on a <b>teeensy4.1</b>,
-	along with the most recent technical documents, including:
+	along with the main overall technical documetation for the whole system, including this
+	page, as well as:
 </p>
 
 <ul>
-	<li>An <a href="overview.md">overview</a> of the full system architecture and design</li>
-	<li>A history of the specific TE3 <a href="prototypes.md">prototypes</a> I started with</li>
-	<li>Details about the <a href="circuits.md">electronics circuits</a> used in the box</li>
-	<li>A more detailed overview of the design of the <a href="software.md">software</a></li>
-	<li>The initial <a href="implement.md">implementation</a> path for the project</li>
-	<li>Implementation <a href="details.md">details</a></li>
+	<li>An <a href="#" onclick="loadFileAndExpand('overview.htm')">overview</a>
+		of the full system architecture and design</li>
+	<li>A history of the <a href="#" data-file="prototypes.htm"  onclick="loadDataFile(this)">prototypes</a>
+		I created along the way</li>
+	<li>Details about the <a href="#" data-file="circuits.htm"  onclick="loadDataFile(this)">circuits</a>
+		used in the box</li>
+	<li>A more detailed look at the design of the <a href="#" data-file="software.htm" onclick="loadDataFile(this)">software</a></li>
+	<li>The initial <a href="#" data-file="implement.htm" onclick="loadDataFile(this)">implementation</a>
+		effort for the project</li>
+	<li>Implementation <a href="#" data-file="details.htm"  onclick="loadDataFile(this)">deetails</a>
+		found along the way</li>
 </ul>
 
+
 <p>
-	In addition to this repository, the other two main programs are the <b>TE3_audio.ino</b>
-	program and the <b>Loopper</b> program.
+	In addition to this repository, the other two programs in the system
+	are the <b>TE3_audio.ino</b> program and the <b>Looper</b> program.
 </p>
 
 <ul>
-	<li><a href="https://github.com/phorton1/Arduino-TE3_audio"><b>TE3_audio</b></a> contains the
-		TE3_audio.ino program which is the <b>USB Audio Device</b>
+	<li>The <a href="https://github.com/phorton1/Arduino-TE3_audio"><b>TE3_audio</b></a>
+		repository contains the TE3_audio.ino program which is the <b>USB Audio Device</b>
 		running on a <b>teensy4.0</b> with a <b>teensy Audio shield</b>,
 		and its associated technical documentation.</li>
 	<li>The <a href="https://github.com/phorton1/circle-prh-apps-Looper"><b>circle-Looper</b></a>
-		repo contains the source code for the <b>Looper</b> program that runs
+		repository contains the source code for the <b>Looper</b> program that runs
 		in <i>bare metal</i> on a Raspberry Pi <b>Zero2W</b>, along with its own
 		associated technical and historical documentation.</li>
 </ul>
 
 
-<h2>Please also see</h2>
+<h2 id="also_see">Please also see</h2>
 
 <p>
 	In addition to the above three main software repositories, there are also a

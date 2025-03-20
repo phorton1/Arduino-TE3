@@ -72,7 +72,8 @@ function ___loadContent(filename) {
         })
         .catch(error => {
             console.error('There was a problem with the fetch operation:', error);
-            contentArea.innerHTML = '<p>Error loading content.</p>';
+            contentArea.innerHTML = '<br><br><p>Whoops! Sorry about that :-)</p>' +
+            '<p>The page <b>' + filename + '</b> has not been created yet.';
         })
         .finally(() => {
             in_hash = false; // Reset the flag after loading
