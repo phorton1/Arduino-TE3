@@ -1,8 +1,8 @@
-# TE3 - teensyExpression3
+## TE3 - teensyExpression3
 
-### Please see the new [TE3 documentation](https://phorton1.github.io/Arduino-TE3/) page at
+### Please see the [teensyExpression3 documentation](https://phorton1.github.io/Arduino-TE3/)
 
-https://phorton1.github.io/Arduino-TE3/
+[![T3_main_image](images/home-T3_main_image.jpg)](images/home-T3_main_image_big.jpg)
 
 
 ### License
@@ -18,4 +18,3 @@ GNU General Public License for more details.
 
 Please see **LICENSE.TXT** for more information.
 
----- end of readme ----

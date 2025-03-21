@@ -6,14 +6,15 @@
 
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Helvetica,Arial,sans-serif;
+    line-height: 1.5;
     display: flex;
     flex-direction: column;
     height: 100vh; /* Full height of the viewport */
 }
 
 #header {
-    background-color: #4CAF50; /* Header background color */
+    background-color: #4CAF50;
     color: white;
     text-align: center;
     padding: 5px;
@@ -25,7 +26,7 @@ body {
 }
 
 #sidebar-left, #sidebar-right {
-    width: 160px; Fixed width for sidebars */
+    width: 160px;
     background-color: #f4f4f4;
     padding: 12px;
     padding-left:0px;
@@ -33,17 +34,19 @@ body {
 }
 
 #sidebar-right {
-    border-left: 1px solid #ccc; /* Add border to the right sidebar */
+    width: 160px;
+    border-left: 1px solid #ccc;
 }
 
 #content {
     flex: 1; /* Take up remaining space */
     padding: 5px;
     padding-left: 20px;
+    padding-right: 20px;
 }
 
 #footer {
-    background-color: #333; /* Footer background color */
+    background-color: #333;
     color: white;
     text-align: center;
     padding: 5px;
@@ -92,8 +95,8 @@ ul.menu li::before {
 
 
 .nested {
-    display: none; /* Hide nested lists by default */
-    padding-left: 20px; /* Indent nested lists */
+    display: none;
+    padding-left: 20px;
 }
 
 
@@ -101,7 +104,7 @@ ul.menu li::before {
     cursor: pointer;
     color: blue;
     text-decoration: underline;
-    position: relative; /* Position relative for the triangle */
+    position: relative;
 }
 
 
@@ -110,7 +113,7 @@ ul.menu li::before {
     cursor: pointer;
     color: blue;
     text-decoration: underline;
-    position: relative; /* Position relative for the triangle */
+    position: relative;
 }
 
 .triangle::before {
@@ -132,7 +135,7 @@ ul.menu li::before {
 
 .sidebar_selected {
     font-weight: bold;
-    color: red; /* Change color to indicate active page */
+    color: red;
     pointer-events: none; /* Prevent clicking on the active link */
 }
 
