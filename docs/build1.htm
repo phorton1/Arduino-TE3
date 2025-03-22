@@ -1,11 +1,140 @@
 <!-- build1.htm -->
 
-<h1>Building the initial teensyExpression3 box</h1>
+<h1>Building the teensyExpression3 box</h1>
 
 <p>
-	<b>ALL</b> of the information needed to build teensyExpression3 as a <i>DIY project</i>
-	is available in this and linked <b>github repos</b>.
+	Once again, as a reminder, <b>ALL</b> of the information needed to build teensyExpression3
+	as a <i>DIY project</i> is available in this and linked <b>github repos</b>.
 </p>
+
+<p>
+	There are three sub-assemblies that make up the teensyExpression3 box.
+</p>
+
+<ul>
+	<li>The <b>base assembly</b> with the buttons</li>
+	<li>The <b>slider assembly</b> that contains most of the electronics, and</li>
+	<li>The <b>top assembly</b> that has the screens, rotary controllers, leds, etc</li>
+</ul>
+
+<p>
+	Please note that these animations do not show all of the assembly details.
+	They do not show the <b>screws</b> that hold everything together or
+	the <b>cables</b> that generally connect the electronic components.
+</p>
+
+
+
+
+<h2>Base Assembly</h2>
+
+<p>
+	The first assembly is the <b>Base Assembly</b>. This assembly
+	contains all of the buttons and attaches to the rest of the electronics
+	by a single cable.
+</p>
+
+<img src="images/build-anim1.gif">
+
+<ul>
+	<li>we start with the 1/4" birch <b>plywood base</b></li>
+	<li>screw down the two large 3d printed <b>button bases</b></li>
+	<li>epoxy glue and screw down the two 3d printed <b>back fasteners</b></li>
+	<li>plug in, and screw down the five 3d printed <b>row_bases</b> and <b>row_board PCBs</b></li>
+	<li>attach each of the 25 3d printed clear <b>buttons</b> with a 1" piece of stainless steel wire</li>
+	<li>screw down the five 3d printed<b>row_covers</b></li>
+</ul>
+
+
+
+<h2>Slider Assembly</h2>
+
+<p>
+	The second assembly is the <b>Slider Assembly</b>. This assembly
+	has most of the electronics and all of the external <b>jacks and plugs</b>.
+	It includes the <b>mother_board</b> with its <b>three microprocessors</b>
+	as well as the <b>USBC Hub</b> and the two <b>USBC breakout boards</b>.
+</p>
+
+<img src="images/build-anim2.gif">
+
+<ul>
+	<li>we start with 3d printed <b>slider bottom</b></li>
+	<li>screw down the two <b>USBC breakout boards</b></li>
+	<li>screw down the <b>USBC hub</b> and connect it to the breakout boards</li>
+	<li>screw in the <b>USB host port</b></li>
+	<li>insert and screw down the <b>mother board</b></li>
+	<li>plug in the <b>teensy 4.1</b> and connect it to the USB host port</b></li>
+	<li>plug in the <b>teensy RevD audio shield</b></li>
+	<li>plug the <b>teensy 4.0</b> into the audio shield and plug in its JST connector</li>
+	<li>plug in the <b>rPi Zero2w</b> and plug in its JST connector</li>
+	<li>plug in the JST connector for the rPI power supply from the USBC hub<li>
+	<li>connect the two teensies to the USBC hub with the specially made <b>USB cables</b>
+</ul>
+
+<p>
+	The Slider Assembly will be connected electronically to the Base Assembly by a single
+	cable for the buttons, and will be physically secured with four screws.
+</p>
+
+
+
+<h2>Top Assembly</h2>
+
+<p>
+	The last sub-assembly we complete is the <b>Slider Top</b>. This assembly
+	has the two <b>touch screens</b>, the <b>rotary controls</b>, the <b>leds</b>
+	and the external <b>USB port</b>.
+</p>
+
+<img src="images/build-anim3.gif">
+
+<ul>
+	<li>we start by screwing the <b>led_board</b> into the 3d printed <b>bezel</b> and set that aside</li>
+	<li>then, starting with 3d printed <b>slider_top</b>, we ...</li>
+	<li>screw down external <b>USB port</b></li>
+	<li>attach the <b>rotary board</b> with four nuts</li>
+	<li>press the four <b>button caps</b> onto the rotary controls</b>
+	<li>insert the two <b>3.5" touch-screens</b></li>
+	<li>attach and screw in the <b>bezel</b> with 8 M3 screws</li>
+</ul>
+
+
+
+<h2>Final Assembly</h2>
+
+<p>
+	The teensyExprssion3 is designed to be simple to test and assemble, as well as
+	being easy to disassemble and/or repair as needed.
+	The <b>Top Assembly</b> is connected to the <b>Slider Assembly</b> with four M3 screws,
+	and the entire combination slides into the <b>Base Assembly</b> where it is connected
+	with an additional four M3 screws. By simply removing those 8 screws, and unplugging
+	the cables that connect the assemblies together, you can easily get at any of the electronics
+	components.
+</p>
+
+<p>
+	When assembling, of course, you have to connect the cables between the assemblies.
+	When connecting the Top Assembly to the Slider Assembly, the following cables
+	must be connected:
+</p>
+
+<ul>
+	<li>the <b>led_board</b> has an attached cable that plugs into the motherboard</li>
+	<li>the <b>USB port</b> has an attached cable that plugs into USBC hub</li>
+	<li>the two <b>touch screens</b> are connected to the mother_board by the two
+	   <b>lcd_connector</b> cables, and finally ...</li>
+	<li>the <b>rotary_board</b> has an attached cable that plugs into the motherboard</li>
+</ul>
+
+<img src="images/build-anim4.gif">
+	
+<p>
+	After the Top is secured to the Slider by four screws then the whole
+	combination slides into the Base assembly, is connected by a single cable, and
+	secured with another four screws.
+</p>
+
 
 
 <!-- end of build1.htm -->
