@@ -33,6 +33,9 @@
 #include "winFTPTuner.h"
 #include "te3_rotaries.h"
 
+#define WITH_SPLASH_SCREEN		0
+	// Set to one to build with long-press on button0 to
+	// turn all the LEDS on for photographs.
 
 #define dbg_patch_buttons    	1
 #define dbg_serial_midi         0
@@ -255,7 +258,13 @@ void rigLooper::begin(bool warm)
 	{
 		for (int c=0; c<NUM_PATCH_COLS; c++)
 		{
-			theButtons.setButtonType(r * NUM_BUTTON_COLS + c, BUTTON_TYPE_CLICK | BUTTON_MASK_USER_DRAW, 0);
+			// potentially allow long click on button zero to show splash screen
+
+			int button_type = BUTTON_TYPE_CLICK | BUTTON_MASK_USER_DRAW;
+			#if WITH_SPLASH_SCREEN
+				if (!r && !c) button_type |= BUTTON_EVENT_LONG_CLICK;
+			#endif
+			theButtons.setButtonType(r * NUM_BUTTON_COLS + c, button_type, 0);
 		}
 	}
 
@@ -792,6 +801,20 @@ void rigLooper::onButtonEvent(int row, int col, int event)
 			display(0,"set_patch_num %d m_cur_bank_num=%d",patch_num,m_cur_bank_num);
 			setPatchNumber(patch_num);
 		}
+		#if WITH_SPLASH_SCREEN
+			else if (event == BUTTON_EVENT_LONG_CLICK)
+			{
+				static bool splash_showing = 0;
+				splash_showing = !splash_showing;
+				if (splash_showing)
+					LEDFancyStart();
+				else
+				{
+					theButtons.clear();
+					begin(true);
+				}
+			}
+		#endif
 	}
 
 	// BANK SELECT

@@ -216,7 +216,13 @@ void setup()
 	//----------------------------------
 
     initLEDs();
-    LEDFancyStart();
+	#if 1
+		LEDFancyStart();
+		delay(1000);
+		clearLEDs();
+		showLEDs();
+	#endif
+
 	theButtons.init();
 	thePedals.init();
 	#if WITH_ROTARIES

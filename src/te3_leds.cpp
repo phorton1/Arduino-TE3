@@ -174,9 +174,6 @@ void LEDFancyStart()
             delay(40);
         }
     }
-    delay(1000);
-    clearLEDs();
-    showLEDs();
 }
 
 
