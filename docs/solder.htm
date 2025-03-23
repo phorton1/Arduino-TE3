@@ -27,7 +27,7 @@
 	and <i>testing it over and over again</i> before even committing myself to do this project.
 </p>
 
-<p><a href="images/solder-all_electronics_big.jpg"><img src="images/solder-all_electronics.jpg"></a></p>
+<p><a href="images/solder-all_electronics_big.jpg" target="_blank"><img src="images/solder-all_electronics.jpg"></a></p>
 
 <p>
 	The above photo shows all of the PCBs, cables, and connectors that go into the box.
@@ -65,27 +65,79 @@
 
 
 <h2 id="mother_board">Mother Board</h2>
-<p><a href="images/solder-mother_board_front_big.jpg"><img src="images/solder-mother_board_front.jpg"></a></p>
-<p><a href="images/solder-mother_board_back_big.jpg"><img src="images/solder-mother_board_back.jpg"></a></p>
+<p>
+	I discovered several problems in the motherboard after I created the PCB, soldered it, and started
+	testing it.  Specifically, in the photos below, the <b>yellow and green</b> wires on the top were
+	added, due to the fact I had some lines wrong on the schematic, and the <b>blue wire</b> on the bottom
+	was added to get the correct clock signal to the teensy 4.1's lcd touchscreen.
+	Those fixes have been incorporated into the kicad files in this repo, but I continued to use the shown
+	mother_board for this build.
+</p>
+<p><a href="images/solder-mother_board_front_big.jpg" target="_blank"><img src="images/solder-mother_board_front.jpg"></a></p>
+<p><a href="images/solder-mother_board_back_big.jpg" target="_blank"><img src="images/solder-mother_board_back.jpg"></a></p>
+<p>
+	Additionally (not shown) I totally messed up the wiring of the RCA jacks in the footprints for the
+	RevD audio shield, and subsequently had to modify those traces on the PCB as well.  Likewise,
+	the corrections are present in the kicad files in this repo.
+</p>
+
 
 
 <h2 id="row_boards">Row Boards</h2>
-<p><a href="images/solder-row_board_mask_big.jpg"><img src="images/solder-row_board_mask.jpg"></a></p>
-<p><a href="images/solder-row_board_front_big.jpg"><img src="images/solder-row_board_front.jpg"></a></p>
-<p><a href="images/solder-row_board_back_big.jpg"><img src="images/solder-row_board_back.jpg"></a></p>
+<p>
+	For soldering the SMT components to the row_boards, I made a solder mask by cutting it
+	out of <b>blue masking tape</b> on my other
+	<a href="https://github.com/phorton1/Arduino-esp32_cnc20mm" target="_blank">larger cnc</a> machine.
+</p>
+<p><a href="images/solder-row_board_mask_big.jpg" target="_blank"><img src="images/solder-row_board_mask.jpg"></a></p>
+<p>
+	Unfortunately I did not take any photos of the solder-paste or hot-plate steps involved
+	in soldering the SMT devices, but in the following image, you can see the results.
+</p>
+<p><a href="images/solder-row_board_front_big.jpg" target="_blank"><img src="images/solder-row_board_front.jpg"></a></p>
+<p>
+	After the SMT components were soldered, I hand soldered the buttons and wires, and added the
+	6 pin JST connectors to four of the five row_boards.
+</p>
+<p><a href="images/solder-row_board_back_big.jpg" target="_blank"><img src="images/solder-row_board_back.jpg"></a></p>
+<p>
+	As I finished soldering each row_board, I tested it with the prototype mother_board breadboard.
+	I found several problem with traces being shorted and had to painstakingly exacto knife them
+	to get them to work correctly.
+</p>
+
 
 
 <h2 id="rotary_board">Rotary Board</h2>
-<p><a href="images/solder-rotary_board_front_big.jpg"><img src="images/solder-rotary_board_front.jpg"></a></p>
-<p><a href="images/solder-rotary_board_back_big.jpg"><img src="images/solder-rotary_board_back.jpg"></a></p>
+<p>
+	The rotary_board was hand-soldered, and fairly straight forward, though, once again,
+	I found some problems in the traces that had to be corrected with an exacto knife.
+</p>
+<p><a href="images/solder-rotary_board_front_big.jpg" target="_blank"><img src="images/solder-rotary_board_front.jpg"></a></p>
+<p><a href="images/solder-rotary_board_back_big.jpg" target="_blank"><img src="images/solder-rotary_board_back.jpg"></a></p>
+
 
 
 <h2 id="lcd_connectors">LCD Connectors</h2>
-<p><a href="images/solder-lcd_connectors_front_big.jpg"><img src="images/solder-lcd_connectors_front.jpg"></a></p>
+<p>
+	Each LCD connector gets 3 resistors, two wires, and then an 8 pin cable
+	with JST connectors crimped on.
+</p>
+<p><a href="images/solder-lcd_connectors_front_big.jpg" target="_blank"><img src="images/solder-lcd_connectors_front.jpg"></a></p>
 
 
 <h2 id="led_board">LED Board</h2>
-<p><a href="images/solder-led_board_front_big.jpg"><img src="images/solder-led_board_front.jpg"></a></p>
+<p>
+	For the LED board, I also made a <b>blue masking tape</p> solder mask before
+	adding the paste and heating them up to solder the LEDs and resistors.
+	After that I cut the 8 wires for the cable, soldered them, and crimped
+	on the JST8 connector.
+</p>
+<p><a href="images/solder-led_board_front_big.jpg" target="_blank"><img src="images/solder-led_board_front.jpg"></a></p>
+<p>
+	I had never tried these particular 1206 SMT colored LEDs, and the green one was way too bright,
+	so I had to replace the 220ohm resistor for it with a 1K resistor by hand soldering.
+</p>
 
 
 <h2 id="mpus">Teensies and rPI</h2>
@@ -94,20 +146,20 @@
 	Although relatively simple, there were more than a <b>hundred</b> pins and wires
 	to solder in this section.
 </p>
-<p><a href="images/solder-teensy41_front_big.jpg"><img src="images/solder-teensy41_front.jpg"></a></p>
+<p><a href="images/solder-teensy41_front_big.jpg" target="_blank"><img src="images/solder-teensy41_front.jpg"></a></p>
 <p>
 	Below, solder and hot glue a fine little blue silicon sheathed wire to gpio32
 	on the teensy4.0 and crimp a JST connector onto the other end.
 </p>
-<p><a href="images/solder-teensy40_back_big.jpg"><img src="images/solder-teensy40_back.jpg"></a></p>
-<p><a href="images/solder-audio_shield_front_big.jpg"><img src="images/solder-audio_shield_front.jpg"></a></p>
-<p><a href="images/solder-audio_shield_back_big.jpg"><img src="images/solder-audio_shield_back.jpg"></a></p>
-<p><a href="images/solder-rpi_front_big.jpg"><img src="images/solder-rpi_front.jpg"></a></p>
+<p><a href="images/solder-teensy40_back_big.jpg" target="_blank"><img src="images/solder-teensy40_back.jpg"></a></p>
+<p><a href="images/solder-audio_shield_front_big.jpg" target="_blank"><img src="images/solder-audio_shield_front.jpg"></a></p>
+<p><a href="images/solder-audio_shield_back_big.jpg" target="_blank"><img src="images/solder-audio_shield_back.jpg"></a></p>
+<p><a href="images/solder-rpi_front_big.jpg" target="_blank"><img src="images/solder-rpi_front.jpg"></a></p>
 <p>
 	Likewise, below, on the bottom of the rPi, solder and hot glue a fine little yellow silicon sheathed wire
 	to the <b>run pin</b> on the rPi and crimp a JST connector onto the other end.
 </p>
-<p><a href="images/solder-rpi_back_big.jpg"><img src="images/solder-rpi_back.jpg"></a></p>
+<p><a href="images/solder-rpi_back_big.jpg"> target="_blank"<img src="images/solder-rpi_back.jpg"></a></p>
 
 
 <h2 id="usb_stuff">USB Stuff</h2>
@@ -116,22 +168,62 @@
 	and crimp JST connectors on them, starting with removing the resistors and adding JST
 	connectors to the two <b>USBC female breakout boards</b>.
 </p>
-<p><a href="images/solder-usbc_breakouts_front_big.jpg"><img src="images/solder-usbc_breakouts_front.jpg"></a></p>
+<p><a href="images/solder-usbc_breakouts_front_big.jpg" target="_blank"><img src="images/solder-usbc_breakouts_front.jpg"></a></p>
 <p>
 	Then there were two of the the home made <b>usba_connectors</b> going to store-bought micro connectors
 	and their tiny soldering points. Cut all the wires, strip em', tin the wires and connectors.
 	Then solder amd weave the wires to the connectors, and hot glue the covers together.
 </p>
-<p><a href="images/solder-usba_micro_big.jpg"><img src="images/solder-usba_micro.jpg"></a></p>
+<p><a href="images/solder-usba_micro_big.jpg" target="_blank"><img src="images/solder-usba_micro.jpg"></a></p>
 <p>
 	Then the USBA breakout boards for the two external USB ports, one to a home made
 	<b>usba_connector</b>, and the other to a crimped JST4 connector.  The wires are hand-weaved.
 	Later I started using little pieces of heatshrink to keep wire bundles neat, which is faster and
 	simpler than weaving them.
 </p>
-<p><a href="images/solder-usba_ports_big.jpg"><img src="images/solder-usba_ports.jpg"></a></p>
+<p><a href="images/solder-usba_ports_big.jpg" target="_blank"><img src="images/solder-usba_ports.jpg"></a></p>
 
 
 <h2 id="usbc_hub">The USBC Hub</h2>
-<p><a href="images/solder-usbc_hub_front_big.jpg"><img src="images/solder-usbc_hub_front.jpg"></a></p>
-<p><a href="images/solder-usbc_hub_back_big.jpg"><img src="images/solder-usbc_hub_back.jpg"></a></p>
+<p>
+	The USBC Hub is a modification to a store-bought PCB. It needs it's own page describing
+	in detail how it is modified.  At the right in the photo below are two cables with JST
+	connectors. The first, upper one, is a hand made USBC to JST6 cable for the power input.
+	The second, lower one, for the external iPad or laptop to connect to, is soldered directly
+	to the hub.
+</p>
+<p><a href="images/solder-usbc_hub_front_big.jpg" target="_blank"><img src="images/solder-usbc_hub_front.jpg"></a></p>
+<p>
+	These are small wires soldered to tiny pads, so I applied prodiguous amounts of hot-glue,
+	even though it not very pretty, to ensure that the solder joints and connectors were
+	robust enough for practical use.
+<p>
+<p><a href="images/solder-usbc_hub_back_big.jpg" target="_blank"><img src="images/solder-usbc_hub_back.jpg"></a></p>
+<p>
+	Finally, I drilled three 2mm mounting holes in the board and scratched out pads for the 5V power
+	and soldered the red and black cable with its JST2 connector crimped on to that.
+</p>
+
+
+<h2 id="usbc_hub">Testing</h2>
+<p>
+	I wanted to make sure that before I started screwing PCBs into 3D printed plastic and
+	hiding them inside the box, that everything was working correctly.  So as I soldered each
+	board, I tested it on my desk, which also meant that I had to write and evolve parts of the
+	software to ensure that it was ok. It was messier than it sounds, but I got it nice and neat
+	on my desk for the below photo.
+</p>
+<p><a href="images/solder-test_setup_big.jpg" target="_blank"><img src="images/solder-test_setup.jpg"></a></p>
+<p>
+	Note that I had not yet soldered the big RCA and 1/4" audio connectors onto the
+	motherboard in this photo.
+</p>
+<p>
+	After I was pretty certain that all the PCB's were basically working, and I had a start
+	on the software, it was time to move to the next steps of 3D printing the box parts,
+	laser-cutting the base from 1/4" plywood, and assembling the whole thing.
+</p>
+
+
+<!-- end of solder.htm -->
+
