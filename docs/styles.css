@@ -18,12 +18,34 @@ body {
     color: white;
     text-align: center;
     padding: 5px;
+    display: flex;
 }
+
+#header-center {
+    flex:1;
+}
+
+#header-left, #header-right {
+    width: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#header-left a, #header-right a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2em;
+}
+
+
+
 
 #main {
     display: flex;
     flex: 1; /* Take up remaining space */
 }
+
 
 #sidebar-left, #sidebar-right {
     width: 160px;
@@ -34,7 +56,6 @@ body {
 }
 
 #sidebar-right {
-    width: 160px;
     border-left: 1px solid #ccc;
 }
 
@@ -139,3 +160,8 @@ ul.menu li::before {
     pointer-events: none; /* Prevent clicking on the active link */
 }
 
+
+
+
+
+/* end of styles.css */

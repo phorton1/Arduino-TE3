@@ -9,7 +9,17 @@
 </head>
 <body onload='startJS()'>
     <div id="header">
-        <h2>teensyExpression3 Documentation</h2>
+		<div id='header-left'>
+			<a href="https://github.com/phorton1/Arduino-TE3" target="_blank">
+				 <span>TE3 Source</span><br>
+				 <span>on GitHub</span>
+			</a>
+		</div>
+		<div id='header-center'>
+			<h2>teensyExpression3 Documentation</h2>
+		</div>
+		<div id='header-right'>
+		</div>
     </div>
 
     <div id="main">
@@ -18,11 +28,11 @@
 			<h3 class='menu_title'>teensyExpression3</h2>
 			<ul class='menu'>
 				<li>
-					<span class="triangle" onclick="toggleFolderLI(event, this.parentNode);"></span>
+					<!--span class="triangle" onclick="toggleFolderLI(event, this.parentNode);"></span-->
 					<a href="#" class='folder' data-file="home.htm" onclick="loadDataFile(this)">Home</a>
-					<ul class="nested menu">
+					<!--ul class="nested menu">
 						<li><a href="#" data-file="demos.htm" onclick="loadDataFile(this)">Demos</a></li>
-					</ul>
+					</ul-->
 				</li>
 				<li>
 					<span class="triangle" onclick="toggleFolderLI(event, this.parentNode)"></span>
@@ -31,7 +41,6 @@
 						<li><a href="#" data-file="pcbs.htm"  onclick="loadDataFile(this)">PCBs</a></li>
 						<li><a href="#" data-file="solder.htm" onclick="loadDataFile(this)">Soldering</a></li>
 						<li><a href="#" data-file="3dp.htm" onclick="loadDataFile(this)">3D Printing</a></li>
-						<li><a href="#" data-file="wood.htm"  onclick="loadDataFile(this)">Wood Base</a></li>
 						<li><a href="#" data-file="assemble.htm"  onclick="loadDataFile(this)">Assemble</a></li>
 					</ul>
 				</li>
